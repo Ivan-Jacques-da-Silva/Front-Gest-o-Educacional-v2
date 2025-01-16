@@ -1,38 +1,34 @@
 import React, { useState, useEffect } from "react";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import axios from "axios";
 import {
+  Container,
   Row,
   Col,
-  Card,
-  Button,
-  Container,
   Form,
-  Modal,
+  Button,
+  Card,
   Image,
+  Modal,
 } from "react-bootstrap";
+import axios from "axios";
+// import "bootstrap/dist/css/bootstrap.min.css";
 import { MdPlayCircle } from "react-icons/md";
 import { FaFilePdf, FaDownload, FaTrash } from "react-icons/fa";
 import { API_BASE_URL } from "./config";
-// import "./treinamento.css";
+// import "./materialExtra.css";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
-const Treinamento = () => {
-  const [materiais, setMateriais] = useState([]);
-  const [isDownloading, setIsDownloading] = useState(false);
-  const [formData, setFormData] = useState({
-    titulo: "",
-    descricao: "",
-    linkYoutube: "",
-    arquivoPdf1: null,
-    arquivoPdf2: null,
-    arquivoPdf3: null,
-    miniatura: null,
-    data: "",
-    categorias: "",
-  });
 
-  const [filteredMateriais, setFilteredMateriais] = useState([]);
+function MaterialExtra() {
+  const [thumbnail, setThumbnail] = useState(null);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [date, setDate] = useState("");
+  const [pdfs, setPdfs] = useState([]);
+  const [categories, setCategories] = useState("");
+  const [youtubeUrl, setYoutubeUrl] = useState("");
+  const [materials, setMaterials] = useState([]);
+  const [filteredMaterials, setFilteredMaterials] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterDate, setFilterDate] = useState("");
@@ -41,6 +37,10 @@ const Treinamento = () => {
   const [showVideo, setShowVideo] = useState(false);
   const [videoUrl, setVideoUrl] = useState("");
   const [userType, setUserType] = useState(null);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [permitirDownload, setPermitirDownload] = useState(false);
+
+
 
   const getUserType = () => {
     const userType = localStorage.getItem("userType");
@@ -52,26 +52,15 @@ const Treinamento = () => {
     setUserType(userType);
   }, []);
 
-  useEffect(() => {
-    fetchMateriais();
-  }, []);
-
-
-  const fetchMateriais = async () => {
-    try {
-      const response = await axios.get(`${API_BASE_URL}/materiais`);
-      setMateriais(response.data);
-      setFilteredMateriais(response.data);
-      console.log("Verificação: ", materiais);
-    } catch (error) {
-      console.error("Erro ao buscar materiais:", error);
-    }
-  };
-
   const handleViewPDF = (url) => {
     setPdfUrl(url);
     setShowPDF(true);
   };
+
+  // const handleOpenVideo = (url) => {
+  //   setVideoUrl(url);
+  //   setShowVideo(true);
+  // };
 
   const handleOpenVideo = (url) => {
     const videoUrlNormalizado = normalizarUrlYoutube(url);
@@ -79,51 +68,10 @@ const Treinamento = () => {
     setShowVideo(true);
   };
 
+
   const handleClose = () => {
     setShowPDF(false);
     setShowVideo(false);
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
-
-  const handleFileChange = (e) => {
-    const { name, files } = e.target;
-    setFormData({ ...formData, [name]: files[0] });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const formDataObj = new FormData();
-    formDataObj.append("titulo", formData.titulo);
-    formDataObj.append("descricao", formData.descricao);
-    formDataObj.append("linkYoutube", formData.linkYoutube);
-    formDataObj.append("arquivoPdf1", formData.arquivoPdf1);
-    formDataObj.append("arquivoPdf2", formData.arquivoPdf2);
-    formDataObj.append("arquivoPdf3", formData.arquivoPdf3);
-    formDataObj.append("miniatura", formData.miniatura);
-    formDataObj.append("data", formData.data);
-    formDataObj.append("categorias", formData.categorias);
-    formDataObj.append("permitirDownload", formData.permitirDownload);
-
-
-    try {
-      await axios.post(`${API_BASE_URL}/materiais`, formDataObj);
-      fetchMateriais();
-    } catch (error) {
-      console.error("Erro ao enviar formulário:", error);
-    }
-  };
-
-  const handleDelete = async (id) => {
-    try {
-      await axios.delete(`${API_BASE_URL}/materiais/${id}`);
-      fetchMateriais();
-    } catch (error) {
-      console.error("Erro ao excluir material:", error);
-    }
   };
 
   const handleDownload = async (pdfUrls) => {
@@ -151,15 +99,93 @@ const Treinamento = () => {
     }
   };
 
-  const normalizarUrlYoutube = (url) => {
-    let videoId = '';
-    if (url.includes('watch?v=')) {
-      videoId = url.split('watch?v=')[1].split('&')[0];
+  const handleDelete = async (id) => {
+    try {
+      await axios.delete(`${API_BASE_URL}/material-extra/${id}`);
+      fetchMaterials();
+    } catch (error) {
+      console.error("Erro ao excluir material:", error);
     }
-    else if (url.includes('youtu.be/')) {
-      videoId = url.split('youtu.be/')[1].split('?')[0];
+  };
+
+
+  const fetchMaterials = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/material-extra`);
+      setMaterials(response.data);
+      setFilteredMaterials(response.data);
+    } catch (error) {
+      console.error("Erro ao buscar materiais", error);
     }
-    return `https://www.youtube.com/embed/${videoId}`;
+  };
+
+  useEffect(() => {
+    fetchMaterials();
+  }, []);
+
+  const handleThumbnailChange = (event) => {
+    if (event.target.files && event.target.files[0]) {
+      setThumbnail(event.target.files[0]);
+    }
+  };
+
+  const handlePdfChange = (event, index) => {
+    const newPdfs = [...pdfs];
+    newPdfs[index] = event.target.files[0];
+    setPdfs(newPdfs);
+  };
+
+  // const handleSubmit = async (event) => {
+  //   event.preventDefault();
+  //   const formData = new FormData();
+  //   formData.append("thumbnail", thumbnail);
+  //   formData.append("title", title);
+  //   formData.append("description", description);
+  //   formData.append("date", date);
+  //   formData.append("youtube_url", youtubeUrl);
+  //   formData.append("categories", categories);
+  //   pdfs.forEach((pdf, index) => {
+  //     formData.append(`pdf${index + 1}`, pdf);
+  //   });
+
+  //   try {
+  //     await axios.post(`${API_BASE_URL}/material-extra`, formData, {
+  //       headers: {
+  //         "Content-Type": "multipart/form-data",
+  //       },
+  //     });
+  //     fetchMaterials();
+  //     applyFilter();
+  //   } catch (error) {
+  //     console.error(error);
+  //   }
+  // };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    const formData = new FormData();
+    formData.append("thumbnail", thumbnail);
+    formData.append("title", title);
+    formData.append("description", description);
+    formData.append("date", date);
+    formData.append("youtube_url", youtubeUrl);
+    formData.append("categories", categories);
+    formData.append("permitirDownload", permitirDownload ? 1 : 0);
+    pdfs.forEach((pdf, index) => {
+      formData.append(`pdf${index + 1}`, pdf);
+    });
+
+    try {
+      await axios.post(`${API_BASE_URL}/material-extra`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      fetchMaterials();
+      applyFilter();
+    } catch (error) {
+      console.error(error);
+    }
   };
 
 
@@ -174,81 +200,76 @@ const Treinamento = () => {
   };
 
   const formatDateString = (dateString) => {
-    if (!dateString) return "";
     const date = new Date(dateString);
-    if (isNaN(date)) {
-      // If date is invalid, try parsing it manually
-      const [year, month, day] = dateString.split("-");
-      return `${day}/${month}/${year}`;
-    }
     return date.toLocaleDateString("pt-BR");
   };
 
-  // const removeAccents = (str) => {
-  //   return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-  // };
-
   const applyFilter = () => {
-    let filtered = materiais;
+    let filtered = materials;
 
-    // Filtro de Categorias
     if (selectedCategories.length > 0) {
-      filtered = filtered.filter((material) => {
-        const materialCategories = material.cp_mat_extra_categories
-          ? material.cp_mat_extra_categories.split(",").map((cat) => cat.trim())
-          : [];
-        return selectedCategories.some((category) =>
-          materialCategories.includes(category)
-        );
-      });
-    }
-
-    // Filtro de Nome
-    if (searchTerm) {
-      const lowerCaseTerm = searchTerm.toLowerCase();
-      filtered = filtered.filter(
-        (material) =>
-          material.cp_mat_titulo &&
-          material.cp_mat_titulo.toLowerCase().includes(lowerCaseTerm)
+      filtered = filtered.filter((material) =>
+        selectedCategories.some((category) =>
+          material.cp_mat_extra_categories
+            .split(",")
+            .map((cat) => cat.trim())
+            .includes(category)
+        )
       );
     }
 
-    // Filtro de Data
+    if (searchTerm) {
+      filtered = filtered.filter((material) =>
+        material.cp_mat_extra_title
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase())
+      );
+    }
+
     if (filterDate) {
+      const selectedDate = new Date(filterDate).toISOString().split("T")[0];
       filtered = filtered.filter((material) => {
-        const materialDate = material.cp_mat_extra_date.split("T")[0];
-        return materialDate === filterDate;
+        const materialDate = new Date(material.cp_mat_extra_date)
+          .toISOString()
+          .split("T")[0];
+        return materialDate === selectedDate;
       });
     }
 
-    setFilteredMateriais(filtered);
+    setFilteredMaterials(filtered);
+  };
+
+  const normalizarUrlYoutube = (url) => {
+    let videoId = '';
+    if (url.includes('watch?v=')) {
+      videoId = url.split('watch?v=')[1].split('&')[0];
+    } else if (url.includes('youtu.be/')) {
+      videoId = url.split('youtu.be/')[1].split('?')[0];
+    }
+    return `https://www.youtube.com/embed/${videoId}`;
   };
 
   return (
     <Container fluid>
       <ToastContainer />
+
       <Row>
         <Col xs={12} md={3} className="border-end p-3">
-          <h5 className="text-center fw-bold mt-3">
-            Filtrar
-          </h5>
+          <h5 className="text-center fw-bold mt-3">Filtrar</h5>
           <Form>
             <Card className="mb-3 shadow-sm h-100 p-0 radius-12">
               <Card.Header className="border-bottom bg-base py-16 px-24 d-flex align-items-center flex-wrap gap-3 justify-content-between">
-                <h6>Categorias</h6>
+                <h6 className="mb-0">Categorias</h6>
               </Card.Header>
               <Card.Body>
                 <div className="category-list">
                   <Form.Group className="mb-3">
                     {Array.from(
                       new Set(
-                        materiais.flatMap((material) =>
-                          material.cp_mat_extra_categories &&
-                            typeof material.cp_mat_extra_categories === "string"
-                            ? material.cp_mat_extra_categories
-                              .split(",")
-                              .map((cat) => cat.trim())
-                            : []
+                        materials.flatMap((material) =>
+                          material.cp_mat_extra_categories
+                            .split(",")
+                            .map((cat) => cat.trim())
                         )
                       )
                     ).map((category, index) => (
@@ -259,6 +280,7 @@ const Treinamento = () => {
                         name={category}
                         onChange={handleCategoryChange}
                         checked={selectedCategories.includes(category)}
+                        className="mb-2"
                       />
                     ))}
                   </Form.Group>
@@ -266,9 +288,9 @@ const Treinamento = () => {
               </Card.Body>
             </Card>
 
-            <Card className="mb-3">
-              <Card.Header>
-                <h6>Pesquisar por Nome</h6>
+            <Card className="mb-3 shadow-sm">
+              <Card.Header className=" text-white">
+                <h6 className="mb-0">Pesquisar por Nome</h6>
               </Card.Header>
               <Card.Body>
                 <Form.Group className="mb-3">
@@ -277,14 +299,15 @@ const Treinamento = () => {
                     placeholder="Digite o nome"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
+                    className="rounded"
                   />
                 </Form.Group>
               </Card.Body>
             </Card>
 
-            <Card className="mb-3">
-              <Card.Header>
-                <h6>Filtrar por Data</h6>
+            <Card className="mb-3 shadow-sm">
+              <Card.Header className=" text-white">
+                <h6 className="mb-0">Filtrar por Data</h6>
               </Card.Header>
               <Card.Body>
                 <Form.Group className="mb-3">
@@ -292,15 +315,14 @@ const Treinamento = () => {
                     type="date"
                     value={filterDate}
                     onChange={(e) => setFilterDate(e.target.value)}
+                    className="rounded"
                   />
                 </Form.Group>
               </Card.Body>
             </Card>
+
             <div className="d-grid gap-2">
-              <Button
-                variant="primary"
-                onClick={applyFilter}
-                className="mt-3 w-100">
+              <Button variant="primary" onClick={applyFilter} className="mt-3 w-100">
                 Aplicar Filtro
               </Button>
               <Button
@@ -309,7 +331,7 @@ const Treinamento = () => {
                   setSearchTerm("");
                   setFilterDate("");
                   setSelectedCategories([]);
-                  setFilteredMateriais(materiais);
+                  setFilteredMaterials(materials);
                 }}
                 className="mt-1 w-100"
               >
@@ -319,6 +341,7 @@ const Treinamento = () => {
           </Form>
         </Col>
 
+
         <Col xs={12} md={9}>
           <Card className="my-3">
             {userType === 1 && (
@@ -326,16 +349,15 @@ const Treinamento = () => {
                 <Form onSubmit={handleSubmit}>
                   <Row>
                     <Col md={4}>
-                      <Form.Group controlId="formMiniatura">
-                        <Form.Label>Miniatura</Form.Label>
+                      <Form.Group controlId="formThumbnail">
+                        <Form.Label>Thumbnail</Form.Label>
                         <Form.Control
                           type="file"
-                          name="miniatura"
-                          onChange={handleFileChange}
+                          onChange={handleThumbnailChange}
                         />
-                        {formData.miniatura && (
+                        {thumbnail && (
                           <Image
-                            src={URL.createObjectURL(formData.miniatura)}
+                            src={URL.createObjectURL(thumbnail)}
                             rounded
                             className="mt-3"
                             style={{
@@ -349,77 +371,72 @@ const Treinamento = () => {
                       </Form.Group>
                     </Col>
                     <Col md={4}>
-                      <Form.Group controlId="formTitulo">
+                      <Form.Group controlId="formTitle">
                         <Form.Label>Título</Form.Label>
                         <Form.Control
                           type="text"
-                          name="titulo"
-                          value={formData.titulo}
-                          onChange={handleInputChange}
+                          placeholder="Digite o título"
+                          value={title}
+                          onChange={(e) => setTitle(e.target.value)}
                         />
                       </Form.Group>
-                      <Form.Group controlId="formDescricao" className="mt-3">
+                      <Form.Group controlId="formDescription" className="mt-3">
                         <Form.Label>Descrição</Form.Label>
                         <Form.Control
                           as="textarea"
-                          name="descricao"
                           rows={3}
-                          value={formData.descricao}
-                          onChange={handleInputChange}
+                          placeholder="Digite a descrição"
+                          value={description}
+                          onChange={(e) => setDescription(e.target.value)}
                         />
                       </Form.Group>
                       <Form.Group controlId="formDate" className="mt-3">
                         <Form.Label>Data</Form.Label>
                         <Form.Control
                           type="date"
-                          name="data"
-                          value={formData.data}
-                          onChange={handleInputChange}
+                          value={date}
+                          onChange={(e) => setDate(e.target.value)}
                         />
                       </Form.Group>
-                      <Form.Group controlId="formLinkYoutube" className="mt-3">
+                      <Form.Group controlId="formYoutubeUrl" className="mt-3">
                         <Form.Label>URL do YouTube</Form.Label>
                         <Form.Control
                           type="text"
-                          name="linkYoutube"
-                          value={formData.linkYoutube}
-                          onChange={handleInputChange}
+                          placeholder="Digite a URL do YouTube"
+                          value={youtubeUrl}
+                          onChange={(e) => setYoutubeUrl(e.target.value)}
                         />
                       </Form.Group>
                     </Col>
                     <Col md={4}>
                       <Form.Group controlId="formPdf1">
-                        <Form.Label>Anexar PDF 1</Form.Label>
+                        <Form.Label>Anexar PDF</Form.Label>
                         <Form.Control
                           type="file"
-                          name="arquivoPdf1"
-                          onChange={handleFileChange}
+                          onChange={(e) => handlePdfChange(e, 0)}
                         />
                       </Form.Group>
                       <Form.Group controlId="formPdf2" className="mt-3">
-                        <Form.Label>Anexar PDF 2</Form.Label>
+                        <Form.Label>Anexar PDF</Form.Label>
                         <Form.Control
                           type="file"
-                          name="arquivoPdf2"
-                          onChange={handleFileChange}
+                          onChange={(e) => handlePdfChange(e, 1)}
                         />
                       </Form.Group>
                       <Form.Group controlId="formPdf3" className="mt-3">
-                        <Form.Label>Anexar PDF 3</Form.Label>
+                        <Form.Label>Anexar PDF</Form.Label>
                         <Form.Control
                           type="file"
-                          name="arquivoPdf3"
-                          onChange={handleFileChange}
+                          onChange={(e) => handlePdfChange(e, 2)}
                         />
                       </Form.Group>
                       <Form.Group controlId="formCategories" className="mt-3">
                         <Form.Label>Categorias</Form.Label>
                         <Form.Control
                           type="text"
-                          name="categorias"
                           placeholder="Digite as categorias separadas por vírgula"
-                          value={formData.categorias}
-                          onChange={handleInputChange}
+                          value={categories}
+                          onChange={(e) => setCategories(e.target.value)}
                         />
                       </Form.Group>
                       <Form.Group controlId="formPermitirDownload" className="mt-3">
@@ -428,13 +445,10 @@ const Treinamento = () => {
                           type="switch"
                           id="custom-switch"
                           label="Permitir"
-                          checked={formData.permitirDownload || false}
-                          onChange={(e) =>
-                            setFormData({ ...formData, permitirDownload: e.target.checked ? 1 : 0 })
-                          }
+                          checked={permitirDownload}
+                          onChange={(e) => setPermitirDownload(e.target.checked)}
                         />
                       </Form.Group>
-
                     </Col>
                   </Row>
                   <Button
@@ -450,20 +464,21 @@ const Treinamento = () => {
           </Card>
 
           <Col>
-            {filteredMateriais.map((material, index) => (
+            {/* <h5 style={{ fontWeight: "bold" }}>Materiais</h5>{" "} */}
+            {filteredMaterials.map((material, index) => (
               <Card className="my-3" key={index}>
                 <Card.Body>
                   <Row>
                     <Col md={4}>
-                      {material.cp_mat_miniatura && (
+                      {material.cp_mat_extra_thumbnail && (
                         <div
                           className="image-container"
                           onClick={() =>
-                            handleOpenVideo(material.cp_mat_linkYoutube)
+                            handleOpenVideo(material.cp_mat_extra_youtube_url)
                           }
                         >
                           <Image
-                            src={material.cp_mat_miniatura}
+                            src={material.cp_mat_extra_thumbnail}
                             rounded
                             style={{
                               width: "100%",
@@ -478,89 +493,55 @@ const Treinamento = () => {
                       )}
                     </Col>
                     <Col md={4}>
-                      <h5>{material.cp_mat_titulo}</h5>
-                      <p>{material.cp_mat_descricao}</p>
+                      <h5>{material.cp_mat_extra_title}</h5>
+                      <p>{material.cp_mat_extra_description}</p>
                       <p>{formatDateString(material.cp_mat_extra_date)}</p>
                     </Col>
                     <Col md={4}>
                       <h6 style={{ fontWeight: "bold" }}>Categorias</h6>
                       <p>
-                        {material.cp_mat_extra_categories &&
-                          material.cp_mat_extra_categories
-                            .split(",")
-                            .map((cat, index) => (
-                              <span
-                                key={index}
-                                className="badge bg-secondary me-1"
-                              >
-                                {cat.trim()}
-                              </span>
-                            ))}
+                        {material.cp_mat_extra_categories
+                          .split(",")
+                          .map((cat, index) => (
+                            <span key={index} className="badge bg-secondary me-1">
+                              {cat.trim()}
+                            </span>
+                          ))}
                       </p>
-                      <p>
-                        {material.cp_mat_arquivoPdf && (
+
+                      {/* Exibir até 3 PDFs */}
+                      {material.cp_mat_extra_pdf1 && (
+                        <p>
                           <Button
                             variant="link"
-                            onClick={() =>
-                              handleViewPDF(material.cp_mat_arquivoPdf)
-                            }
+                            onClick={() => handleViewPDF(material.cp_mat_extra_pdf1)}
                           >
                             <FaFilePdf /> PDF 1
                           </Button>
-                        )}
-                      </p>
-                      <p>
-                        {material.cp_mat_extra_pdf2 && (
+                        </p>
+                      )}
+
+                      {material.cp_mat_extra_pdf2 && (
+                        <p>
                           <Button
                             variant="link"
-                            onClick={() =>
-                              handleViewPDF(material.cp_mat_extra_pdf2)
-                            }
+                            onClick={() => handleViewPDF(material.cp_mat_extra_pdf2)}
                           >
                             <FaFilePdf /> PDF 2
                           </Button>
-                        )}
-                      </p>
-                      <p>
-                        {material.cp_mat_extra_pdf3 && (
+                        </p>
+                      )}
+
+                      {material.cp_mat_extra_pdf3 && (
+                        <p>
                           <Button
                             variant="link"
-                            onClick={() =>
-                              handleViewPDF(material.cp_mat_extra_pdf3)
-                            }
+                            onClick={() => handleViewPDF(material.cp_mat_extra_pdf3)}
                           >
                             <FaFilePdf /> PDF 3
                           </Button>
-                        )}
-                      </p>
-                      {(userType === 1 || userType === 2) && (
-                        <Button
-                          variant="danger"
-                          onClick={() => handleDelete(material.cp_mat_id)}
-                          className="mt-2"
-                        >
-                          <FaTrash />
-                        </Button>
+                        </p>
                       )}
-                      {material.cp_mat_permitirDownload === 1 && (
-                        <Button
-                          variant="success"
-                          className="custom-download-button mt-2 ms-2"
-                          onClick={() =>
-                            handleDownload([material.cp_mat_arquivoPdf, material.cp_mat_extra_pdf2, material.cp_mat_extra_pdf3])
-                          }
-                          disabled={isDownloading}
-                        >
-                          {isDownloading ? (
-                            <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                          ) : (
-                            <FaDownload />
-                          )}
-                        </Button>
-                      )}
-
-
-
                     </Col>
                   </Row>
                 </Card.Body>
@@ -604,23 +585,19 @@ const Treinamento = () => {
           <Modal.Title>Visualizar Vídeo</Modal.Title>
         </Modal.Header>
         <Modal.Body className="text-center d-flex w-100 justify-content-center">
-          {videoUrl ? (
-            <iframe
-              width="100%"
-              height="80vh"
-              className="custom-modal-video"
-              src={videoUrl}
-              frameBorder="0"
-              allowFullScreen
-              title="YouTube Video"
-            />
-          ) : (
-            <p>URL do vídeo inválida</p>
-          )}
+          <iframe
+            width="100%"
+            height="80vh"
+            className="custom-modal-video"
+            src={videoUrl.replace("watch?v=", "embed/")}
+            frameBorder="0"
+            allowFullScreen
+            title="YouTube Video"
+          />
         </Modal.Body>
       </Modal>
     </Container>
   );
-};
+}
 
-export default Treinamento;
+export default MaterialExtra;

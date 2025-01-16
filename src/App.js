@@ -89,10 +89,12 @@ import WidgetsPage from "./pages/WidgetsPage";
 import Financeiro from "./pages/FinanceiroPage.jsx";
 import Audios from "./pages/AudioPage.jsx";
 import Treinamento from "./pages/TreinamentoPage.jsx";
+import MaterialExtra from "./pages/MaterialExtraPage.jsx";
 import WizardPage from "./pages/WizardPage";
 import RouteScrollToTop from "./helper/RouteScrollToTop";
 import TextGeneratorNewPage from "./pages/TextGeneratorNewPage";
 import MatriculaPage from "./pages/MatriculaPage";
+import SalaDeAula from "./pages/SalaDeAulaPage.jsx";
 // import CadastroUsuario from "./components/CadastroUsuario";
 
 
@@ -124,6 +126,8 @@ function App() {
         <Route exact path="/financeiro" element={<Financeiro />} />
         <Route exact path="/audios" element={<Audios />} />
         <Route exact path="/treinamento" element={<Treinamento />} />
+        <Route exact path="/material-extra" element={<MaterialExtra />} />
+        <Route exact path="/sala-de-aula" element={<SalaDeAula />} />
 
         
         <Route exact path="/alert" element={<AlertPage />} />

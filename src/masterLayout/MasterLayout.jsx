@@ -116,7 +116,7 @@ const MasterLayout = ({ children }) => {
 
   return (
     <section className={mobileMenu ? "overlay active" : "overlay "}>
-     
+
       <aside className={sidebarActive ? "sidebar active " : mobileMenu ? "sidebar sidebar-open" : "sidebar"}>
         <button onClick={mobileMenuControl} type="button" className="sidebar-close-btn">
           <Icon icon="radix-icons:cross-2" />
@@ -153,7 +153,7 @@ const MasterLayout = ({ children }) => {
               </NavLink>
             </li>
 
-           
+
             <li className="dropdown">
               <Link to="#">
                 <Icon icon="heroicons:document" className="menu-icon" />
@@ -264,10 +264,27 @@ const MasterLayout = ({ children }) => {
                 <span> Treinamento</span>
               </NavLink>
             </li>
+            <li>
+              <NavLink to="/material-extra" className={(navData) =>
+                navData.isActive ? "active-page" : ""
+              }>
+                <Icon icon="ph:books" className="menu-icon" />
+                <span> Material Extra</span>
+              </NavLink>
+            </li>
 
+            <li className="sidebar-menu-group-title">Aula</li>
+            <li>
+              <NavLink to="/sala-de-aula" className={(navData) =>
+                navData.isActive ? "active-page" : ""
+              }>
+                <Icon icon="ph:chalkboard-teacher" className="menu-icon" />
 
+                <span> Sala de Aula</span>
+              </NavLink>
+            </li>
 
-            <li className="sidebar-menu-group-title">Application</li>
+            {/* <li className="sidebar-menu-group-title">Application</li>
             <li>
               <NavLink to="/email" className={(navData) =>
                 navData.isActive ? "active-page" : ""
@@ -301,7 +318,7 @@ const MasterLayout = ({ children }) => {
               </NavLink>
             </li>
 
-           
+
             <li className="dropdown">
               <Link to="#">
                 <Icon icon="hugeicons:invoice-03" className="menu-icon" />
@@ -340,7 +357,7 @@ const MasterLayout = ({ children }) => {
               </ul>
             </li>
 
-           
+
             <li className="dropdown">
               <Link to="#">
                 <i className="ri-robot-2-line mr-10" />
@@ -386,7 +403,7 @@ const MasterLayout = ({ children }) => {
               </ul>
             </li>
 
-           
+
             <li className="dropdown">
               <Link to="#">
                 <i className="ri-robot-2-line mr-10" />
@@ -430,7 +447,7 @@ const MasterLayout = ({ children }) => {
 
             <li className="sidebar-menu-group-title">UI Elements</li>
 
-           
+
             <li className="dropdown">
               <Link to="#">
                 <Icon icon="solar:document-text-outline" className="menu-icon" />
@@ -589,7 +606,7 @@ const MasterLayout = ({ children }) => {
               </ul>
             </li>
 
-           
+
             <li className="dropdown">
               <Link to="#">
                 <Icon icon="heroicons:document" className="menu-icon" />
@@ -627,7 +644,7 @@ const MasterLayout = ({ children }) => {
               </ul>
             </li>
 
-           
+
             <li className="dropdown">
               <Link to="#">
                 <Icon icon="mingcute:storage-line" className="menu-icon" />
@@ -651,7 +668,7 @@ const MasterLayout = ({ children }) => {
               </ul>
             </li>
 
-           
+
             <li className="dropdown">
               <Link to="#">
                 <Icon icon="solar:pie-chart-outline" className="menu-icon" />
@@ -691,7 +708,7 @@ const MasterLayout = ({ children }) => {
               </NavLink>
             </li>
 
-           
+
             <li className="dropdown">
               <Link to="#">
                 <Icon icon="flowbite:users-group-outline" className="menu-icon" />
@@ -729,7 +746,7 @@ const MasterLayout = ({ children }) => {
               </ul>
             </li>
 
-           
+
             <li className="dropdown">
               <Link to="#">
                 <i className="ri-user-settings-line" />
@@ -757,7 +774,7 @@ const MasterLayout = ({ children }) => {
 
             <li className="sidebar-menu-group-title">Application</li>
 
-           
+
             <li className="dropdown">
               <Link to="#">
                 <Icon icon="simple-line-icons:vector" className="menu-icon" />
@@ -829,7 +846,7 @@ const MasterLayout = ({ children }) => {
               </NavLink>
             </li>
 
-           
+
             <li className="dropdown">
               <Link to="#">
                 <Icon icon="icon-park-outline:setting-two" className="menu-icon" />
@@ -886,7 +903,7 @@ const MasterLayout = ({ children }) => {
                   </NavLink>
                 </li>
               </ul>
-            </li>
+            </li> */}
           </ul>
         </div>
       </aside>
@@ -915,12 +932,12 @@ const MasterLayout = ({ children }) => {
                     className="icon"
                   />
                 </button>
-               
+
               </div>
             </div>
             <div className="col-auto">
               <div className="d-flex flex-wrap align-items-center gap-3">
-               
+
                 <ThemeToggleButton />
                 <div className="dropdown d-none d-sm-inline-block">
                   <button
@@ -1130,7 +1147,7 @@ const MasterLayout = ({ children }) => {
                     </div>
                   </div>
                 </div>
-               
+
                 <div className="dropdown">
                   <button
                     className="has-indicator w-40-px h-40-px bg-neutral-200 rounded-circle d-flex justify-content-center align-items-center"
@@ -1315,7 +1332,7 @@ const MasterLayout = ({ children }) => {
                     </div>
                   </div>
                 </div>
-               
+
                 <div className="dropdown">
                   <button
                     className="has-indicator w-40-px h-40-px bg-neutral-200 rounded-circle d-flex justify-content-center align-items-center"
@@ -1466,7 +1483,7 @@ const MasterLayout = ({ children }) => {
                   </div>
                 </div>
 
-               
+
                 <div className="dropdown">
                   <button
                     className="d-flex justify-content-center align-items-center rounded-circle"
@@ -1552,17 +1569,17 @@ const MasterLayout = ({ children }) => {
                   </div>
                 </div>
 
-               
+
 
               </div>
             </div>
           </div>
         </div>
 
-       
+
         <div className="dashboard-main-body">{children}</div>
 
-       
+
         <footer className="d-footer">
           <div className="row align-items-center justify-content-between">
             <div className="col-auto">

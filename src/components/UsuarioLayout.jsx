@@ -64,12 +64,6 @@ const Usuarios = () => {
         const diffTime = Math.abs(birthDateThisYear - todayOnlyDate);
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-        console.log("Data de nascimento recebida:", dateOfBirth);
-        console.log(
-            `Verificando aniversário para ${day}/${month} -> Dentro de 5 dias: ${diffDays <= 5 && birthDateThisYear >= todayOnlyDate
-            }`
-        );
-
         return diffDays <= 5 && birthDateThisYear >= todayOnlyDate;
     };
 
