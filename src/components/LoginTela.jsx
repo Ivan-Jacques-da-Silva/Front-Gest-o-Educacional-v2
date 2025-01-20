@@ -4,8 +4,8 @@ import { Icon } from '@iconify/react/dist/iconify.js'
 import Axios from 'axios';
 import { Spinner, Button } from 'react-bootstrap';
 import { useNavigate, Link } from 'react-router-dom';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 import { API_BASE_URL } from './config';
 import Logo from './../img/frasePreta.png';
@@ -19,15 +19,25 @@ const LoginTela = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [isPageLoading, setIsPageLoading] = useState(true);
     const [isLoggingIn, setIsLoggingIn] = useState(false);
+    const [rememberMe, setRememberMe] = useState(false);
+
+
+    const handleKeyPress = (e) => {
+        if (e.key === 'Enter') {
+            setIsLoggingIn(true);
+            handleClickLogin({ login, password });
+        }
+    };
 
 
     const handleClickLogin = async (values) => {
         try {
             const response = await Axios.post(`${API_BASE_URL}/login`, values);
-            console.log(response.data);
+            console.log('Resposta recebida:', response.data);
             setIsLoggingIn(true);
 
             if (response.data.msg === 'Usuário Logado com sucesso') {
+                console.log('Entrou no if: Usuário Logado com sucesso');
                 // Armazenar o tipo de usuário após o login bem-sucedido
                 localStorage.setItem('userType', response.data.userType);
                 localStorage.setItem('userName', response.data.userName);
@@ -36,16 +46,17 @@ const LoginTela = () => {
                 localStorage.setItem('schoolId', response.data.schoolId);
                 localStorage.setItem('turmaID', response.data.turmaID);
 
-                toast.success('Login realizado com sucesso!');
-
                 if (response.data.userType === 5) {
                     navigate('/home/');
                 } else {
                     navigate('/home');
                 }
+            } else if (response.data.msg == 'Usuário ou senha incorretos') {
+                console.log('Entrou no else if: Usuário ou senha incorretos');
+                toast.error(response.data.msg);
+                setLoginError(true);
             } else {
-                // setLoginError(true);
-                toast.error('Usuário ou senha incorretos.');
+                console.log('Entrou no else: Nenhum dos ifs foi atendido');
             }
         } catch (error) {
             if (error.response) {
@@ -57,14 +68,16 @@ const LoginTela = () => {
             } else {
                 console.error('Erro ao processar a requisição:', error.message);
             }
+            console.log('Entrou no catch');
             setIsLoggingIn(false);
-            console.error('Erro ao fazer login:', error);
-            // setLoginError(true);
             toast.error('Erro ao fazer login.');
         } finally {
+            console.log('Entrou no finally');
+            // toast.error("Usuário ou senha incorretos");
             setIsLoggingIn(false);
         }
     };
+
 
     useEffect(() => {
         const timer = setTimeout(() => setIsPageLoading(false), 1000);
@@ -85,6 +98,7 @@ const LoginTela = () => {
     return (
 
         <>
+            <ToastContainer />
             <section className="auth bg-base d-flex flex-wrap">
                 <div className="auth-left d-lg-block d-none">
                     <div className="d-flex align-items-center flex-column h-100 w-auto justify-content-center">
@@ -118,6 +132,7 @@ const LoginTela = () => {
                                     placeholder="Login"
                                     value={login}
                                     onChange={(e) => setLogin(e.target.value)}
+                                    onKeyPress={handleKeyPress}
                                 />
                             </div>
                             <div className="position-relative mb-20">
@@ -132,6 +147,7 @@ const LoginTela = () => {
                                         placeholder="Password"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
+                                        onKeyPress={handleKeyPress}
                                     />
                                 </div>
                                 {/* <span
@@ -142,14 +158,16 @@ const LoginTela = () => {
                                 </span> */}
                             </div>
                             <div className="">
-                                <div className="d-flex justify-content-between gap-2">
+                                {/* <div className="d-flex justify-content-between gap-2">
                                     <div className="form-check style-check d-flex align-items-center">
                                         <input
                                             className="form-check-input border border-neutral-300"
                                             type="checkbox"
                                             defaultValue=""
                                             id="remeber"
+                                            onChange={(e) => setRememberMe(e.target.checked)}
                                         />
+
                                         <label className="form-check-label" htmlFor="remeber">
                                             Lembre de mim{" "}
                                         </label>
@@ -157,16 +175,30 @@ const LoginTela = () => {
                                     <Link to="#" className="text-primary-600 fw-medium">
                                         Esqueceu sua senha?
                                     </Link>
-                                </div>
+                                </div> */}
                             </div>
-                            <button
+                            {/* <button
                                 type="button"
                                 className="btn btn-primary text-sm btn-sm px-12 py-16 w-100 radius-12 mt-32"
                                 onClick={() => handleClickLogin({ login, password })}
                             >
                                 {" "}
                                 Entrar
+                                </button> */}
+
+                            <button
+                                type="button"
+                                className="btn btn-primary text-sm btn-sm px-12 py-16 w-100 radius-12 mt-32"
+                                onClick={() => {
+                                    setIsLoggingIn(true);
+                                    handleClickLogin({ login, password });
+                                }}
+                                disabled={isLoggingIn}
+                            >
+                                {" "}
+                                {isLoggingIn ? <Spinner animation="border" size="sm" /> : "Entrar"}
                             </button>
+
                             {/* <div className="mt-32 center-border-horizontal text-center">
                             <span className="bg-base z-1 px-4">Ou faça login com</span>
                         </div> */}

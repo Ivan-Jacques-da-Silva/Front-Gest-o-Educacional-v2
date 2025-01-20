@@ -283,6 +283,14 @@ const MasterLayout = ({ children }) => {
                 <span> Sala de Aula</span>
               </NavLink>
             </li>
+            <li>
+              <NavLink to="/calendar-main" className={(navData) =>
+                navData.isActive ? "active-page" : ""
+              }>
+                <Icon icon="solar:calendar-outline" className="menu-icon" />
+                <span>Calendar</span>
+              </NavLink>
+            </li>
 
             {/* <li className="sidebar-menu-group-title">Application</li>
             <li>

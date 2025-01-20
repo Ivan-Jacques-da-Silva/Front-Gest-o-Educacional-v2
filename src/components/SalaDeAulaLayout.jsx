@@ -1,88 +1,67 @@
 // SalaDeAula.js
 import React, { useState, useEffect } from "react";
 import { Container, Row, Col, Card, Button } from "react-bootstrap";
-import "react-toastify/dist/ReactToastify.css";
 import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import Turmas from "./components/Turmas.jsx";
 import HistoricoChamadas from "./components/HistoricoChamadas.jsx";
-import ResumoMaterial from "./components/ResumoMaterial.jsx";
-import { API_BASE_URL } from "./config";
+// import ResumoMaterial from "./components/ResumoMaterial.jsx";
 import axios from "axios";
+import { API_BASE_URL } from "./config";
 
 const SalaDeAula = () => {
     const [turmas, setTurmas] = useState([]);
     const [selectedTurma, setSelectedTurma] = useState(null);
     const [alunos, setAlunos] = useState([]);
     const [historicoChamadas, setHistoricoChamadas] = useState([]);
-    const [selectedChamadaId, setSelectedChamadaId] = useState(null);
     const [showResumoCard, setShowResumoCard] = useState(false);
+    const [selectedChamadaId, setSelectedChamadaId] = useState(null);
 
-    const onOpenResumo = (chamadaId) => {
-        setSelectedChamadaId(chamadaId);
-        setShowResumoCard(true);
+    const carregarTurmas = async () => {
+        try {
+            const schoolId = localStorage.getItem("schoolId");
+            const userId = localStorage.getItem("userId");
+            const response = await axios.get(`${API_BASE_URL}/turmasComAlunos`);
+            const filteredTurmas = response.data.filter(
+                (turma) =>
+                    turma.cp_tr_id_escola === parseInt(schoolId) &&
+                    turma.cp_tr_id_professor === parseInt(userId)
+            );
+            setTurmas(filteredTurmas);
+        } catch (error) {
+            console.error("Erro ao carregar turmas:", error);
+            toast.error("Erro ao carregar turmas. Tente novamente mais tarde.");
+        }
     };
 
-    const onCloseResumo = () => {
-        setShowResumoCard(false);
-        setSelectedChamadaId(null);
+    const carregarDadosTurma = async (turmaId) => {
+        try {
+            const alunosResponse = await axios.get(`${API_BASE_URL}/turmas/${turmaId}/alunos`);
+            setAlunos(alunosResponse.data);
+
+            const chamadasResponse = await axios.get(`${API_BASE_URL}/chamadas/turma/${turmaId}`);
+            setHistoricoChamadas(chamadasResponse.data);
+        } catch (error) {
+            console.error("Erro ao carregar dados da turma:", error);
+            toast.error("Erro ao carregar dados da turma. Tente novamente mais tarde.");
+        }
     };
 
-    useEffect(() => {
-        if (!selectedTurma) return;
-
-        // Buscar alunos da turma selecionada
-        axios.get(`${API_BASE_URL}/turmas/${selectedTurma}/alunos`)
-            .then((response) => setAlunos(response.data))
-            .catch((error) => {
-                console.error("Erro ao buscar alunos:", error);
-                toast.error("Erro ao buscar alunos. Tente novamente mais tarde.");
-            });
-
-        // Buscar histórico de chamadas da turma selecionada
-        axios.get(`${API_BASE_URL}/chamadas/turma/${selectedTurma}`)
-            .then((response) => setHistoricoChamadas(response.data))
-            .catch((error) => console.error("Erro ao buscar histórico de chamadas:", error));
-    }, [selectedTurma]); // Executa sempre que a turma selecionada muda
-
-
-    useEffect(() => {
-        const schoolId = localStorage.getItem("schoolId");
-        const userId = localStorage.getItem("userId");
-
-        axios.get(`${API_BASE_URL}/turmasComAlunos`)
-            .then((response) => {
-                const filteredTurmas = response.data.filter(
-                    (turma) => turma.cp_tr_id_escola === parseInt(schoolId) && turma.cp_tr_id_professor === parseInt(userId)
-                );
-                setTurmas(filteredTurmas);
-            })
-            .catch((error) => console.error("Erro ao buscar turmas:", error));
-    }, []);
+    const atualizarHistorico = async () => {
+        try {
+            const chamadasResponse = await axios.get(`${API_BASE_URL}/chamadas/turma/${selectedTurma}`);
+            setHistoricoChamadas(chamadasResponse.data);
+        } catch (error) {
+            console.error("Erro ao atualizar histórico de chamadas:", error);
+            toast.error("Erro ao atualizar o histórico. Tente novamente mais tarde.");
+        }
+    };
 
     const handleSelectTurma = (turmaId) => {
         setSelectedTurma(turmaId);
-
-        axios.get(`${API_BASE_URL}/turmas/${turmaId}/alunos`)
-            .then((response) => setAlunos(response.data))
-            .catch((error) => {
-                console.error("Erro ao buscar alunos:", error);
-                toast.error("Erro ao buscar alunos. Tente novamente mais tarde.");
-            });
-
-        axios.get(`${API_BASE_URL}/chamadas/turma/${turmaId}`)
-            .then((response) => setHistoricoChamadas(response.data))
-            .catch((error) => console.error("Erro ao buscar histórico de chamadas:", error));
-    };
-
-
-    const handleOpenResumo = (chamadaId) => {
-        setSelectedChamadaId(chamadaId);
-        setShowResumoCard(true);
-    };
-
-    const handleCloseResumo = () => {
-        setShowResumoCard(false);
         setSelectedChamadaId(null);
+        setHistoricoChamadas([]);
+        carregarDadosTurma(turmaId);
     };
 
     const handleUpdateStatus = async (chamadaId, status) => {
@@ -98,28 +77,26 @@ const SalaDeAula = () => {
             });
 
             toast.success(`Status atualizado para: ${status}`);
-
-            // Atualiza o histórico após o sucesso
-            const response = await axios.get(`${API_BASE_URL}/chamadas/turma/${selectedTurma}`);
-            setHistoricoChamadas(response.data);
+            await atualizarHistorico();
         } catch (error) {
             console.error("Erro ao atualizar status:", error);
             toast.error("Erro ao atualizar status. Tente novamente.");
         }
     };
 
-
-
-    const fetchResumoMaterial = async (chamadaId) => {
-        try {
-            const response = await axios.get(`${API_BASE_URL}/resumos/${chamadaId}`);
-            return response.data;
-        } catch (error) {
-            console.error("Erro ao buscar materiais e resumos:", error);
-            toast.error("Erro ao buscar materiais e resumos. Tente novamente mais tarde.");
-            return null;
-        }
+    const handleOpenResumo = (chamadaId) => {
+        setSelectedChamadaId(chamadaId);
+        setShowResumoCard(true);
     };
+
+    const handleCloseResumo = () => {
+        setShowResumoCard(false);
+        setSelectedChamadaId(null);
+    };
+
+    useEffect(() => {
+        carregarTurmas();
+    }, []);
 
     return (
         <Container fluid>
@@ -128,38 +105,22 @@ const SalaDeAula = () => {
                 <Col xs={12} md={12}>
                     <Card>
                         <Card.Body>
-                            <h2 className="text-center mb-4">Sala de Aula</h2>
+                            {/* <h5 className="mb-4">Sala de Aula</h5> */}
                             <Turmas turmas={turmas} onSelectTurma={handleSelectTurma} />
 
                             {selectedTurma && (
-                                <>
-                                    <HistoricoChamadas
-                                        historico={historicoChamadas}
-                                        onUpdateStatus={handleUpdateStatus}
-                                        fetchResumoMaterial={fetchResumoMaterial}
-                                        onOpenResumo={onOpenResumo}
-                                        turmaId={selectedTurma}
-                                        alunos={alunos}
-                                    />
-
-                                    {/* <ResumoMaterial turmaId={selectedTurma} /> */}
-                                </>
+                                <HistoricoChamadas
+                                    turmaId={selectedTurma}
+                                    historico={historicoChamadas}
+                                    alunos={alunos}
+                                    onUpdateStatus={handleUpdateStatus}
+                                    atualizarHistorico={atualizarHistorico}
+                                    onOpenResumo={handleOpenResumo}
+                                />
                             )}
                         </Card.Body>
                     </Card>
                 </Col>
-                {showResumoCard && (
-                    <Col md={6}>
-                        <Card>
-                            <Card.Body>
-                                <Button variant="secondary" onClick={handleCloseResumo}>
-                                    Fechar
-                                </Button>
-                                <ResumoMaterial turmaId={selectedTurma} chamadaId={selectedChamadaId} />
-                            </Card.Body>
-                        </Card>
-                    </Col>
-                )}
             </Row>
         </Container>
     );

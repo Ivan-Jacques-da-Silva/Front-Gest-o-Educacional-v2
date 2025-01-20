@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { Icon } from "@iconify/react";
-import { Table, Badge, Button, Modal, Form } from "react-bootstrap";
+import { Table, Badge, Button, Modal, Form, Card } from "react-bootstrap";
 import dayjs from "dayjs";
 import { toast } from "react-toastify";
 import axios from "axios";
 import { API_BASE_URL } from "./../config";
+import CadastrarResumoChamada from "./CadastroResumo.jsx";
+import RegistrosAula from './RegistrosAula.jsx'
 
 const getBadgeVariant = (status) => {
   switch (status) {
@@ -19,37 +21,31 @@ const getBadgeVariant = (status) => {
   }
 };
 
-const HistoricoChamadas = ({ turmaId, historico, onUpdateStatus, fetchResumoMaterial, alunos }) => {
-  console.log("Turma ID recebido:", turmaId);
+const HistoricoChamadas = ({ turmaId, historico, onUpdateStatus, alunos, atualizarHistorico }) => {
   const [currentPage, setCurrentPage] = useState(1);
+  const [resumosPorData, setResumosPorData] = useState({});
   const [itemsPerPage] = useState(10);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [pendingStatusUpdate, setPendingStatusUpdate] = useState(null);
   const [showResumoForm, setShowResumoForm] = useState(false);
-  const [resumos, setResumos] = useState([]);
   const [selectedChamadaId, setSelectedChamadaId] = useState(null);
-  const [usuariosDisponiveis, setUsuariosDisponiveis] = useState([]);
+  const [selectedChamadaDate, setSelectedChamadaDate] = useState(null);
+  const [atualizarResumos, setAtualizarResumos] = useState(false);
   const [formData, setFormData] = useState({
     alunoId: "",
     data: dayjs().format("YYYY-MM-DD"),
     hora: dayjs().format("HH:mm"),
     status: "Presente",
   });
-  const [resumoData, setResumoData] = useState({
-    resumo: "",
-    link: "",
-    linkYoutube: "",
-    arquivo: null,
-    aula: "",
-  });
 
   const confirmStatusUpdate = (chamadaId, status) => {
-    if (!chamadaId) {
-      console.error("Erro: chamadaId não foi passado para confirmStatusUpdate");
-      return;
-    }
     setPendingStatusUpdate({ chamadaId, status });
     setShowConfirmModal(true);
+  };
+
+
+  const handleAtualizarResumos = () => {
+    setAtualizarResumos((prev) => !prev); 
   };
 
   const handleDeleteChamada = async (chamadaId) => {
@@ -57,6 +53,7 @@ const HistoricoChamadas = ({ turmaId, historico, onUpdateStatus, fetchResumoMate
       await axios.delete(`${API_BASE_URL}/chamadas/${chamadaId}`);
       toast.success("Chamada deletada com sucesso.");
       // Atualizar a lista de chamadas localmente
+      atualizarHistorico();
     } catch (error) {
       console.error("Erro ao deletar chamada:", error);
       toast.error("Erro ao deletar chamada. Tente novamente mais tarde.");
@@ -64,50 +61,21 @@ const HistoricoChamadas = ({ turmaId, historico, onUpdateStatus, fetchResumoMate
   };
 
   const handleOpenResumoForm = (chamadaId) => {
-    setSelectedChamadaId(chamadaId);
-    setShowResumoForm(true);
-    fetchResumos(chamadaId);
-  };
-
-  const fetchResumos = async (chamadaId) => {
-    try {
-      const response = await axios.get(`${API_BASE_URL}/resumos/${chamadaId}/${turmaId}`);
-      setResumos(response.data);
-    } catch (error) {
-      console.error("Erro ao buscar resumos:", error);
+    const chamadaSelecionada = historico.find((chamada) => chamada.cp_ch_id === chamadaId);
+    if (chamadaSelecionada) {
+      setSelectedChamadaId(chamadaId);
+      setSelectedChamadaDate(chamadaSelecionada.cp_ch_data);
     }
+    setShowResumoForm(true);
   };
 
   const handleConfirmStatusUpdate = () => {
     if (pendingStatusUpdate) {
-      // Chama a função passada por props, com os parâmetros do status pendente
       onUpdateStatus(pendingStatusUpdate.chamadaId, pendingStatusUpdate.status);
-      setPendingStatusUpdate(null); // Reseta o estado
-      setShowConfirmModal(false); // Fecha o modal
+      setPendingStatusUpdate(null);
+      setShowConfirmModal(false);
     } else {
       toast.error("Erro ao confirmar a atualização do status.");
-    }
-  };
-
-  const handleSaveResumo = async () => {
-    const formData = new FormData();
-    formData.append("turmaId", turmaId);
-    formData.append("resumo", resumoData.resumo);
-    formData.append("link", resumoData.link);
-    formData.append("linkYoutube", resumoData.linkYoutube);
-    formData.append("aula", resumoData.aula);
-    if (resumoData.arquivo) {
-      formData.append("arquivo", resumoData.arquivo);
-    }
-
-    try {
-      await axios.post(`${API_BASE_URL}/resumos`, formData);
-      toast.success("Resumo salvo com sucesso.");
-      setResumoData({ resumo: "", link: "", linkYoutube: "", arquivo: null, aula: "" });
-      fetchResumos(selectedChamadaId);
-    } catch (error) {
-      console.error("Erro ao salvar resumo:", error);
-      toast.error("Erro ao salvar resumo. Tente novamente mais tarde.");
     }
   };
 
@@ -122,83 +90,86 @@ const HistoricoChamadas = ({ turmaId, historico, onUpdateStatus, fetchResumoMate
     paginasVisiveis.push(i);
   }
 
+  // useEffect(() => {
+  //   if (!turmaId) {
+  //     console.error("turmaId está indefinido");
+  //     return;
+  //   }
+  //   axios
+  //     .get(`${API_BASE_URL}/turmas/${turmaId}/alunos`)
+  //     .then((response) => {
+  //       setUsuariosDisponiveis(response.data);
+  //       if (response.data.length === 1) {
+  //         setFormData((prev) => ({
+  //           ...prev,
+  //           alunoId: response.data[0].cp_id,
+  //         }));
+  //       }
+  //     })
+  //     .catch((error) => {
+  //       console.error("Erro ao buscar alunos:", error);
+  //       toast.error("Erro ao buscar alunos. Tente novamente.");
+  //     });
+  // }, [turmaId]);
+
+
   useEffect(() => {
-    if (!turmaId) {
-      console.error("turmaId está indefinido");
-      return;
-    }
-
-    console.log("Buscando alunos para turmaId:", turmaId);
-
-    axios
-      .get(`${API_BASE_URL}/turmas/${turmaId}/alunos`)
-      .then((response) => {
-        setUsuariosDisponiveis(response.data);
-        console.log("Alunos recebidos:", response.data);
-
-        if (response.data.length === 1) {
-          setFormData((prev) => ({
-            ...prev,
-            alunoId: response.data[0].cp_id,
-          }));
-        }
-      })
-      .catch((error) => {
-        console.error("Erro ao buscar alunos:", error);
-        toast.error("Erro ao buscar alunos. Tente novamente.");
-      });
+    // if (turmaId) {
+    //   atualizarResumos();
+    //   atualizarHistorico();
+    // }
+    setCurrentPage(1);
   }, [turmaId]);
-
-
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-
   useEffect(() => {
-    if (alunos.length === 1) {
+    if (alunos.length === 1 && formData.alunoId !== alunos[0].cp_id) {
       setFormData((prev) => ({ ...prev, alunoId: alunos[0].cp_id }));
     }
-  }, [alunos]);
-
+  }, [alunos, formData.alunoId]);
 
 
   const handleCadastrarChamada = async () => {
-    console.log("Form Data Atual:", formData);
-
     const { alunoId, data, hora, status } = formData;
-
     if (!alunoId || !data || !hora || !status || !turmaId) {
-      console.error("Dados incompletos:", { turmaId, alunoId, data, hora, status });
       toast.error("Preencha todos os campos obrigatórios.");
       return;
     }
-
     try {
-      console.log("Enviando dados para o back-end:", { turmaId, alunoId, data, hora, status });
-
-      const response = await axios.post(`${API_BASE_URL}/chamadas`, { turmaId, alunoId, data, hora, status });
-
-
-      console.log("Resposta do servidor:", response.data);
+      await axios.post(`${API_BASE_URL}/chamadas`, { turmaId, alunoId, data, hora, status });
       toast.success("Chamada cadastrada com sucesso!");
-
-      setFormData({
-        alunoId: "",
-        data: dayjs().format("YYYY-MM-DD"),
-        hora: dayjs().format("HH:mm"),
-        status: "Presente",
-      });
-
-      const chamadasAtualizadas = await axios.get(`${API_BASE_URL}/chamadas/turma/${turmaId}`);
-      onUpdateStatus(chamadasAtualizadas.data);
+      setFormData({ alunoId: "", data: dayjs().format("YYYY-MM-DD"), hora: dayjs().format("HH:mm"), status: "Presente" });
+      atualizarHistorico();
     } catch (error) {
-      console.error("Erro ao cadastrar chamada:", error.response?.data || error);
+      console.error("Erro ao cadastrar chamada:", error);
       toast.error("Erro ao cadastrar chamada. Tente novamente.");
     }
   };
+
+  // const atualizarResumos = async () => {
+  //   try {
+  //     const response = await axios.get(`${API_BASE_URL}/resumos/${turmaId}`);
+  //     const resumos = response.data;
+
+  //     const agrupados = resumos.reduce((acc, resumo) => {
+  //       const data = resumo.cp_res_data;
+  //       if (!acc[data]) acc[data] = [];
+  //       acc[data].push(resumo);
+  //       return acc;
+  //     }, {});
+
+  //     console.log("Etapa 2: Atualizando resumosPorData no pai:", agrupados);
+  //     setResumosPorData(agrupados);
+  //   } catch (error) {
+  //     console.error("Erro ao atualizar resumos no pai:", error);
+  //     toast.error("Erro ao atualizar resumos. Tente novamente.");
+  //   }
+  // };
+
 
 
   return (
@@ -302,7 +273,8 @@ const HistoricoChamadas = ({ turmaId, historico, onUpdateStatus, fetchResumoMate
                           onClick={() => confirmStatusUpdate(chamada.cp_ch_id, "Presente")}
                           title="Marcar como Presente"
                         >
-                          <Icon icon="mdi:check-circle" />
+                          {/* <Icon icon="mdi:check-circle" /> */}
+                          P
                         </Button>
                         <Button
                           variant="link"
@@ -310,7 +282,8 @@ const HistoricoChamadas = ({ turmaId, historico, onUpdateStatus, fetchResumoMate
                           onClick={() => confirmStatusUpdate(chamada.cp_ch_id, "Justificado")}
                           title="Marcar como Justificado"
                         >
-                          <Icon icon="mdi:account-alert" />
+                          {/* <Icon icon="mdi:account-alert" /> */}
+                          J
                         </Button>
                         <Button
                           variant="link"
@@ -318,7 +291,8 @@ const HistoricoChamadas = ({ turmaId, historico, onUpdateStatus, fetchResumoMate
                           onClick={() => confirmStatusUpdate(chamada.cp_ch_id, "Ausente")}
                           title="Marcar como Ausente"
                         >
-                          <Icon icon="mdi:cancel" />
+                          {/* <Icon icon="mdi:cancel" /> */}
+                          F
                         </Button>
                         <Button
                           variant="link"
@@ -330,7 +304,7 @@ const HistoricoChamadas = ({ turmaId, historico, onUpdateStatus, fetchResumoMate
                         </Button>
                         <Button
                           variant="link"
-                          className="bg-danger-focus text-danger-main rounded-circle"
+                          className="bg-danger-focus text-neutral-700 border-neutral-700 rounded-circle"
                           onClick={() => handleDeleteChamada(chamada.cp_ch_id)}
                           title="Excluir Chamada"
                         >
@@ -411,104 +385,35 @@ const HistoricoChamadas = ({ turmaId, historico, onUpdateStatus, fetchResumoMate
           </div>
         </div>
 
-        {/* Coluna de Resumo */}
         {showResumoForm && (
-          <div className="col-4 p-3">
-            <div className="d-flex justify-content-between align-items-center mb-3">
-              <h5>Cadastrar Resumo</h5>
-              <Button
-                variant="light"
-                className="btn-close"
-                aria-label="Close"
-                onClick={() => setShowResumoForm(false)}
-                title="Fechar"
-              />
-            </div>
-            <Form>
-              <Form.Group>
-                <Form.Label>Resumo</Form.Label>
-                <Form.Control
-                  as="textarea"
-                  rows={3}
-                  value={resumoData.resumo}
-                  onChange={(e) =>
-                    setResumoData((prev) => ({ ...prev, resumo: e.target.value }))
-                  }
-                />
-              </Form.Group>
-              <Form.Group className="mt-3">
-                <Form.Label>Link</Form.Label>
-                <Form.Control
-                  type="text"
-                  value={resumoData.link}
-                  onChange={(e) =>
-                    setResumoData((prev) => ({ ...prev, link: e.target.value }))
-                  }
-                />
-              </Form.Group>
-              <Form.Group className="mt-3">
-                <Form.Label>Link do YouTube</Form.Label>
-                <Form.Control
-                  type="text"
-                  value={resumoData.linkYoutube}
-                  onChange={(e) =>
-                    setResumoData((prev) => ({ ...prev, linkYoutube: e.target.value }))
-                  }
-                />
-              </Form.Group>
-              <Form.Group className="mt-3">
-                <Form.Label>Arquivo</Form.Label>
-                <Form.Control
-                  type="file"
-                  onChange={(e) =>
-                    setResumoData((prev) => ({ ...prev, arquivo: e.target.files[0] }))
-                  }
-                />
-              </Form.Group>
-              <Form.Group className="mt-3">
-                <Form.Label>Aula</Form.Label>
-                <Form.Control
-                  type="text"
-                  value={resumoData.aula}
-                  onChange={(e) =>
-                    setResumoData((prev) => ({ ...prev, aula: e.target.value }))
-                  }
-                />
-              </Form.Group>
-              <Button className="mt-3" onClick={handleSaveResumo}>
-                Salvar Resumo
-              </Button>
-            </Form>
-            <hr />
-            <h5>Resumos Cadastrados</h5>
-            {resumos.length > 0 ? (
-              resumos.map((resumo) => (
-                <div key={resumo.cp_res_id} className="mb-3">
-                  <p>{resumo.cp_res_resumo}</p>
-                  {resumo.cp_res_link && (
-                    <a href={resumo.cp_res_link} target="_blank" rel="noopener noreferrer">
-                      Link
-                    </a>
-                  )}
-                  {resumo.cp_res_linkYoutube && (
-                    <a href={resumo.cp_res_linkYoutube} target="_blank" rel="noopener noreferrer">
-                      Vídeo
-                    </a>
-                  )}
-                  {resumo.cp_res_arquivo && (
-                    <a href={resumo.cp_res_arquivo} target="_blank" rel="noopener noreferrer">
-                      Material
-                    </a>
-                  )}
-                </div>
-              ))
-            ) : (
-              <p>Nenhum resumo cadastrado.</p>
-            )}
-          </div>
+          <CadastrarResumoChamada
+            chamadaId={selectedChamadaId}
+            turmaId={turmaId}
+            setShowResumoForm={setShowResumoForm}
+            // atualizarResumos={atualizarResumos}
+            atualizarResumos={handleAtualizarResumos}
+            dataChamada={selectedChamadaDate}
+          />
         )}
 
       </div>
+      <div className="container-fluid mt-5">
+        <div className="row justify-content-center">
+          <div className="col-12">
+            <Card className="shadow-sm">
+              <Card.Body>
+                <RegistrosAula
+                  turmaId={turmaId}
+                  chamadaId={selectedChamadaId}
+                  onAtualizar={atualizarHistorico}
+                  atualizarResumos={atualizarResumos}
+                />
+              </Card.Body>
+            </Card>
+          </div>
+        </div>
+      </div>
+
 
       {/* Modal de confirmação status */}
       <Modal show={showConfirmModal} onHide={() => setShowConfirmModal(false)} centered>
