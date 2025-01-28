@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { Icon } from '@iconify/react/dist/iconify.js';
+
 import axios from "axios";
 import {
   Row,
@@ -12,10 +14,10 @@ import {
   Modal,
   Image,
 } from "react-bootstrap";
-import { MdPlayCircle } from "react-icons/md";
-import { FaFilePdf, FaDownload, FaTrash } from "react-icons/fa";
+import { FaFilePdf, FaDownload, FaTrash, FaEdit } from "react-icons/fa";
 import { API_BASE_URL } from "./config";
-// import "./treinamento.css";
+import ModalVideo from "react-modal-video";
+
 
 const Treinamento = () => {
   const [materiais, setMateriais] = useState([]);
@@ -38,14 +40,36 @@ const Treinamento = () => {
   const [filterDate, setFilterDate] = useState("");
   const [showPDF, setShowPDF] = useState(false);
   const [pdfUrl, setPdfUrl] = useState("");
-  const [showVideo, setShowVideo] = useState(false);
-  const [videoUrl, setVideoUrl] = useState("");
   const [userType, setUserType] = useState(null);
+  const [isOpen, setOpen] = useState(false);
+  const [videoId, setVideoId] = useState("");
 
   const getUserType = () => {
     const userType = localStorage.getItem("userType");
     return userType ? parseInt(userType, 10) : null;
   };
+
+  const handleEdit = (material) => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+
+    setFormData({
+      id: material.cp_mat_id || "",
+      titulo: material.cp_mat_titulo || "",
+      descricao: material.cp_mat_descricao || "",
+      linkYoutube: material.cp_mat_linkYoutube || "",
+      arquivoPdf1: material.cp_mat_arquivoPdf || null,
+      arquivoPdf2: material.cp_mat_extra_pdf2 || null,
+      arquivoPdf3: material.cp_mat_extra_pdf3 || null,
+      miniatura: material.cp_mat_miniatura || null,
+      data: material.cp_mat_extra_date || "",
+      categorias: material.cp_mat_extra_categories || "",
+      permitirDownload: material.cp_mat_permitirDownload === 1,
+    });
+  };
+
+
+
+
 
   useEffect(() => {
     const userType = getUserType();
@@ -75,13 +99,14 @@ const Treinamento = () => {
 
   const handleOpenVideo = (url) => {
     const videoUrlNormalizado = normalizarUrlYoutube(url);
-    setVideoUrl(videoUrlNormalizado);
-    setShowVideo(true);
+    const videoId = videoUrlNormalizado.split("embed/")[1]; // Extrai o ID do vídeo
+    setVideoId(videoId);
+    setOpen(true);
   };
+
 
   const handleClose = () => {
     setShowPDF(false);
-    setShowVideo(false);
   };
 
   const handleInputChange = (e) => {
@@ -93,29 +118,63 @@ const Treinamento = () => {
     const { name, files } = e.target;
     setFormData({ ...formData, [name]: files[0] });
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     const formDataObj = new FormData();
+
     formDataObj.append("titulo", formData.titulo);
     formDataObj.append("descricao", formData.descricao);
     formDataObj.append("linkYoutube", formData.linkYoutube);
-    formDataObj.append("arquivoPdf1", formData.arquivoPdf1);
-    formDataObj.append("arquivoPdf2", formData.arquivoPdf2);
-    formDataObj.append("arquivoPdf3", formData.arquivoPdf3);
-    formDataObj.append("miniatura", formData.miniatura);
     formDataObj.append("data", formData.data);
     formDataObj.append("categorias", formData.categorias);
-    formDataObj.append("permitirDownload", formData.permitirDownload);
+    formDataObj.append("permitirDownload", formData.permitirDownload ? 1 : 0); // Inclua o campo permitirDownload
 
+    if (formData.arquivoPdf1 instanceof File) {
+      formDataObj.append("arquivoPdf1", formData.arquivoPdf1);
+    }
+    if (formData.arquivoPdf2 instanceof File) {
+      formDataObj.append("arquivoPdf2", formData.arquivoPdf2);
+    }
+    if (formData.arquivoPdf3 instanceof File) {
+      formDataObj.append("arquivoPdf3", formData.arquivoPdf3);
+    }
+    if (formData.miniatura instanceof File) {
+      formDataObj.append("miniatura", formData.miniatura);
+    }
 
     try {
-      await axios.post(`${API_BASE_URL}/materiais`, formDataObj);
-      fetchMateriais();
+      if (formData.id) {
+        // Atualiza material existente
+        await axios.put(`${API_BASE_URL}/materiais/${formData.id}`, formDataObj);
+        toast.success("Material atualizado com sucesso!");
+      } else {
+        // Cria novo material
+        await axios.post(`${API_BASE_URL}/materiais`, formDataObj);
+        toast.success("Material cadastrado com sucesso!");
+      }
+
+      fetchMateriais(); // Atualiza a lista após salvar
+
+      // Limpar formulário
+      setFormData({
+        id: "",
+        titulo: "",
+        descricao: "",
+        linkYoutube: "",
+        arquivoPdf1: null,
+        arquivoPdf2: null,
+        arquivoPdf3: null,
+        miniatura: null,
+        data: "",
+        categorias: "",
+        permitirDownload: false,
+      });
     } catch (error) {
-      console.error("Erro ao enviar formulário:", error);
+      console.error("Erro ao enviar o formulário:", error);
+      toast.error("Erro ao salvar o material.");
     }
   };
+
 
   const handleDelete = async (id) => {
     try {
@@ -224,14 +283,55 @@ const Treinamento = () => {
     setFilteredMateriais(filtered);
   };
 
+  const handleFileUpload = (e) => {
+    const files = Array.from(e.target.files).slice(0, 3 - uploadedPDFCount());
+    const updatedFiles = { ...formData };
+
+    files.forEach((file, idx) => {
+      const pdfKey = `arquivoPdf${uploadedPDFCount() + idx + 1}`;
+      updatedFiles[pdfKey] = file;
+    });
+
+    setFormData(updatedFiles);
+  };
+
+  const uploadedPDFCount = () => {
+    return [formData.arquivoPdf1, formData.arquivoPdf2, formData.arquivoPdf3].filter(Boolean).length;
+  };
+
+
   return (
     <Container fluid>
+      <style>
+        {`
+          .custom-switch .form-check-input {
+            background-color: rgba(140, 140, 140, 0.4);
+            border: 2px solid #333; /* Borda cinza escura */
+            transition: background-color 0.3s ease-in-out, border-color 0.3s ease-in-out;
+            cursor: pointer;
+          }
+          .custom-switch .form-check-input:checked {
+            background-color: #0d6efd; /* Cor do switch ativado */
+          }
+          .custom-switch .form-check-input::before {
+            // content: "";
+            top: 0px;
+            left: 0px;
+            transition: transform 0.3s ease-in-out;
+          }
+
+          .custom-switch .form-check-input:checked::before {
+            transform: translateX(1px); /* Mover a bolinha para o final */
+          }
+        `}
+      </style>
+
       <ToastContainer />
       <Row>
         <Col xs={12} md={3} className="border-end p-3">
-          <h5 className="text-center fw-bold mt-3">
+          {/* <h5 className="text-center fw-bold mt-3">
             Filtrar
-          </h5>
+          </h5> */}
           <Form>
             <Card className="mb-3 shadow-sm h-100 p-0 radius-12">
               <Card.Header className="border-bottom bg-base py-16 px-24 d-flex align-items-center flex-wrap gap-3 justify-content-between">
@@ -258,6 +358,11 @@ const Treinamento = () => {
                         label={category}
                         name={category}
                         onChange={handleCategoryChange}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "10px", // Espaço entre o checkbox e a label
+                        }}
                         checked={selectedCategories.includes(category)}
                       />
                     ))}
@@ -325,45 +430,88 @@ const Treinamento = () => {
               <Card.Body>
                 <Form onSubmit={handleSubmit}>
                   <Row>
+                    {/* Título e Miniatura */}
                     <Col md={4}>
-                      <Form.Group controlId="formMiniatura">
-                        <Form.Label>Miniatura</Form.Label>
+                      <p>Miniatura</p>
+                      <div
+                        className="pdf-add-button border radius-8 text-center position-relative"
+                        style={{
+                          width: "100%",
+                          height: "200px",
+                          background: "#f8f9fa",
+                          display: "flex",
+                          flexDirection: "column",
+                          justifyContent: "center",
+                          alignItems: "center",
+                          cursor: "pointer",
+                          padding: "0!important",
+                          border: "4px solid #fff",
+                        }}
+                      >
                         <Form.Control
                           type="file"
                           name="miniatura"
-                          onChange={handleFileChange}
+                          accept="image/*"
+                          style={{
+                            opacity: 0,
+                            position: "absolute",
+                            width: "100%",
+                            height: "100%",
+                            cursor: "pointer",
+                          }}
+                          onChange={(e) => {
+                            const file = e.target.files[0];
+                            setFormData((prev) => ({
+                              ...prev,
+                              miniatura: file,
+                            }));
+                          }}
                         />
-                        {formData.miniatura && (
+                        {formData.miniatura ? (
                           <Image
-                            src={URL.createObjectURL(formData.miniatura)}
+                            src={
+                              typeof formData.miniatura === "string"
+                                ? formData.miniatura
+                                : URL.createObjectURL(formData.miniatura)
+                            }
                             rounded
-                            className="mt-3"
                             style={{
                               width: "100%",
-                              height: "auto",
-                              aspectRatio: "16/9",
+                              height: "100%",
                               objectFit: "cover",
                             }}
                           />
+                        ) : (
+                          <>
+                            <Icon icon="carbon:add-alt" className="text-secondary text-xl" />
+                            <span className="text-secondary mt-2" style={{ fontSize: "12px", fontWeight: "bold" }}>
+                            Adicionar Miniatura<br/>
+                            (300px / 180px)
+                            </span>
+                          </>
                         )}
-                      </Form.Group>
-                    </Col>
-                    <Col md={4}>
-                      <Form.Group controlId="formTitulo">
+                      </div>
+                      <Form.Group className="mt-3" controlId="formTitulo">
                         <Form.Label>Título</Form.Label>
                         <Form.Control
                           type="text"
                           name="titulo"
+                          placeholder="Digite o título"
                           value={formData.titulo}
                           onChange={handleInputChange}
                         />
                       </Form.Group>
+                    </Col>
+
+                    {/* Descrição, Data e URL do YouTube */}
+                    <Col md={4}>
                       <Form.Group controlId="formDescricao" className="mt-3">
                         <Form.Label>Descrição</Form.Label>
                         <Form.Control
                           as="textarea"
                           name="descricao"
-                          rows={3}
+                          placeholder="Digite a descrição"
+                          rows={6}
                           value={formData.descricao}
                           onChange={handleInputChange}
                         />
@@ -373,7 +521,7 @@ const Treinamento = () => {
                         <Form.Control
                           type="date"
                           name="data"
-                          value={formData.data}
+                          value={formData.data ? formData.data.split("T")[0] : ""}
                           onChange={handleInputChange}
                         />
                       </Form.Group>
@@ -382,36 +530,90 @@ const Treinamento = () => {
                         <Form.Control
                           type="text"
                           name="linkYoutube"
+                          placeholder="Digite o link do vídeo"
                           value={formData.linkYoutube}
                           onChange={handleInputChange}
                         />
                       </Form.Group>
                     </Col>
+
+                    {/* PDFs e Categorias */}
                     <Col md={4}>
-                      <Form.Group controlId="formPdf1">
-                        <Form.Label>Anexar PDF 1</Form.Label>
-                        <Form.Control
-                          type="file"
-                          name="arquivoPdf1"
-                          onChange={handleFileChange}
-                        />
-                      </Form.Group>
-                      <Form.Group controlId="formPdf2" className="mt-3">
-                        <Form.Label>Anexar PDF 2</Form.Label>
-                        <Form.Control
-                          type="file"
-                          name="arquivoPdf2"
-                          onChange={handleFileChange}
-                        />
-                      </Form.Group>
-                      <Form.Group controlId="formPdf3" className="mt-3">
-                        <Form.Label>Anexar PDF 3</Form.Label>
-                        <Form.Control
-                          type="file"
-                          name="arquivoPdf3"
-                          onChange={handleFileChange}
-                        />
-                      </Form.Group>
+                      <p>PDFs Anexados</p>
+                      <div className="d-flex flex-wrap gap-2">
+                        {[formData.arquivoPdf1, formData.arquivoPdf2, formData.arquivoPdf3]
+                          .filter((pdf) => pdf)
+                          .map((pdf, index) => (
+                            <div
+                              key={index}
+                              className="pdf-card border radius-8 p-3 text-center position-relative"
+                              style={{
+                                width: "100px",
+                                height: "150px",
+                                background: "#f8f9fa",
+                                display: "flex",
+                                flexDirection: "column",
+                                justifyContent: "center",
+                                alignItems: "center",
+                              }}
+                            >
+                              <FaFilePdf className="text-danger text-xl" />
+                              <span
+                                className="text-dark mt-2"
+                                style={{ fontSize: "12px", fontWeight: "bold" }}
+                              >
+                                PDF {index + 1}
+                              </span>
+                              <Button
+                                variant="link"
+                                className="position-absolute top-0 end-0 p-1"
+                                onClick={() => {
+                                  const pdfKey = `arquivoPdf${index + 1}`;
+                                  setFormData((prev) => ({
+                                    ...prev,
+                                    [pdfKey]: null,
+                                  }));
+                                }}
+                              >
+                                <FaTrash className="text-danger" />
+                              </Button>
+                            </div>
+                          ))}
+                        {uploadedPDFCount() < 3 && (
+                          <div
+                            className="pdf-add-button border radius-8 p-3 text-center position-relative"
+                            style={{
+                              width: "100px",
+                              height: "150px",
+                              background: "#f8f9fa",
+                              display: "flex",
+                              flexDirection: "column",
+                              justifyContent: "center",
+                              alignItems: "center",
+                              cursor: "pointer",
+                            }}
+                          >
+                            <Form.Control
+                              type="file"
+                              multiple
+                              accept=".pdf"
+                              style={{
+                                opacity: 0,
+                                position: "absolute",
+                                width: "100%",
+                                height: "100%",
+                                cursor: "pointer",
+                              }}
+                              onChange={(e) => handleFileUpload(e)}
+                            />
+                            <Icon icon="carbon:add-alt" className="text-secondary text-xl" />
+                            <span className="text-secondary mt-2" style={{ fontSize: "12px", fontWeight: "bold" }}>
+                              Adicionar
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
                       <Form.Group controlId="formCategories" className="mt-3">
                         <Form.Label>Categorias</Form.Label>
                         <Form.Control
@@ -427,14 +629,14 @@ const Treinamento = () => {
                         <Form.Check
                           type="switch"
                           id="custom-switch"
-                          label="Permitir"
+                          label={<span style={{ marginLeft: "10px" }}>Permitir</span>}
+                          className="custom-switch"
                           checked={formData.permitirDownload || false}
                           onChange={(e) =>
                             setFormData({ ...formData, permitirDownload: e.target.checked ? 1 : 0 })
                           }
                         />
                       </Form.Group>
-
                     </Col>
                   </Row>
                   <Button
@@ -442,12 +644,14 @@ const Treinamento = () => {
                     type="submit"
                     className="mt-3 float-end"
                   >
-                    Cadastrar Material
+                    {formData.id ? "Atualizar Material" : "Cadastrar Material"}
                   </Button>
                 </Form>
               </Card.Body>
             )}
           </Card>
+
+
 
           <Col>
             {filteredMateriais.map((material, index) => (
@@ -457,24 +661,40 @@ const Treinamento = () => {
                     <Col md={4}>
                       {material.cp_mat_miniatura && (
                         <div
-                          className="image-container"
-                          onClick={() =>
-                            handleOpenVideo(material.cp_mat_linkYoutube)
-                          }
+                          style={{
+                            backgroundColor: "#eaeaea",
+                            borderRadius: "10px",
+                            height: "180px",
+                            width: "300px",
+                            display: "flex",
+                            justifyContent: "center",
+                            alignItems: "center",
+                            overflow: "hidden",
+                            margin: "10px auto", // Centraliza horizontalmente no Col
+                          }}
+                          className="position-relative"
                         >
-                          <Image
-                            src={material.cp_mat_miniatura}
-                            rounded
+                          <img
                             style={{
-                              width: "100%",
-                              height: "auto",
-                              cursor: "pointer",
-                              aspectRatio: "16/9",
-                              objectFit: "cover",
+                              maxWidth: "100%",
+                              maxHeight: "100%",
+                              objectFit: "contain",
                             }}
+                            src={material.cp_mat_miniatura}
+                            // className="w-100 h-100 object-fit-cover radius-8"
+                            alt={material.cp_mat_titulo}
                           />
-                          <MdPlayCircle className="play-icon" />
+                          <Button
+                            onClick={() => handleOpenVideo(material.cp_mat_linkYoutube)}
+                            className="magnific-video bordered-shadow w-56-px h-56-px bg-white rounded-circle d-flex justify-content-center align-items-center position-absolute start-50 top-50 translate-middle z-1"
+                          >
+                            <Icon
+                              icon="ion:play"
+                              className="text-primary-600 text-xxl"
+                            />
+                          </Button>
                         </div>
+
                       )}
                     </Col>
                     <Col md={4}>
@@ -489,79 +709,72 @@ const Treinamento = () => {
                           material.cp_mat_extra_categories
                             .split(",")
                             .map((cat, index) => (
-                              <span
-                                key={index}
-                                className="badge bg-secondary me-1"
-                              >
+                              <span key={index} className="badge bg-secondary me-1">
                                 {cat.trim()}
                               </span>
                             ))}
                       </p>
-                      <p>
-                        {material.cp_mat_arquivoPdf && (
-                          <Button
-                            variant="link"
-                            onClick={() =>
-                              handleViewPDF(material.cp_mat_arquivoPdf)
-                            }
-                          >
-                            <FaFilePdf /> PDF 1
-                          </Button>
-                        )}
-                      </p>
-                      <p>
-                        {material.cp_mat_extra_pdf2 && (
-                          <Button
-                            variant="link"
-                            onClick={() =>
-                              handleViewPDF(material.cp_mat_extra_pdf2)
-                            }
-                          >
-                            <FaFilePdf /> PDF 2
-                          </Button>
-                        )}
-                      </p>
-                      <p>
-                        {material.cp_mat_extra_pdf3 && (
-                          <Button
-                            variant="link"
-                            onClick={() =>
-                              handleViewPDF(material.cp_mat_extra_pdf3)
-                            }
-                          >
-                            <FaFilePdf /> PDF 3
-                          </Button>
-                        )}
-                      </p>
-                      {(userType === 1 || userType === 2) && (
+
+                      {/* Botões lado a lado */}
+                      <div className="d-flex flex-wrap gap-2 mt-3">
+                        {[material.cp_mat_arquivoPdf, material.cp_mat_extra_pdf2, material.cp_mat_extra_pdf3]
+                          .filter(Boolean)
+                          .map((pdfUrl, index) => (
+                            <div key={index} className="d-flex">
+                              {/* Botão de Abrir PDF */}
+                              <Button
+                                variant="primary"
+                                className="px-3"
+                                onClick={() => handleViewPDF(pdfUrl)}
+                                style={{
+                                  borderRadius: material.cp_mat_permitirDownload === 1 ? "5px 0 0 5px" : "5px",
+                                  border: "none",
+                                }}
+                              >
+                                Abrir PDF {index + 1}
+                              </Button>
+
+                              {/* Botão de Baixar PDF */}
+                              {material.cp_mat_permitirDownload === 1 && (
+                                <Button
+                                  variant="success"
+                                  className="px-3"
+                                  onClick={() => handleDownload([pdfUrl])}
+                                  style={{
+                                    borderRadius: "0 5px 5px 0",
+                                    border: "none",
+                                  }}
+                                >
+                                  <FaDownload />
+                                </Button>
+                              )}
+                            </div>
+                          ))}
+                      </div>
+
+                      {/* Botões de Editar e Excluir */}
+                      <div className="d-flex gap-2 mt-3">
+                        <Button
+                          variant="warning"
+                          onClick={() => handleEdit(material)}
+                          className="d-flex align-items-center"
+                          style={{ fontSize: "0.9rem" }}
+                        >
+                          <FaEdit className="me-2" />
+                          Editar
+                        </Button>
                         <Button
                           variant="danger"
                           onClick={() => handleDelete(material.cp_mat_id)}
-                          className="mt-2"
+                          className="d-flex align-items-center"
+                          style={{ fontSize: "0.9rem" }}
                         >
-                          <FaTrash />
+                          <FaTrash className="me-2" />
+                          Excluir
                         </Button>
-                      )}
-                      {material.cp_mat_permitirDownload === 1 && (
-                        <Button
-                          variant="success"
-                          className="custom-download-button mt-2 ms-2"
-                          onClick={() =>
-                            handleDownload([material.cp_mat_arquivoPdf, material.cp_mat_extra_pdf2, material.cp_mat_extra_pdf3])
-                          }
-                          disabled={isDownloading}
-                        >
-                          {isDownloading ? (
-                            <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                          ) : (
-                            <FaDownload />
-                          )}
-                        </Button>
-                      )}
-
-
-
+                      </div>
                     </Col>
+
                   </Row>
                 </Card.Body>
               </Card>
@@ -592,33 +805,14 @@ const Treinamento = () => {
         </Modal.Body>
       </Modal>
 
-      <Modal
-        className="modal-video-conteudo"
-        show={showVideo}
-        style={{ zIndex: "1050" }}
-        onHide={handleClose}
-        centered
-        fullscreen
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>Visualizar Vídeo</Modal.Title>
-        </Modal.Header>
-        <Modal.Body className="text-center d-flex w-100 justify-content-center">
-          {videoUrl ? (
-            <iframe
-              width="100%"
-              height="80vh"
-              className="custom-modal-video"
-              src={videoUrl}
-              frameBorder="0"
-              allowFullScreen
-              title="YouTube Video"
-            />
-          ) : (
-            <p>URL do vídeo inválida</p>
-          )}
-        </Modal.Body>
-      </Modal>
+      <ModalVideo
+        channel="youtube"
+        youtube={{ mute: 0, autoplay: 0 }}
+        isOpen={isOpen}
+        videoId={videoId}
+        onClose={() => setOpen(false)}
+      />
+
     </Container>
   );
 };

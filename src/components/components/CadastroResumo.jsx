@@ -6,6 +6,7 @@ import { API_BASE_URL } from "../config";
 
 const CadastroResumo = ({ chamadaId, turmaId, setShowResumoForm, atualizarResumos, dataChamada }) => {
   const [resumos, setResumos] = useState([]);
+  const isMobile = window.innerWidth <= 768;
   const [resumoData, setResumoData] = useState({
     resumo: "",
     link: "",
@@ -55,7 +56,7 @@ const CadastroResumo = ({ chamadaId, turmaId, setShowResumoForm, atualizarResumo
       fetchResumos();
       console.log("Etapa 1: Chamando atualizarResumos no cadastro.");
       atualizarResumos(); // Envia o "sinal"
-        setShowResumoForm(false); // Fecha o formulário
+      setShowResumoForm(false); // Fecha o formulário
     } catch (error) {
       console.error("Erro ao salvar resumo:", error);
       toast.error("Erro ao salvar resumo. Tente novamente mais tarde.");
@@ -70,7 +71,25 @@ const CadastroResumo = ({ chamadaId, turmaId, setShowResumoForm, atualizarResumo
   }, [chamadaId, turmaId]);
 
   return (
-    <div className="col-4 p-3">
+    <div
+      className={isMobile ? "col-4 p-3" : "col p-3"}
+      style={
+        isMobile
+          ? {
+            width: "calc(100% - 30px)",
+            position: "fixed",
+            top: "50%",
+            // margin: "0 10px",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            backgroundColor: "#868f93",
+            zIndex: 1050,
+            borderRadius: "8px",
+            boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+          }
+          : {}
+      }
+    >
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h5>Cadastrar Resumo</h5>
         <Button

@@ -284,11 +284,11 @@ const MasterLayout = ({ children }) => {
               </NavLink>
             </li>
             <li>
-              <NavLink to="/calendar-main" className={(navData) =>
+              <NavLink to="/agenda" className={(navData) =>
                 navData.isActive ? "active-page" : ""
               }>
                 <Icon icon="solar:calendar-outline" className="menu-icon" />
-                <span>Calendar</span>
+                <span>Agenda</span>
               </NavLink>
             </li>
 
@@ -365,6 +365,8 @@ const MasterLayout = ({ children }) => {
               </ul>
             </li>
 
+ 
+
 
             <li className="dropdown">
               <Link to="#">
@@ -407,10 +409,11 @@ const MasterLayout = ({ children }) => {
                   }>
                     <i className="ri-circle-fill circle-icon text-success-main w-auto" /> Video Generator
                   </NavLink>
+
                 </li>
               </ul>
             </li>
-
+            
 
             <li className="dropdown">
               <Link to="#">
@@ -912,6 +915,7 @@ const MasterLayout = ({ children }) => {
                 </li>
               </ul>
             </li> */}
+
           </ul>
         </div>
       </aside>

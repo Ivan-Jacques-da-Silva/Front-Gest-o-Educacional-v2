@@ -192,77 +192,96 @@ const RegistrosAula = ({ turmaId, onAtualizar, atualizarResumos }) => {
             </Form.Select>
 
             {/* Tabela para exibir resumos */}
-            <Table striped bordered hover size="sm">
-                <thead>
-                    <tr>
-                        <th>Aula</th>
-                        <th>Resumo</th>
-                        <th>Link</th>
-                        <th>Vídeo</th>
-                        <th>Material</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {resumosSelecionados.map((resumo) => (
-                        <tr key={resumo.cp_res_id}>
-                            <td>{resumo.cp_res_aula || "Não informado"}</td>
-                            <td>{resumo.cp_res_resumo}</td>
-                            <td>
-                                {resumo.cp_res_link && (
-                                    <a
-                                        href={resumo.cp_res_link.startsWith("http") ? resumo.cp_res_link : `http://${resumo.cp_res_link}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                    >
-                                        Link
-                                    </a>
-                                )}
-                            </td>
-                            <td>
-                                {resumo.cp_res_link_youtube && (
-                                    <a
-                                        href={resumo.cp_res_link_youtube.startsWith("http") ? resumo.cp_res_link_youtube : `http://${resumo.cp_res_link_youtube}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                    >
-                                        Vídeo
-                                    </a>
-                                )}
-                            </td>
-                            <td>
-                                {resumo.cp_res_arquivo && (
-                                    <a
-                                        href={resumo.cp_res_arquivo}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                    >
-                                        Material
-                                    </a>
-                                )}
-                            </td>
-                            <td className="d-flex gap-2">
-                                <Button
-                                    variant="link"
-                                    onClick={() => handleAbrirModalEdicao(resumo)}
-                                    title="Editar"
-                                    className="p-0 text-primary"
-                                >
-                                    <Icon icon="mdi:pencil" />
-                                </Button>
-                                <Button
-                                    variant="link"
-                                    onClick={() => handleAbrirModalExcluir(resumo)}
-                                    title="Excluir"
-                                    className="p-0 text-danger"
-                                >
-                                    <Icon icon="mdi:trash-can-outline" />
-                                </Button>
-                            </td>
+            <div className="table-responsive scroll-sm">
+                <Table className="table bordered-table sm-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Aula</th>
+                            <th>Resumo</th>
+                            <th>Link</th>
+                            <th>Vídeo</th>
+                            <th>Material</th>
+                            <th className="text-center">Ações</th>
                         </tr>
-                    ))}
-                </tbody>
-            </Table>
+                    </thead>
+                    <tbody>
+                        {resumosSelecionados.length > 0 ? (
+                            resumosSelecionados.map((resumo) => (
+                                <tr key={resumo.cp_res_id}>
+                                    <td>{resumo.cp_res_aula || "Não informado"}</td>
+                                    <td>{resumo.cp_res_resumo}</td>
+                                    <td>
+                                        {resumo.cp_res_link && (
+                                            <a
+                                                href={
+                                                    resumo.cp_res_link.startsWith("http")
+                                                        ? resumo.cp_res_link
+                                                        : `http://${resumo.cp_res_link}`
+                                                }
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                            >
+                                                Link
+                                            </a>
+                                        )}
+                                    </td>
+                                    <td>
+                                        {resumo.cp_res_link_youtube && (
+                                            <a
+                                                href={
+                                                    resumo.cp_res_link_youtube.startsWith("http")
+                                                        ? resumo.cp_res_link_youtube
+                                                        : `http://${resumo.cp_res_link_youtube}`
+                                                }
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                            >
+                                                Vídeo
+                                            </a>
+                                        )}
+                                    </td>
+                                    <td>
+                                        {resumo.cp_res_arquivo && (
+                                            <a
+                                                href={resumo.cp_res_arquivo}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                            >
+                                                Material
+                                            </a>
+                                        )}
+                                    </td>
+                                    <td className="text-center d-flex gap-2 justify-content-center">
+                                        <Button
+                                            variant="link"
+                                            onClick={() => handleAbrirModalEdicao(resumo)}
+                                            title="Editar"
+                                            className="p-0 text-primary"
+                                        >
+                                            <Icon icon="mdi:pencil" />
+                                        </Button>
+                                        <Button
+                                            variant="link"
+                                            onClick={() => handleAbrirModalExcluir(resumo)}
+                                            title="Excluir"
+                                            className="p-0 text-danger"
+                                        >
+                                            <Icon icon="mdi:trash-can-outline" />
+                                        </Button>
+                                    </td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr>
+                                <td colSpan="6" className="text-center">
+                                    Nenhum registro encontrado.
+                                </td>
+                            </tr>
+                        )}
+                    </tbody>
+                </Table>
+            </div>
+
 
             {/* Modal para editar resumo */}
             <Modal show={showModal} onHide={handleFecharModal} centered>

@@ -37,6 +37,7 @@ const HistoricoChamadas = ({ turmaId, historico, onUpdateStatus, alunos, atualiz
     hora: dayjs().format("HH:mm"),
     status: "Presente",
   });
+  const isMobile = window.innerWidth <= 768;
 
   const confirmStatusUpdate = (chamadaId, status) => {
     setPendingStatusUpdate({ chamadaId, status });
@@ -45,7 +46,7 @@ const HistoricoChamadas = ({ turmaId, historico, onUpdateStatus, alunos, atualiz
 
 
   const handleAtualizarResumos = () => {
-    setAtualizarResumos((prev) => !prev); 
+    setAtualizarResumos((prev) => !prev);
   };
 
   const handleDeleteChamada = async (chamadaId) => {
@@ -177,16 +178,16 @@ const HistoricoChamadas = ({ turmaId, historico, onUpdateStatus, alunos, atualiz
 
       <div className="mb-3 p-3 border rounded">
         <h5>Cadastrar Nova Chamada</h5>
-        <Form className="d-flex align-items-center gap-3">
-          <Form.Group controlId="alunoId" className="w-25">
+        <Form className="row g-3">
+          <Form.Group controlId="alunoId" className="col-md-3">
             <Form.Label>Aluno</Form.Label>
             {alunos.length === 1 ? (
               <Form.Control
                 type="text"
-                value={alunos[0].cp_nome} // Mostra o nome do único aluno
+                value={alunos[0].cp_nome}
                 readOnly
                 onFocus={() =>
-                  setFormData((prev) => ({ ...prev, alunoId: alunos[0].cp_id })) // Atualiza automaticamente o alunoId
+                  setFormData((prev) => ({ ...prev, alunoId: alunos[0].cp_id }))
                 }
               />
             ) : (
@@ -204,45 +205,48 @@ const HistoricoChamadas = ({ turmaId, historico, onUpdateStatus, alunos, atualiz
               </Form.Select>
             )}
           </Form.Group>
-          <Form.Group controlId="data" className="w-25">
+          <Form.Group controlId="data" className="col-md-3">
             <Form.Label>Data</Form.Label>
             <Form.Control
               type="date"
               name="data"
-              value={formData.data} // Controlado pelo estado
-              onChange={handleInputChange} // Atualiza o estado ao alterar
+              value={formData.data}
+              onChange={handleInputChange}
             />
           </Form.Group>
-          <Form.Group controlId="hora" className="w-25">
+          <Form.Group controlId="hora" className="col-md-3">
             <Form.Label>Hora</Form.Label>
             <Form.Control
               type="time"
               name="hora"
-              value={formData.hora} // Controlado pelo estado
-              onChange={handleInputChange} // Atualiza o estado ao alterar
+              value={formData.hora}
+              onChange={handleInputChange}
             />
           </Form.Group>
-          <Form.Group controlId="status" className="w-25">
+          <Form.Group controlId="status" className="col-md-3">
             <Form.Label>Status</Form.Label>
             <Form.Select
               name="status"
-              value={formData.status} // Controlado pelo estado
-              onChange={handleInputChange} // Atualiza o estado ao alterar
+              value={formData.status}
+              onChange={handleInputChange}
             >
               <option value="Presente">Presente</option>
               <option value="Ausente">Ausente</option>
               <option value="Justificado">Justificado</option>
             </Form.Select>
           </Form.Group>
-          <Button style={{ marginTop: "34px" }} variant="primary" onClick={handleCadastrarChamada}>
-            Cadastrar
-          </Button>
+          <div className="col-12 text-end">
+            <Button variant="primary" onClick={handleCadastrarChamada}>
+              Cadastrar
+            </Button>
+          </div>
         </Form>
       </div>
 
       <div className={`d-flex`}>
         {/* Tabela */}
-        <div className={`table-container ${showResumoForm ? "col-8" : "col-12"}`}>
+        {/* <div className={`table-container ${showResumoForm ? "col-8" : "col-12"}`}> */}
+        <div className={`table-container ${isMobile || !showResumoForm ? "col-12" : "col-8"}`}>
           <div className="table-responsive scroll-sm">
             <Table className="table bordered-table sm-table mb-0">
               <thead>
@@ -397,19 +401,19 @@ const HistoricoChamadas = ({ turmaId, historico, onUpdateStatus, alunos, atualiz
         )}
 
       </div>
-      <div className="container-fluid mt-5">
+      <div className="my-5">
         <div className="row justify-content-center">
           <div className="col-12">
-            <Card className="shadow-sm">
-              <Card.Body>
-                <RegistrosAula
-                  turmaId={turmaId}
-                  chamadaId={selectedChamadaId}
-                  onAtualizar={atualizarHistorico}
-                  atualizarResumos={atualizarResumos}
-                />
-              </Card.Body>
-            </Card>
+            {/* <Card className="shadow-sm">
+              <Card.Body> */}
+            <RegistrosAula
+              turmaId={turmaId}
+              chamadaId={selectedChamadaId}
+              onAtualizar={atualizarHistorico}
+              atualizarResumos={atualizarResumos}
+            />
+            {/* </Card.Body>
+            </Card> */}
           </div>
         </div>
       </div>

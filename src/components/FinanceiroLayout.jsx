@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Icon } from "@iconify/react";
 import { API_BASE_URL } from "./config";
+import './financeiro.css'
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const Financeiro = () => {
     const [dados, setDados] = useState([]);
@@ -13,6 +16,78 @@ const Financeiro = () => {
     const [valorMensal, setValorMensal] = useState(0);
     const [loading, setLoading] = useState(false);
     const [userType] = useState(parseInt(localStorage.getItem("userType"), 10));
+    const [modalOpen, setModalOpen] = useState(false);
+    const [selectedParcela, setSelectedParcela] = useState(null);
+    const [newStatus, setNewStatus] = useState("");
+
+    const handleOpenModal = (parcela) => {
+        setSelectedParcela(parcela);
+        const initialStatus =
+            parcela.cp_mtPar_status === "Vencido" ? "à vencer" : parcela.cp_mtPar_status; // Mapeia "Vencido" para "à vencer"
+        setNewStatus(initialStatus); // Inicializa com o status correto
+        setModalOpen(true);
+    };
+    
+
+    const handleCloseModal = () => {
+        setModalOpen(false);
+        setSelectedParcela(null);
+        setNewStatus("");
+    };
+
+    const handleSaveStatus = async () => {
+        try {
+            setLoading(true);
+    
+            // Garantir que "Vencido" seja tratado como "à vencer" ao salvar
+            const statusToSave =
+                newStatus === "Pago"
+                    ? "Pago"
+                    : newStatus === "Não Pago" || newStatus === "Vencido"
+                    ? "à vencer"
+                    : newStatus;
+    
+            const response = await axios.put(
+                `${API_BASE_URL}/update-status/${selectedParcela.cp_mtPar_id}`,
+                { status: statusToSave }
+            );
+    
+            if (response.status === 200) {
+                // Atualize o estado local com o novo status
+                setDados((prevDados) =>
+                    prevDados.map((item) =>
+                        item.cp_mtPar_id === selectedParcela.cp_mtPar_id
+                            ? { ...item, cp_mtPar_status: statusToSave }
+                            : item
+                    )
+                );
+                toast.success("Status atualizado com sucesso!", {
+                    position: "top-right",
+                    autoClose: 3000,
+                    hideProgressBar: false,
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                    progress: undefined,
+                });
+            }
+        } catch (error) {
+            console.error("Erro ao atualizar o status:", error);
+            toast.error("Erro ao atualizar o status. Tente novamente.", {
+                position: "top-right",
+                autoClose: 3000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+            });
+        } finally {
+            setLoading(false);
+            handleCloseModal();
+        }
+    };
+    
 
     useEffect(() => {
         fetchFinanceiro();
@@ -29,38 +104,43 @@ const Financeiro = () => {
                     const response = await axios.get(`${API_BASE_URL}/financeira/${id}`);
                     const data = response.data[0];
 
-                    // Obter informações do usuário e escola
                     const userType = parseInt(localStorage.getItem("userType"), 10);
                     const schoolId = parseInt(localStorage.getItem("schoolId"), 10);
+                    const userName = localStorage.getItem("userName");
 
-                    // Verificar se o dado existe, o status é ativo, e se atende às regras de userType e schoolId
-                    if (
-                        data &&
-                        data.cp_status_matricula === "ativo" &&
-                        data.cp_mt_nome_usuario &&
-                        (userType === 1 || data.cp_mt_escola === schoolId)
-                    ) {
-                        return data.cp_mt_nome_usuario;
+                    // console.log("Verificando - userType:", userType, "schoolId:", schoolId, "userName:", userName, "Data recebida:", data);
+
+                    // Filtro principal e complementares
+                    if (data && data.cp_status_matricula === "ativo") { // Filtro principal
+                        if (
+                            (userType === 1) || // Nível 1: Todos os dados
+                            (userType === 5 && data.cp_mt_nome_usuario === userName && data.cp_mt_escola === schoolId) || // Nível 3
+                            (userType !== 4 && userType !== 5 && data.cp_mt_escola === schoolId) // Nível 2 (geral para escolas)
+                        ) {
+                            // console.log("Dado aceito:", data.cp_mt_nome_usuario);
+                            return data.cp_mt_nome_usuario;
+                        }
                     }
 
-                    return null; // Retorna null para dados inválidos ou fora dos critérios
+                    // console.log("Dado rejeitado:", data ? data.cp_mt_nome_usuario : null);
+                    return null; // Não atende aos critérios
                 } catch (error) {
                     console.error("Erro ao buscar nome do usuário:", error);
                     return null;
                 }
             };
 
-
-
-
             const verificarStatus = (status, dataVencimento) => {
                 const hoje = new Date();
                 const dataVenc = new Date(dataVencimento);
+
+                // Apenas exibição; não altera o dado original
                 if (status === "à vencer" && dataVenc < hoje) {
-                    return "Vencido";
+                    return "Vencido"; // Apenas para exibição no front-end
                 }
                 return status;
             };
+
 
             const formatarData = (data) => {
                 const dataObj = new Date(data);
@@ -70,53 +150,76 @@ const Financeiro = () => {
                 return `${dia}/${mes}/${ano}`;
             };
 
+            const userType = parseInt(localStorage.getItem("userType"), 10);
+            const schoolId = parseInt(localStorage.getItem("schoolId"), 10);
+            const userName = localStorage.getItem("userName");
+
+            // console.log("Informações do usuário:", { userType, schoolId, userName });
+
+            // Caso o usuário seja do tipo 4, não deve exibir nada
+            if (userType === 4) {
+                setDados([]);
+                setTotalAtrasado(0);
+                setValorMensal(0);
+                setLoading(false);
+                return;
+            }
+
             const dadosComNomes = await Promise.all(
                 parcelas.map(async (parcela) => {
-                    const nome = await fetchNomes(parcela.cp_mtPar_id);
+                    const nome = await fetchNomes(parcela.cp_mt_id);
 
-                    // Ignorar parcelas sem nome válido
                     if (!nome) {
-                        return null;
+                        return null; // Ignorar parcelas sem nome válido
                     }
 
                     const statusAtualizado = verificarStatus(
                         parcela.cp_mtPar_status,
                         parcela.cp_mtPar_dataParcela
                     );
-                    const dataFormatada = formatarData(parcela.cp_mtPar_dataParcela);
+                    const dataFormatada = formatarData(parcela.cp_mtPar_dataParcela); // Formata a data
 
                     return {
                         ...parcela,
                         nome,
                         cp_mtPar_status: statusAtualizado,
-                        cp_mtPar_dataParcela: dataFormatada,
+                        cp_mtPar_dataParcela: dataFormatada, // Usa a data formatada
                     };
                 })
             );
 
-            // Filtrar itens válidos
             const dadosFiltrados = dadosComNomes.filter((dado) => dado !== null);
-            setDados(dadosFiltrados);
 
+            setDados(dadosFiltrados);
 
             const totalAtrasado = dadosFiltrados
                 .filter((dado) => dado.cp_mtPar_status === "Vencido")
                 .reduce((acc, curr) => acc + parseFloat(curr.cp_mtPar_valorParcela), 0);
             setTotalAtrasado(totalAtrasado.toFixed(2));
 
-            const valorMensalTotal = dadosFiltrados
-                .filter((dado) => {
-                    const dataParcela = new Date(dado.cp_mtPar_dataParcela.replace(/(\d{2})\/(\d{2})\/(\d{4})/, "$3-$2-$1"));
-                    return dataParcela.getMonth() === new Date().getMonth();
-                })
-                .reduce((acc, curr) => acc + parseFloat(curr.cp_mtPar_valorParcela), 0);
-            setValorMensal(valorMensalTotal.toFixed(2));
+            // Verificação de IDs únicos para o valor mensal
+            const idsJaProcessados = new Set(); // Rastreador de IDs únicos
+            let totalMensal = 0;
+
+            dadosFiltrados.forEach((parcela) => {
+                if (!idsJaProcessados.has(parcela.cp_mt_id)) {
+                    // Soma o valor da primeira parcela do ID único
+                    totalMensal += parseFloat(parcela.cp_mtPar_valorParcela);
+                    idsJaProcessados.add(parcela.cp_mt_id); // Marca o ID como processado
+                }
+            });
+
+            setValorMensal(totalMensal.toFixed(2));
+
+
         } catch (error) {
             console.error("Erro ao buscar dados financeiros:", error);
         } finally {
             setLoading(false);
         }
     };
+
+
 
     const filteredData = dados.filter((item) => {
         const matchesNome = item.nome?.toLowerCase().includes(nomeFiltro.toLowerCase()) ?? true;
@@ -128,7 +231,6 @@ const Financeiro = () => {
         return matchesNome && matchesStatus;
     });
 
-
     const totalPaginas = Math.ceil(filteredData.length / itemsPerPage);
 
     const paginasVisiveis = [];
@@ -138,16 +240,11 @@ const Financeiro = () => {
 
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-
-
-
     const currentItems = filteredData.slice(indexOfFirstItem, indexOfLastItem);
-
-
 
     return (
         <div className="card h-100 p-0 radius-12">
-
+            <ToastContainer />
             <div className="row mb-3">
                 <div className="col-12 col-md-6 mb-3 mb-md-0">
                     <div className="card p-3 shadow-sm border border-primary radius-12">
@@ -234,26 +331,36 @@ const Financeiro = () => {
                                     </td>
                                 </tr>
                             ) : (
-                                currentItems.map((item) => (
-                                    <tr key={item.cp_mtPar_id}>
+                                currentItems.map((item, index) => (
+                                    <tr key={item.cp_mtPar_id || index}>
                                         <td>{item.nome || "Desconhecido"}</td>
                                         <td>
                                             <span
                                                 className={`badge text-sm fw-semibold rounded-pill px-20 py-9 radius-4 text-white ${item.cp_mtPar_status === "Pago"
                                                     ? "bg-success-600"
-                                                    : item.cp_mtPar_status === "à vencer" && new Date(item.cp_mtPar_dataParcela) < new Date()
+                                                    : item.cp_mtPar_status === "à vencer" &&
+                                                        new Date(item.cp_mtPar_dataParcela) < new Date()
                                                         ? "bg-danger-600"
                                                         : item.cp_mtPar_status === "à vencer"
                                                             ? "bg-warning-600"
                                                             : "bg-danger-600"
-                                                    }`}
+                                                    } `}
                                             >
-                                                {item.cp_mtPar_status === "à vencer" && new Date(item.cp_mtPar_dataParcela) < new Date()
+                                                {item.cp_mtPar_status === "à vencer" &&
+                                                    new Date(item.cp_mtPar_dataParcela) < new Date()
                                                     ? "Vencido"
                                                     : item.cp_mtPar_status}
+                                                {(userType === 1 || userType === 2) && (
+                                                    <Icon
+                                                        style={{ marginLeft: '5px' }}
+                                                        icon="mdi:pencil-outline"
+                                                        className="cursor-pointer"
+                                                        width="16"
+                                                        height="16"
+                                                        onClick={() => handleOpenModal(item)}
+                                                    />
+                                                )}
                                             </span>
-
-
                                         </td>
                                         <td>{item.cp_mtPar_dataParcela}</td>
                                         <td>R$ {item.cp_mtPar_valorParcela}</td>
@@ -338,7 +445,34 @@ const Financeiro = () => {
                     </select>
                 </div>
             </div>
+            {modalOpen && (
+                <div className="modal-backdrop">
+                    <div className="modal-container radius-12 p-4">
+                        <h4 className="mb-3">Alterar Status</h4>
+                        <p>Parcela: {selectedParcela?.nome}</p>
+                        <select
+                            className="form-select mt-2"
+                            value={newStatus}
+                            onChange={(e) => setNewStatus(e.target.value)}
+                        >
+                            <option value="Pago">Pago</option>
+                            <option value="à vencer">Não Pago</option>
+                        </select>
+                        <div className="mt-4 d-flex justify-content-end gap-2">
+                            <button className="btn btn-secondary" onClick={handleCloseModal}>
+                                Cancelar
+                            </button>
+                            <button className="btn btn-primary" onClick={handleSaveStatus}>
+                                Salvar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
         </div>
+
+
     );
 };
 

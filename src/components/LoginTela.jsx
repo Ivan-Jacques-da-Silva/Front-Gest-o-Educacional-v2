@@ -37,7 +37,7 @@ const LoginTela = () => {
             setIsLoggingIn(true);
 
             if (response.data.msg === 'Usuário Logado com sucesso') {
-                console.log('Entrou no if: Usuário Logado com sucesso');
+                // console.log('Entrou no if: Usuário Logado com sucesso');
                 // Armazenar o tipo de usuário após o login bem-sucedido
                 localStorage.setItem('userType', response.data.userType);
                 localStorage.setItem('userName', response.data.userName);
@@ -52,7 +52,7 @@ const LoginTela = () => {
                     navigate('/home');
                 }
             } else if (response.data.msg == 'Usuário ou senha incorretos') {
-                console.log('Entrou no else if: Usuário ou senha incorretos');
+                // console.log('Entrou no else if: Usuário ou senha incorretos');
                 toast.error(response.data.msg);
                 setLoginError(true);
             } else {
@@ -68,11 +68,11 @@ const LoginTela = () => {
             } else {
                 console.error('Erro ao processar a requisição:', error.message);
             }
-            console.log('Entrou no catch');
+            // console.log('Entrou no catch');
             setIsLoggingIn(false);
             toast.error('Erro ao fazer login.');
         } finally {
-            console.log('Entrou no finally');
+            // console.log('Entrou no finally');
             // toast.error("Usuário ou senha incorretos");
             setIsLoggingIn(false);
         }
