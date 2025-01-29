@@ -780,20 +780,40 @@ function MaterialExtra() {
         onHide={handleClose}
         centered
         fullscreen
+        className="bg-dark text-white"
+        style={{ zIndex: 1050 }}
       >
-        <Modal.Header closeButton>
-          <Modal.Title>Visualizar PDF</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <iframe
-            src={`https://docs.google.com/gview?url=${pdfUrl}&embedded=true`}
-            width="100%"
-            height="100%"
-            frameBorder="0"
-            title="PDF Viewer"
-          />
-        </Modal.Body>
+        <Button
+          variant="secondary"
+          onClick={handleClose}
+          className="position-absolute top-0 end-0 m-3"
+          style={{
+            zIndex: 1060,
+            borderRadius: "50%",
+            width: "40px",
+            height: "40px",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          ✕
+        </Button>
+        <iframe
+          src={`https://docs.google.com/gview?url=${pdfUrl}&embedded=true`}
+          width="100%"
+          height="100%"
+          frameBorder="0"
+          title="PDF Viewer"
+          style={{
+            border: "none",
+            width: "100vw",
+            height: "100vh",
+            pointerEvents: "none",
+          }}
+        />
       </Modal>
+
       <ModalVideo
         channel="youtube"
         youtube={{ mute: 0, autoplay: 0 }}

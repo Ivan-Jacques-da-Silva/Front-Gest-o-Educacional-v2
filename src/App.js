@@ -95,6 +95,7 @@ import RouteScrollToTop from "./helper/RouteScrollToTop";
 import TextGeneratorNewPage from "./pages/TextGeneratorNewPage";
 import MatriculaPage from "./pages/MatriculaPage";
 import SalaDeAula from "./pages/SalaDeAulaPage.jsx";
+import SalaDeAulaAluno from "./pages/SalaDeAulaAlunoPage.jsx";
 import Agenda from "./pages/AgendaPage.jsx";
 // import CadastroUsuario from "./components/CadastroUsuario";
 
@@ -129,6 +130,7 @@ function App() {
         <Route exact path="/treinamento" element={<Treinamento />} />
         <Route exact path="/material-extra" element={<MaterialExtra />} />
         <Route exact path="/sala-de-aula" element={<SalaDeAula />} />
+        <Route exact path="/sala-de-aula-aluno" element={<SalaDeAulaAluno />} />
         <Route exact path="/agenda" element={<Agenda />} />
 
         

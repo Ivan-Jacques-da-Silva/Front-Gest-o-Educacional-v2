@@ -275,14 +275,15 @@ const MasterLayout = ({ children }) => {
 
             <li className="sidebar-menu-group-title">Aula</li>
             <li>
-              <NavLink to="/sala-de-aula" className={(navData) =>
-                navData.isActive ? "active-page" : ""
-              }>
+              <NavLink
+                to={localStorage.getItem("userType") === "5" ? "/sala-de-aula-aluno" : "/sala-de-aula"}
+                className={(navData) => (navData.isActive ? "active-page" : "")}
+              >
                 <Icon icon="ph:chalkboard-teacher" className="menu-icon" />
-
-                <span> Sala de Aula</span>
+                <span>Sala de Aula</span>
               </NavLink>
             </li>
+
             <li>
               <NavLink to="/agenda" className={(navData) =>
                 navData.isActive ? "active-page" : ""
