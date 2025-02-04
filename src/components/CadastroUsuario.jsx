@@ -2,9 +2,12 @@ import React, { useState, useEffect } from "react";
 import { API_BASE_URL } from "./config";
 import axios from "axios";
 // import { ToastContainer } from "react-toastify";
-import { Row, Col, Button } from "react-bootstrap";
+import { Row, Col, Button, Modal } from "react-bootstrap";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import InputMask from "react-input-mask";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 
 
 // const CadastroUsuarioModal = ({ closeModal, escolas = [] }) => {
@@ -39,6 +42,23 @@ const CadastroUsuarioModal = () => {
     const [userType, setUserType] = useState(null);
     const [showPassword, setShowPassword] = useState(false);
     const [confirmPassword, setConfirmPassword] = useState("");
+    const [escolas, setEscolas] = useState([]);
+    const [showModal, setShowModal] = useState(false);
+
+    const handleShowModal = () => setShowModal(true);
+    const handleCloseModal = () => setShowModal(false);
+
+    useEffect(() => {
+        const fetchEscolas = async () => {
+            try {
+                const response = await axios.get(`${API_BASE_URL}/escolas`);
+                setEscolas(response.data);
+            } catch (error) {
+                console.error("Erro ao buscar escolas:", error);
+            }
+        };
+        fetchEscolas();
+    }, []);
 
 
     useEffect(() => {
@@ -80,16 +100,12 @@ const CadastroUsuarioModal = () => {
     };
     const handleSubmit = async (e) => {
         e.preventDefault();
+        handleCloseModal(); // Fecha o modal
 
         try {
             const formData = new FormData();
-            formData.append("cp_foto_perfil", userData.cp_foto_perfil);
-
-            // Adicione os demais campos do usuário ao formData
             Object.keys(userData).forEach((key) => {
-                if (key !== "cp_foto_perfil") {
-                    formData.append(key, userData[key]);
-                }
+                formData.append(key, userData[key]);
             });
 
             const response = await axios.post(`${API_BASE_URL}/register`, formData, {
@@ -99,25 +115,28 @@ const CadastroUsuarioModal = () => {
             });
 
             if (response.data.exists) {
-                //   toast.error("Usuário já cadastrado");
+                toast.error("Usuário já cadastrado");
             } else {
-                //   toast.success("Usuário cadastrado com sucesso");
-                //   closeModal();
+                toast.success("Usuário cadastrado com sucesso!");
+                setUserData({  // Limpar todos os campos
+                    cp_nome: "", cp_email: "", cp_login: "", cp_password: "",
+                    cp_tipo_user: "", cp_rg: "", cp_cpf: "", cp_datanascimento: "",
+                    cp_estadocivil: "", cp_cnpj: "", cp_ie: "", cp_whatsapp: "",
+                    cp_telefone: "", cp_empresaatuacao: "", cp_profissao: "",
+                    cp_end_cidade_estado: "", cp_end_rua: "", cp_end_num: "",
+                    cp_end_cep: "", cp_descricao: "", cp_escola_id: ""
+                });
             }
         } catch (error) {
-            console.error(
-                "Erro ao realizar a solicitação:",
-                error.response ? error.response.data : error.message
-            );
-            // toast.error(
-            //   `Erro ao realizar a solicitação: ${error.response ? error.response.data : error.message
-            //   }`
-            // );
+            console.error("Erro ao cadastrar:", error.response?.data || error.message);
+            toast.error("Erro ao cadastrar usuário. Tente novamente.");
         }
     };
 
+
     return (
         <div>
+            <ToastContainer />
             <form className="form-container-cad" onSubmit={handleSubmit}>
                 <Row>
                     <Col md={6}>
@@ -207,6 +226,28 @@ const CadastroUsuarioModal = () => {
                                             ))}
                                         </select>
                                     </Col>
+                                    <Col md={12}>
+                                        <label htmlFor="cp_escola_id">Escola<span className="required">*</span>:</label>
+                                        <select
+                                            id="cp_escola_id"
+                                            name="cp_escola_id"
+                                            value={userData.cp_escola_id}
+                                            onChange={handleChange}
+                                            className="form-control"
+                                            required
+                                        >
+                                            <option value="">Selecione a escola</option>
+                                            {escolas.length > 0 ? (
+                                                escolas.map((escola) => (
+                                                    <option key={escola.cp_ec_id} value={escola.cp_ec_id}>
+                                                        {escola.cp_ec_nome}
+                                                    </option>
+                                                ))
+                                            ) : (
+                                                <option value="" disabled>Carregando escolas...</option>
+                                            )}
+                                        </select>
+                                    </Col>
                                 </Row>
                             </div>
                         </div>
@@ -257,16 +298,22 @@ const CadastroUsuarioModal = () => {
                                     </Col>
                                     <Col md={12}>
                                         <label htmlFor="cp_estadocivil">Estado Civil:</label>
-                                        <input
-                                            type="text"
+                                        <select
                                             id="cp_estadocivil"
                                             name="cp_estadocivil"
-                                            value={userData.cp_estadocivil}
+                                            value={userData.cp_estadocivil || ""}
                                             onChange={handleChange}
                                             className="form-control"
-                                            placeholder="Estado Civil"
-                                        />
+                                        >
+                                            <option value="">Selecione...</option>
+                                            <option value="solteiro">Solteiro(a)</option>
+                                            <option value="casado">Casado(a)</option>
+                                            <option value="divorciado">Divorciado(a)</option>
+                                            <option value="viuvo">Viúvo(a)</option>
+                                            <option value="uniao_estavel">União Estável</option>
+                                        </select>
                                     </Col>
+
                                 </Row>
                             </div>
                         </div>
@@ -454,16 +501,32 @@ const CadastroUsuarioModal = () => {
                             </div>
                         </div>
 
-                        
+
                     </Col>
                 </Row>
 
                 <div className="mt-4 text-center">
-                    <button type="submit" className="btn btn-primary">
+                    <button type="button" className="btn btn-primary" onClick={handleShowModal}>
                         Cadastrar Usuário
                     </button>
+
                 </div>
             </form>
+            <Modal show={showModal} onHide={handleCloseModal} centered>
+                <Modal.Header closeButton>
+                    <Modal.Title>Confirmar Cadastro</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>Tem certeza que deseja cadastrar este usuário?</Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={handleCloseModal}>
+                        Cancelar
+                    </Button>
+                    <Button variant="primary" onClick={handleSubmit}>
+                        Confirmar
+                    </Button>
+                </Modal.Footer>
+            </Modal>
+
         </div>
     );
 

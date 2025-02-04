@@ -90,31 +90,28 @@ const CadastroTurmaModal = ({ closeModal, isEdit, turmaDataToEdit }) => {
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    if (name === "cp_tr_alunos") {
-      const selectedValues = Array.from(
-        e.target.selectedOptions,
-        (option) => option.value
-      );
-      setTurmaData((prevTurmaData) => ({
-        ...prevTurmaData,
-        [name]: selectedValues,
-      }));
-    } else if (name === "cp_tr_id_escola") {
-      setTurmaData((prevTurmaData) => ({ ...prevTurmaData, [name]: value }));
+    if (name === "cp_tr_id_escola") {
+      setTurmaData((prev) => ({ ...prev, [name]: value, cp_tr_alunos: [] }));
       fetchAlunosPorEscola(value);
     } else {
-      setTurmaData((prevTurmaData) => ({ ...prevTurmaData, [name]: value }));
+      setTurmaData((prev) => ({ ...prev, [name]: value }));
     }
   };
 
+
+  const normalizeString = (str) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
   const handleSearchChange = (e) => {
+    const searchValue = normalizeString(e.target.value);
     setSearchTerm(e.target.value);
-    setAlunosFiltrados(
-      alunosPorEscola.filter((aluno) =>
-        aluno.cp_nome.toLowerCase().includes(e.target.value.toLowerCase())
-      )
+
+    const alunosFiltrados = alunosPorEscola.filter(aluno =>
+      normalizeString(aluno.cp_nome).includes(searchValue)
     );
+
+    setAlunosFiltrados(alunosFiltrados);
   };
+
 
   const handleCheckboxChange = (e, alunoId) => {
     const isChecked = e.target.checked;
@@ -214,6 +211,25 @@ const CadastroTurmaModal = ({ closeModal, isEdit, turmaDataToEdit }) => {
               <div className="card-body">
                 <Row className="gy-3">
                   <Col md={12}>
+                    <label htmlFor="cp_tr_id_escola">Escola<span className="required">*</span>:</label>
+                    <select
+                      id="cp_tr_id_escola"
+                      name="cp_tr_id_escola"
+                      value={turmaData.cp_tr_id_escola}
+                      onChange={handleChange}
+                      className="form-control"
+                      required
+                    >
+                      <option value="" disabled>Selecione uma escola</option>
+                      {escolas.map((escola) => (
+                        <option key={escola.cp_ec_id} value={escola.cp_ec_id}>
+                          {escola.cp_ec_nome}
+                        </option>
+                      ))}
+                    </select>
+                  </Col>
+
+                  <Col md={12}>
                     <label htmlFor="cp_tr_curso_id">Curso<span className="required">*</span>:</label>
                     <select
                       id="cp_tr_curso_id"
@@ -262,28 +278,33 @@ const CadastroTurmaModal = ({ closeModal, isEdit, turmaDataToEdit }) => {
 
                   <Col md={12}>
                     <div className="table-responsive">
-                      <Table striped bordered hover>
-                        <thead>
-                          <tr>
-                            <th>#</th>
-                            <th>Nome</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {alunosFiltrados.map((aluno) => (
-                            <tr key={aluno.cp_id}>
-                              <td>
-                                <Form.Check
-                                  type="checkbox"
-                                  checked={turmaData.cp_tr_alunos.includes(aluno.cp_id)}
-                                  onChange={(e) => handleCheckboxChange(e, aluno.cp_id)}
-                                />
-                              </td>
-                              <td>{aluno.cp_nome}</td>
+                      {alunosFiltrados.length > 0 ? (
+                        <Table striped bordered hover>
+                          <thead>
+                            <tr>
+                              <th>#</th>
+                              <th>Nome</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </Table>
+                          </thead>
+                          <tbody>
+                            {alunosFiltrados.map((aluno) => (
+                              <tr key={aluno.cp_id}>
+                                <td>
+                                  <Form.Check
+                                    type="checkbox"
+                                    checked={turmaData.cp_tr_alunos.includes(aluno.cp_id)}
+                                    onChange={(e) => handleCheckboxChange(e, aluno.cp_id)}
+                                  />
+                                </td>
+                                <td>{aluno.cp_nome}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </Table>
+                      ) : (
+                        <p className="text-muted">Nenhum aluno encontrado. Selecione uma escola!</p>
+                      )}
+
                     </div>
                   </Col>
                 </Row>
