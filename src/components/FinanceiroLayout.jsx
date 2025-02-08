@@ -5,6 +5,8 @@ import { API_BASE_URL } from "./config";
 import './financeiro.css'
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { Modal, Button, Form } from "react-bootstrap";
+
 
 const Financeiro = () => {
     const [dados, setDados] = useState([]);
@@ -27,7 +29,7 @@ const Financeiro = () => {
         setNewStatus(initialStatus); // Inicializa com o status correto
         setModalOpen(true);
     };
-    
+
 
     const handleCloseModal = () => {
         setModalOpen(false);
@@ -38,20 +40,20 @@ const Financeiro = () => {
     const handleSaveStatus = async () => {
         try {
             setLoading(true);
-    
+
             // Garantir que "Vencido" seja tratado como "à vencer" ao salvar
             const statusToSave =
                 newStatus === "Pago"
                     ? "Pago"
                     : newStatus === "Não Pago" || newStatus === "Vencido"
-                    ? "à vencer"
-                    : newStatus;
-    
+                        ? "à vencer"
+                        : newStatus;
+
             const response = await axios.put(
                 `${API_BASE_URL}/update-status/${selectedParcela.cp_mtPar_id}`,
                 { status: statusToSave }
             );
-    
+
             if (response.status === 200) {
                 // Atualize o estado local com o novo status
                 setDados((prevDados) =>
@@ -87,7 +89,7 @@ const Financeiro = () => {
             handleCloseModal();
         }
     };
-    
+
 
     useEffect(() => {
         fetchFinanceiro();
@@ -446,28 +448,31 @@ const Financeiro = () => {
                 </div>
             </div>
             {modalOpen && (
-                <div className="modal-backdrop">
-                    <div className="modal-container radius-12 p-4">
-                        <h4 className="mb-3">Alterar Status</h4>
+                <Modal show={modalOpen} onHide={handleCloseModal} centered>
+                    <Modal.Header closeButton>
+                        <Modal.Title>Alterar Status</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
                         <p>Parcela: {selectedParcela?.nome}</p>
-                        <select
-                            className="form-select mt-2"
+                        <Form.Select
+                            className="mt-2"
                             value={newStatus}
                             onChange={(e) => setNewStatus(e.target.value)}
                         >
                             <option value="Pago">Pago</option>
                             <option value="à vencer">Não Pago</option>
-                        </select>
-                        <div className="mt-4 d-flex justify-content-end gap-2">
-                            <button className="btn btn-secondary" onClick={handleCloseModal}>
-                                Cancelar
-                            </button>
-                            <button className="btn btn-primary" onClick={handleSaveStatus}>
-                                Salvar
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                        </Form.Select>
+                    </Modal.Body>
+                    <Modal.Footer>
+                        <Button variant="secondary" onClick={handleCloseModal}>
+                            Cancelar
+                        </Button>
+                        <Button variant="primary" onClick={handleSaveStatus}>
+                            Salvar
+                        </Button>
+                    </Modal.Footer>
+                </Modal>
+
             )}
 
         </div>

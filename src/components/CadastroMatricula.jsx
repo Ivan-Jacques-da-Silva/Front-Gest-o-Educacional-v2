@@ -1,14 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import InputMask from "react-input-mask";
 import { API_BASE_URL } from "./config";
 import { ToastContainer, toast } from "react-toastify";
-import { Form, Row, Col, Button } from "react-bootstrap";
-// import "./CadastroModal.css";
-// import "./Modal.css";
+import { Form, Row, Col, Button, Modal } from "react-bootstrap";
+import './modal.css'
 
 const CadastroMatricula = ({
-    closeModal,
     isEdit,
     matriculaDataToEdit,
     matriculaId,
@@ -21,6 +19,13 @@ const CadastroMatricula = ({
     const [showParentFields, setShowParentFields] = useState(false);
     const [filteredUsuarios, setFilteredUsuarios] = useState([]);
     const [showUserSearchModal, setShowUserSearchModal] = useState(false);
+    const inputSearchRef = useRef(null);
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [acaoConfirmada, setAcaoConfirmada] = useState(null);
+    const abrirModalConfirmacao = () => setShowConfirmModal(true);
+    const fecharModalConfirmacao = () => setShowConfirmModal(false);
+
+
     // const [usuarioSelecionado, setUsuarioSelecionado] = useState();
     const [matriculaData, setMatriculaData] = useState({
         status: "ativo",
@@ -54,8 +59,53 @@ const CadastroMatricula = ({
         primeiraDataPagamento: "",
     });
 
+    const limparCampos = () => {
+        setMatriculaData({
+            status: "ativo",
+            numeroParcelas: "",
+            valorParcela: "",
+            usuarioId: "",
+            nomeUsuario: "",
+            cpfUsuario: "",
+            valorCurso: "",
+            cursoId: "",
+            escolaId: "",
+            dataNascimento: "",
+            profissao: "",
+            estadoCivil: "",
+            endereco: "",
+            rua: "",
+            numero: "",
+            whatsapp: "",
+            telefone: "",
+            email: "",
+            escolaridade: "",
+            localNascimento: "",
+            redeSocial: "",
+            nomePai: "",
+            contatoPai: "",
+            nomeMae: "",
+            contatoMae: "",
+            horarioInicio: "",
+            horarioFim: "",
+            nivelIdioma: "",
+            primeiraDataPagamento: "",
+        });
+    };
+
+
+    useEffect(() => {
+        if (showUserSearchModal && inputSearchRef.current) {
+            inputSearchRef.current.focus();
+        }
+    }, [showUserSearchModal]);
+
     // Funções para abrir e fechar o modal
-    const openUserSearchModal = () => setShowUserSearchModal(true);
+    const openUserSearchModal = () => {
+        setFilteredUsuarios(usuarios); // Preenche a lista antes de abrir o modal
+        setShowUserSearchModal(true);
+    };
+
     const closeUserSearchModal = () => setShowUserSearchModal(false);
 
     useEffect(() => {
@@ -67,30 +117,20 @@ const CadastroMatricula = ({
             axios
                 .get(`${API_BASE_URL}/buscarusermatricula`)
                 .then((response) => {
-                    setUsuarios(response.data);
-                    setFilteredUsuarios(response.data);
+                    const schoolId = localStorage.getItem("schoolId");
+
+                    const usuariosFiltrados = response.data.filter(usuario =>
+                        usuario.cp_excluido !== 1 && usuario.cp_escola_id == schoolId
+                    );
+
+                    setUsuarios(usuariosFiltrados);
+                    setFilteredUsuarios(usuariosFiltrados);
                 })
                 .catch((error) => {
                     console.error("Erro ao buscar usuários:", error);
                 });
         }
     }, [isEdit]);
-
-    // useEffect(() => {
-    //   if (isEdit && matriculaDataToEdit) {
-    //     setMatriculaData(matriculaDataToEdit);
-
-    //   }
-    // }, [isEdit, matriculaDataToEdit]);
-    // const calcularValorParcela = () => {
-    //   if (matriculaData.valorCurso && matriculaData.numeroParcelas) {
-    //     const valorParcela = matriculaData.valorCurso / matriculaData.numeroParcelas;
-    //     setMatriculaData((prevState) => ({
-    //       ...prevState,
-    //       valorParcela: valorParcela.toFixed(2),
-    //     }));
-    //   }
-    // };
 
     const calcularValorParcela = () => {
         const valorCurso = parseFloat(matriculaData.valorCurso);
@@ -154,79 +194,9 @@ const CadastroMatricula = ({
         ];
     };
 
+
+
     const defaultLanguageLevels = loadDefaultLanguageLevels();
-
-    // const handleSubmit = async (e) => {
-    //   e.preventDefault();
-
-    //   try {
-    //     const requestBody = {
-
-    //       cursoId: matriculaData.cursoId,
-    //       usuarioId: matriculaData.usuarioId,
-    //       escolaId: matriculaData.escolaId,
-    //       nomeUsuario: matriculaData.nomeUsuario,
-    //       cpfUsuario: matriculaData.cpfUsuario,
-    //       valorCurso: matriculaData.valorCurso,
-    //       numeroParcelas: matriculaData.numeroParcelas,
-    //       primeiraDataPagamento: matriculaData.primeiraDataPagamento,
-    //       status: matriculaData.status,
-    //       nivelIdioma: matriculaData.nivelIdioma,
-    //       horarioInicio: matriculaData.horarioInicio,
-    //       horarioFim: matriculaData.horarioFim,
-    //       localNascimento: matriculaData.localNascimento,
-    //       escolaridade: matriculaData.escolaridade,
-    //       redeSocial: matriculaData.redeSocial,
-    //       nomePai: matriculaData.nomePai,
-    //       contatoPai: matriculaData.contatoPai,
-    //       nomeMae: matriculaData.nomeMae,
-    //       contatoMae: matriculaData.contatoMae,
-    //     };
-
-    //     console.log('Request Body:', requestBody);
-
-    //     let response;
-    //     if (isEdit) {
-    //       console.log("chegou no edit")
-    //       const matriculaId = matriculaData.cp_mt_id; // ID da matrícula a ser editada
-    //       console.log(`Enviando requisição PUT para editar a matrícula com ID: ${matriculaId}`);
-    //       // response = await axios.put(
-    //       //   `${API_BASE_URL}/editar-matricula/${matriculaId}`,
-    //       //   requestBody
-    //       // );
-
-    //       response = await axios.put(
-    //         `${API_BASE_URL}/editar-matricula/${matriculaDataToEdit.cp_mt_id}`,
-    //         requestBody
-    //       );
-    //     } else {
-    //       response = await axios.post(
-    //         `${API_BASE_URL}/cadastrar-matricula`,
-    //         requestBody
-    //       );
-    //     }
-
-    //     if (response.status === 200) {
-    //       toast.success(
-    //         `Matrícula ${isEdit ? "atualizada" : "cadastrada"} com sucesso!`
-    //       );
-    //       closeModal();
-    //     } else {
-    //       toast.error(
-    //         `Erro ao ${isEdit ? "atualizar" : "cadastrar"} matrícula. Por favor, tente novamente.`
-    //       );
-    //     }
-    //   } catch (error) {
-    //     console.error(
-    //       `Erro ao ${isEdit ? "atualizar" : "cadastrar"} matrícula:`,
-    //       error
-    //     );
-    //     toast.error(
-    //       `Erro ao ${isEdit ? "atualizar" : "cadastrar"} matrícula. Por favor, tente novamente.`
-    //     );
-    //   }
-    // };
-
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -273,7 +243,6 @@ const CadastroMatricula = ({
                     response.data.msg === "Matrícula editada com sucesso"
                 ) {
                     toast.success("Matrícula editada com sucesso");
-                    closeModal();
                 } else {
                     console.error("Erro ao editar matrícula:", response.data);
                     toast.error("Erro ao editar matrícula");
@@ -290,7 +259,6 @@ const CadastroMatricula = ({
                     response.data.msg === "Matrícula cadastrada com sucesso"
                 ) {
                     toast.success("Operação realizada com sucesso");
-                    closeModal();
                 } else {
                     console.error("Erro ao cadastrar matrícula:", response.data);
                 }
@@ -367,24 +335,27 @@ const CadastroMatricula = ({
     };
 
     const formatarData = (dataString) => {
-        const data = new Date(dataString);
-        if (!isNaN(data.getTime())) {
-            const dia = data.getDate().toString().padStart(2, "0");
-            const mes = (data.getMonth() + 1).toString().padStart(2, "0");
-            const ano = data.getFullYear();
-            return `${ano}-${mes}-${dia}`;
-        } else {
-            return "";
+        if (!dataString) return "";
+
+        // Verifica se a data já está no formato correto
+        if (/^\d{4}-\d{2}-\d{2}$/.test(dataString)) {
+            return dataString;
         }
+
+        const data = new Date(dataString);
+
+        // Se a data for inválida, retorna uma string vazia
+        if (isNaN(data.getTime())) return "";
+
+        const ano = data.getFullYear().toString().padStart(4, "0"); // Garante 4 dígitos no ano
+        const mes = (data.getMonth() + 1).toString().padStart(2, "0");
+        const dia = data.getDate().toString().padStart(2, "0");
+
+        return `${ano}-${mes}-${dia}`; // Retorna no formato YYYY-MM-DD
     };
 
 
-    // useEffect(() => {
-    //   setMatriculaData((prevState) => ({
-    //     ...prevState,
-    //     numeroParcelas: "", 
-    //   }));
-    // }, [matriculaData.valorCurso]);
+
 
     const handleNumeroParcelasChange = (e) => {
         const { value } = e.target;
@@ -504,34 +475,29 @@ const CadastroMatricula = ({
         matriculaData.localNascimento,
         matriculaData.redeSocial,
     ]);
-    // const handleAdditionalDataChange = (e) => {
-    //   const isChecked = e.target.checked;
-    //   setShowAdditionalFields(isChecked);
-    //   // Se o checkbox for marcado, esperar 1 segundo antes de enviar os dados para a tela
-    //   if (isChecked) {
-    //     setTimeout(() => {
-    //       // Envie os dados para a tela aqui
-    //       console.log("Dados enviados para a tela:", matriculaData);
-    //     }, 1000); 
-    //   }
-    // };
 
     const handleAdditionalDataChange = (e) => {
-        // const isChecked = e.target.checked;
         setShowAdditionalFields(e.target.checked);
 
-        // if (isChecked) {
-        //   setTimeout(() => { }, 1000);
-        // }
     };
 
     const handleUsuarioSearch = (e) => {
-        const searchTerm = e.target.value.toLowerCase();
-        const filtered = usuarios.filter(usuario =>
-            usuario.cp_nome.toLowerCase().includes(searchTerm)
-        );
-        setFilteredUsuarios(filtered);
+        const termoBusca = e.target.value.toLowerCase();
+        setMatriculaData((prev) => ({ ...prev, nomeUsuario: e.target.value })); // Atualiza o input de nome
+
+        if (!termoBusca) {
+            setFilteredUsuarios(usuarios); // Se vazio, mostra todos
+        } else {
+            const filtrados = usuarios.filter(usuario =>
+                usuario.cp_nome.toLowerCase().includes(termoBusca)
+            );
+            setFilteredUsuarios(filtrados);
+        }
+
+        setShowUserSearchModal(true); // Abre o modal automaticamente
     };
+
+
 
     const handleUsuarioSelect = (usuario) => {
         setDadosUsuario(usuario);
@@ -549,9 +515,8 @@ const CadastroMatricula = ({
             email: usuario.cp_email,
             escolaId: usuario.cp_escola_id,
         }));
+        closeUserSearchModal(); // Fecha o modal após selecionar
     };
-
-
 
     return (
         <div className="modal-edit">
@@ -587,49 +552,15 @@ const CadastroMatricula = ({
                                                 id="nomeUsuario"
                                                 name="nomeUsuario"
                                                 value={matriculaData.nomeUsuario}
-                                                className="form-control"
-                                                placeholder="Nome do usuário"
+                                                className="form-control border-primary text-base"
+                                                placeholder="Clique para pesquisar um aluno"
                                                 required
-                                                onChange={handleInputChange}
+                                                readOnly // Impede digitação direta, forçando uso do modal
+                                                onClick={openUserSearchModal} // Abre o modal ao clicar
                                             />
-                                            <Button
-                                                className="mt-2"
-                                                onClick={openUserSearchModal}
-                                            >
-                                                Pesquisar Usuário
-                                            </Button>
                                         </Col>
-                                    )}
-                                    {showUserSearchModal && (
-                                        <div className="modal open">
-                                            <div className="modal-content-matricula">
-                                                <span className="close" onClick={closeUserSearchModal}>
-                                                    &times;
-                                                </span>
-                                                <label htmlFor="usuarioSearch">Pesquisar Usuário:</label>
-                                                <input
-                                                    type="text"
-                                                    id="usuarioSearch"
-                                                    name="usuarioSearch"
-                                                    onChange={handleUsuarioSearch}
-                                                    className="form-control"
-                                                    placeholder="Digite para pesquisar"
-                                                />
-                                                <ul className="usuario-lista">
-                                                    {filteredUsuarios.map((usuario) => (
-                                                        <li
-                                                            key={usuario.cp_id}
-                                                            onClick={() => {
-                                                                handleUsuarioSelect(usuario);
-                                                                closeUserSearchModal();
-                                                            }}
-                                                        >
-                                                            {usuario.cp_nome}
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                            </div>
-                                        </div>
+
+
                                     )}
 
                                     <Col md={12}>
@@ -675,13 +606,12 @@ const CadastroMatricula = ({
                                             type="text"
                                             id="estadoCivil"
                                             name="estadoCivil"
-                                            value={dadosUsuario.cp_estadocivil || ""}
-                                            className="input-field"
-                                            placeholder="Estado civil"
+                                            value={dadosUsuario.cp_estadocivil || "Não informado"}
+                                            className="form-control"
+                                            placeholder="Estado Civil"
                                             readOnly
                                         />
                                     </Col>
-
                                     <Col md={12}>
                                         <label htmlFor="endereco">Endereço:</label>
                                         <input
@@ -998,7 +928,7 @@ const CadastroMatricula = ({
                                             onChange={(e) =>
                                                 setMatriculaData({
                                                     ...matriculaData,
-                                                    primeiraDataPagamento: e.target.value,
+                                                    primeiraDataPagamento: e.target.value, // Mantém no formato correto
                                                 })
                                             }
                                             className="form-control"
@@ -1110,18 +1040,72 @@ const CadastroMatricula = ({
                 </Row>
 
                 <div className="text-center mt-4">
-                    <button type="submit" className="btn btn-primary me-2">
+                    <button type="button" className="btn btn-primary me-2" onClick={abrirModalConfirmacao}>
                         {isEdit ? 'Atualizar Matrícula' : 'Cadastrar Matrícula'}
                     </button>
-                    {/* <button
-                        type="button"
-                        className="btn btn-secondary"
-                        onClick={closeModal}
-                    >
-                        Cancelar
-                    </button> */}
                 </div>
             </form>
+            <Modal show={showUserSearchModal} onHide={closeUserSearchModal} centered animation={false}>
+                <Modal.Header closeButton>
+                    <Modal.Title>Pesquisar Usuário</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <input
+                        type="text"
+                        id="usuarioSearch"
+                        name="usuarioSearch"
+                        onChange={handleUsuarioSearch}
+                        className="form-control"
+                        placeholder="Digite para pesquisar"
+                        ref={inputSearchRef}
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter" && filteredUsuarios.length > 0) {
+                                handleUsuarioSelect(filteredUsuarios[0]); // Seleciona o primeiro da lista
+                                closeUserSearchModal(); // Fecha o modal
+                            }
+                        }}
+                    />
+                    <ul className="list-group mt-2">
+                        {filteredUsuarios.length > 0 ? (
+                            filteredUsuarios.map((usuario) => (
+                                <li
+                                    key={usuario.cp_id}
+                                    className="list-group-item list-group-item-action"
+                                    onClick={() => {
+                                        handleUsuarioSelect(usuario);
+                                        closeUserSearchModal();
+                                    }}
+                                    style={{ cursor: "pointer" }}
+                                >
+                                    {usuario.cp_nome} - {usuario.cp_cpf}
+                                </li>
+                            ))
+                        ) : (
+                            <li className="list-group-item">Nenhum usuário encontrado</li>
+                        )}
+                    </ul>
+                </Modal.Body>
+            </Modal>
+            <Modal show={showConfirmModal} onHide={fecharModalConfirmacao} centered>
+                <Modal.Header closeButton>
+                    <Modal.Title>Confirmação</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    Tem certeza que deseja {isEdit ? "atualizar" : "cadastrar"} esta matrícula?
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={fecharModalConfirmacao}>
+                        Cancelar
+                    </Button>
+                    <Button variant="primary" onClick={() => {
+                        fecharModalConfirmacao();
+                        handleSubmit(new Event('submit')); // Dispara o envio do formulário
+                    }}>
+                        Confirmar
+                    </Button>
+                </Modal.Footer>
+            </Modal>
+
         </div>
     );
 

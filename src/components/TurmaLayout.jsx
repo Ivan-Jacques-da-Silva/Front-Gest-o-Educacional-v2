@@ -21,7 +21,17 @@ const Turmas = () => {
         try {
             const response = await fetch(`${API_BASE_URL}/turmas`);
             const data = await response.json();
-            setTurmas(data);
+            const schoolId = localStorage.getItem("schoolId");
+            const userType = localStorage.getItem("userType");
+            const userName = localStorage.getItem("userName");
+
+            let turmasFiltradas = data.filter(turma => turma.cp_tr_id_escola == schoolId);
+
+            if (userType == 4) {
+                turmasFiltradas = turmasFiltradas.filter(turma => turma.nomeDoProfessor === userName);
+            }
+
+            setTurmas(turmasFiltradas);
         } catch (error) {
             console.error("Erro ao buscar turmas:", error);
         } finally {
@@ -209,8 +219,8 @@ const Turmas = () => {
                             >
                                 <button
                                     className={`page-link text-md fw-semibold radius-8 border-0 d-flex align-items-center justify-content-center h-32-px w-32-px ${currentPage === page
-                                            ? "bg-primary-600 text-white"
-                                            : "bg-neutral-200 text-secondary-light"
+                                        ? "bg-primary-600 text-white"
+                                        : "bg-neutral-200 text-secondary-light"
                                         }`}
                                     onClick={() => setCurrentPage(page)}
                                 >

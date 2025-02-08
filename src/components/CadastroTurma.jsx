@@ -3,10 +3,10 @@ import axios from "axios";
 import { API_BASE_URL } from "./config";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { Row, Col, Button, Form, Table } from "react-bootstrap";
+import { Row, Col, Button, Form, Table, Modal } from "react-bootstrap";
 import { FaSearch } from "react-icons/fa";
 
-const CadastroTurmaModal = ({ closeModal, isEdit, turmaDataToEdit }) => {
+const CadastroTurmaModal = ({ isEdit, turmaDataToEdit }) => {
   const [turmaData, setTurmaData] = useState({
     cp_tr_nome: "",
     cp_tr_data: "",
@@ -22,6 +22,13 @@ const CadastroTurmaModal = ({ closeModal, isEdit, turmaDataToEdit }) => {
   const [cursos, setCursos] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [alunosFiltrados, setAlunosFiltrados] = useState([]);
+  const [mensagem, setMensagem] = useState({ tipo: "", texto: "" });
+  const [showModal, setShowModal] = useState(false);
+
+
+  const handleShowModal = () => setShowModal(true);
+  const handleCloseModal = () => setShowModal(false);
+
 
   useEffect(() => {
     fetchProfessores();
@@ -126,28 +133,48 @@ const CadastroTurmaModal = ({ closeModal, isEdit, turmaDataToEdit }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+    setShowModal(false); // Fecha o modal de confirmação
+  
     try {
       const alunosSelecionados = turmaData.cp_tr_alunos.map((alunoId) =>
         alunosFiltrados.find((aluno) => aluno.cp_id === alunoId)
       );
-
+  
       const dataToSend = {
         ...turmaData,
         cp_tr_alunos: alunosSelecionados.map((aluno) => aluno.cp_id),
       };
-
-      await axios.post(`${API_BASE_URL}/register-turma`, dataToSend);
-      toast.success("Turma cadastrada com sucesso");
-      closeModal();
+  
+      const response = await axios.post(`${API_BASE_URL}/register-turma`, dataToSend);
+  
+      if (response.status === 200 || response.status === 201) {
+        toast.success("Turma cadastrada com sucesso!"); // Mantendo Toastify
+  
+        setTurmaData({
+          cp_tr_nome: "",
+          cp_tr_data: "",
+          cp_tr_id_professor: "",
+          cp_tr_id_escola: "",
+          cp_tr_alunos: [],
+          cp_tr_curso_id: "",
+        });
+  
+        setAlunosPorEscola([]);
+        setAlunosFiltrados([]);
+        setSearchTerm("");
+      } else {
+        throw new Error("Falha ao cadastrar turma");
+      }
     } catch (error) {
       console.error("Erro durante o processamento:", error);
-      toast.error("Erro ao realizar a solicitação");
+      toast.error("Erro ao realizar a solicitação!"); // Mantendo Toastify
     }
   };
+  
 
   return (
     <div>
+      <ToastContainer />
       <form className="form-container-cad" onSubmit={handleSubmit}>
         <Row>
           <Col md={6}>
@@ -314,11 +341,28 @@ const CadastroTurmaModal = ({ closeModal, isEdit, turmaDataToEdit }) => {
         </Row>
 
         <div className="mt-4 text-center">
-          <Button type="submit" variant="primary">
+          <Button variant="primary" onClick={handleShowModal}>
             {isEdit ? "Salvar Alterações" : "Cadastrar Turma"}
           </Button>
         </div>
       </form>
+      <Modal show={showModal} onHide={handleCloseModal} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Confirmar Cadastro</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          Tem certeza que deseja {isEdit ? "salvar as alterações" : "cadastrar esta turma"}?
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleCloseModal}>
+            Cancelar
+          </Button>
+          <Button variant="primary" onClick={handleSubmit}>
+            Confirmar
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
     </div>
   );
 };

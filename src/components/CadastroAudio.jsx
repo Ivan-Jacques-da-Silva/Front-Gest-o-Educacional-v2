@@ -3,18 +3,27 @@ import axios from "axios";
 import { API_BASE_URL } from "./config";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { Row, Col, Button, Form } from "react-bootstrap";
+import { Row, Col, Button, Form, Modal } from "react-bootstrap";
 
-const CadastroAudio = ({ closeModal, isEdit, audioDataToEdit }) => {
-    const [isLoading, setIsLoading] = useState()
-    const [audioData, setAudioData] = useState({
+const CadastroAudio = ({ isEdit, audioDataToEdit }) => {
+    const estadoInicial = {
         cp_curso_id: "",
-        cp_audio: null,
+        cp_audio: [],
         cp_link_youtube: "",
         cp_pdfs: [],
-    });
-
+    };
+    const [isLoading, setIsLoading] = useState()
     const [cursos, setCursos] = useState([]);
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [audioData, setAudioData] = useState(estadoInicial);
+
+
+    const handleConfirmSubmit = (e) => {
+        e.preventDefault(); // Agora recebe o evento corretamente
+        setShowConfirmModal(false);
+        handleSubmit(e); // Passa o evento corretamente
+    };
+
 
     const opcoesCursos = [
         { value: "FERRIS WHEEL 1", label: "[ING] - FERRIS WHEEL 1" },
@@ -60,7 +69,7 @@ const CadastroAudio = ({ closeModal, isEdit, audioDataToEdit }) => {
         { value: "MOMENTE B1", label: "[ALE] - MOMENTE B1" },
         { value: "ASPEKTE B2", label: "[ALE] - ASPEKTE B2" },
         { value: "DAF+", label: "[ALE] - DAF+" },
-        // { value: "TESTE", label: "[TT] - TESTE" }
+        { value: "TESTE", label: "[TT] - TESTE" }
     ];
 
     useEffect(() => {
@@ -91,20 +100,32 @@ const CadastroAudio = ({ closeModal, isEdit, audioDataToEdit }) => {
         const { files, name } = e.target;
 
         if (name === "cp_audio") {
-            setAudioData((prevAudioData) => ({ ...prevAudioData, cp_audio: files[0] }));
-        } else if (name === "cp_pdfs") {
-            const updatedFiles = Array.from(files).slice(0, 3).map((file) => ({ file, type: "pdf" }));
+            const novosAudios = [...(audioData.cp_audio || []), ...Array.from(files)];
+
             setAudioData((prevAudioData) => ({
                 ...prevAudioData,
-                cp_pdfs: [...prevAudioData.cp_pdfs, ...updatedFiles].slice(0, 3),
+                cp_audio: novosAudios,
+            }));
+        } else if (name === "cp_pdfs") {
+            if (files.length + audioData.cp_pdfs.length > 3) {
+                toast.error("Máximo de 3 PDFs permitidos.");
+                return;
+            }
+
+            const novosPdfs = [...(audioData.cp_pdfs || []), ...Array.from(files)].slice(0, 3);
+
+            setAudioData((prevAudioData) => ({
+                ...prevAudioData,
+                cp_pdfs: novosPdfs,
             }));
         }
     };
 
 
+
     const removeFile = (index, type) => {
         if (type === "audio") {
-            setAudioData((prevAudioData) => ({ ...prevAudioData, cp_audio: null }));
+            setAudioData((prevAudioData) => ({ ...prevAudioData, cp_audio: [] }));
         } else if (type === "pdf") {
             setAudioData((prevAudioData) => ({
                 ...prevAudioData,
@@ -113,47 +134,67 @@ const CadastroAudio = ({ closeModal, isEdit, audioDataToEdit }) => {
         }
     };
 
+
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsLoading(true);
 
-        let cursoId = audioData.cp_curso_id;
+        let cursoId = null;
 
         try {
-            const formData = new FormData();
-            formData.append("cp_curso_id", audioData.cp_curso_id);
-            formData.append("cp_link_youtube", audioData.cp_link_youtube);
+            // Criando o curso primeiro
+            const cursoFormData = new FormData();
+            cursoFormData.append("cp_nome_curso", audioData.cp_curso_id); // Nome do curso
+            cursoFormData.append("cp_youtube_link_curso", audioData.cp_link_youtube);
 
-            if (audioData.cp_audio) {
-                formData.append("cp_audio", audioData.cp_audio);
+            if (audioData.cp_pdfs.length > 0) {
+                audioData.cp_pdfs.forEach((pdf, index) => {
+                    cursoFormData.append(`pdf${index + 1}`, pdf);
+                });
             }
 
-            audioData.cp_pdfs.forEach((pdf, index) => {
-                formData.append(`pdf${index + 1}`, pdf.file);
+            const response = await axios.post(`${API_BASE_URL}/cursos`, cursoFormData, {
+                headers: { "Content-Type": "multipart/form-data" },
             });
 
-            if (isEdit) {
-                // Atualização de áudio
-                await axios.put(`${API_BASE_URL}/update-audio/${cursoId}`, formData, {
+            cursoId = response.data.cursoId; // Pegando o ID do curso criado
+
+            // Agora cadastrando os áudios no curso criado
+            if (audioData.cp_audio.length > 0) {
+                const audioFormData = new FormData();
+                audioData.cp_audio.forEach((audio) => {
+                    audioFormData.append("audios", audio);
+                });
+
+                await axios.post(`${API_BASE_URL}/register-audio/${cursoId}`, audioFormData, {
                     headers: { "Content-Type": "multipart/form-data" },
                 });
-                toast.success("Áudio atualizado com sucesso!");
-            } else {
-                // Cadastro de novo áudio
-                await axios.post(`${API_BASE_URL}/register-audio`, formData, {
-                    headers: { "Content-Type": "multipart/form-data" },
-                });
-                toast.success("Áudio cadastrado com sucesso!");
             }
 
-            closeModal();
+            toast.success("Curso e áudios cadastrados com sucesso!");
+
+            // Resetando os dados do formulário
+            setAudioData({
+                cp_curso_id: "",
+                cp_audio: [],
+                cp_link_youtube: "",
+                cp_pdfs: [],
+            });
+
         } catch (error) {
-            console.error("Erro ao cadastrar ou editar o áudio:", error);
-            toast.error("Erro ao cadastrar ou editar o áudio");
+            console.error("Erro ao cadastrar o curso ou áudio:", error);
+            toast.error("Erro ao cadastrar curso ou áudio");
+
+            // Se falhar no cadastro, excluir o curso criado
+            if (cursoId) {
+                await axios.delete(`${API_BASE_URL}/cursos/${cursoId}`);
+            }
         } finally {
             setIsLoading(false);
         }
     };
+
 
     return (
         <div>
@@ -165,24 +206,23 @@ const CadastroAudio = ({ closeModal, isEdit, audioDataToEdit }) => {
                                 <h6 className="card-title mb-0">Informações do Áudio</h6>
                             </div>
                             <div className="card-body">
-                                <Form.Group>
-                                    <Form.Label>Curso</Form.Label>
-                                    <Form.Control
-                                        as="select"
-                                        id="cp_curso_id"
-                                        name="cp_curso_id"
-                                        value={audioData.cp_curso_id}
-                                        onChange={handleChange}
-                                        required
-                                    >
-                                        <option value="">Selecione o curso</option>
-                                        {opcoesCursos.map((curso, index) => (
-                                            <option key={index} value={curso.value}>
-                                                {curso.label}
-                                            </option>
-                                        ))}
-                                    </Form.Control>
-                                </Form.Group>
+                                <Form.Control
+                                    as="select"
+                                    id="cp_curso_id"
+                                    name="cp_curso_id"
+                                    value={audioData.cp_curso_id}
+                                    onChange={handleChange}
+                                    required
+                                >
+                                    <option value="">Selecione o curso</option>
+                                    {opcoesCursos.map((curso) => (
+                                        <option key={curso.value} value={curso.value}>
+                                            {curso.label}
+                                        </option>
+                                    ))}
+                                </Form.Control>
+
+
 
                                 <Form.Group className="mt-3">
                                     <Form.Label>Link do YouTube</Form.Label>
@@ -209,37 +249,54 @@ const CadastroAudio = ({ closeModal, isEdit, audioDataToEdit }) => {
                                     <Col md={12}>
                                         <div className="upload-wrapper d-flex align-items-center gap-3 flex-wrap">
                                             {/* Upload de Áudio */}
-                                            {audioData.cp_audio && (
-                                                <div className="uploaded-file-preview position-relative h-120-px w-120-px border input-form-light radius-8 overflow-hidden border-dashed bg-light">
-                                                    <button
-                                                        type="button"
-                                                        className="remove-file position-absolute top-0 end-0 z-1 text-2xxl line-height-1 me-8 mt-8 d-flex"
-                                                        onClick={() => removeFile(0, "audio")}
-                                                    >
-                                                        ×
-                                                    </button>
-                                                    <div className="w-100 h-100 d-flex align-items-center justify-content-center">
-                                                        <span style={{ fontSize: '40px' }} className="text-primary text-4xl">🎵</span>
+                                            <div className="upload-wrapper d-flex align-items-center gap-3 flex-wrap">
+                                                {audioData.cp_audio.length > 0 ? (
+                                                    <div className="uploaded-file-preview position-relative h-120-px w-120-px border input-form-light radius-8 overflow-hidden border-dashed bg-light">
+                                                        <button
+                                                            type="button"
+                                                            className="remove-file position-absolute top-0 end-0 z-1 text-2xxl line-height-1 me-8 mt-8 d-flex"
+                                                            onClick={() => setAudioData(prev => ({ ...prev, cp_audio: [] }))}
+                                                        >
+                                                            ×
+                                                        </button>
+                                                        <div className="w-100 h-100 d-flex align-items-center justify-content-center">
+                                                            <span style={{ fontSize: '40px' }} className="text-primary text-4xl">🎵</span>
+                                                        </div>
+                                                        <p style={{
+                                                            position: "absolute",
+                                                            bottom: "-18px",  // Ajusta a posição para ficar mais alinhado
+                                                            left: "50%",
+                                                            transform: "translateX(-50%)",
+                                                            fontSize: "16px",
+                                                            fontWeight: "bold",
+                                                            color: "#333",
+                                                            textAlign: "center",
+                                                            lineHeight: "1.2"
+                                                        }}>
+                                                            <span>({audioData.cp_audio.length})</span><br />
+                                                            <span>áudio{audioData.cp_audio.length !== 1 ? "s" : ""}</span>
+                                                        </p>
                                                     </div>
-                                                </div>
-                                            )}
-                                            {!audioData.cp_audio && (
-                                                <label
-                                                    className="upload-file-multiple h-120-px w-120-px border input-form-light radius-8 overflow-hidden border-dashed bg-light d-flex align-items-center flex-column justify-content-center gap-1"
-                                                    htmlFor="upload-audio"
-                                                >
-                                                    <span className="text-secondary-light text-3xl">+</span>
-                                                    <span className="fw-semibold text-secondary-light">Áudio</span>
-                                                    <input
-                                                        id="upload-audio"
-                                                        type="file"
-                                                        hidden
-                                                        name="cp_audio"
-                                                        accept="audio/*"
-                                                        onChange={handleFileChange}
-                                                    />
-                                                </label>
-                                            )}
+                                                ) : (
+                                                    <label
+                                                        className="upload-file-multiple h-120-px w-120-px border input-form-light radius-8 overflow-hidden border-dashed bg-light d-flex align-items-center flex-column justify-content-center gap-1"
+                                                        htmlFor="upload-audio"
+                                                    >
+                                                        <span className="text-secondary-light text-3xl">+</span>
+                                                        <span className="fw-semibold text-secondary-light">Áudio</span>
+                                                        <input
+                                                            id="upload-audio"
+                                                            type="file"
+                                                            hidden
+                                                            name="cp_audio"
+                                                            accept="audio/*"
+                                                            multiple
+                                                            onChange={handleFileChange}
+                                                        />
+                                                    </label>
+                                                )}
+                                            </div>
+
 
                                             {/* Upload de PDFs */}
                                             {audioData.cp_pdfs.map((pdf, index) => (
@@ -277,6 +334,7 @@ const CadastroAudio = ({ closeModal, isEdit, audioDataToEdit }) => {
                                                     />
                                                 </label>
                                             )}
+
                                         </div>
                                     </Col>
 
@@ -288,11 +346,28 @@ const CadastroAudio = ({ closeModal, isEdit, audioDataToEdit }) => {
                 </Row>
 
                 <div className="mt-4 text-center">
-                    <Button type="submit" variant="primary">
+                    <Button type="button" variant="primary" onClick={() => setShowConfirmModal(true)}>
                         {isEdit ? "Salvar Alterações" : "Cadastrar Áudio"}
                     </Button>
+
                 </div>
             </form>
+            <Modal show={showConfirmModal} onHide={() => setShowConfirmModal(false)} centered>
+                <Modal.Header closeButton>
+                    <Modal.Title>Confirmar Cadastro</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <p>Tem certeza de que deseja cadastrar este áudio?</p>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={() => setShowConfirmModal(false)}>Cancelar</Button>
+                    <Button variant="primary" onClick={(e) => handleConfirmSubmit(e)}>
+                        Confirmar
+                    </Button>
+
+                </Modal.Footer>
+            </Modal>
+
         </div>
     );
 };
