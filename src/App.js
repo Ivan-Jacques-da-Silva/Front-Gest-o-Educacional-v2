@@ -1,4 +1,5 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
+// import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 // import HomePageTwo from "./pages/HomePageTwo";
 import HomePageThree from "./pages/HomePageThree";
@@ -97,6 +98,9 @@ import MatriculaPage from "./pages/MatriculaPage";
 import SalaDeAula from "./pages/SalaDeAulaPage.jsx";
 import SalaDeAulaAluno from "./pages/SalaDeAulaAlunoPage.jsx";
 import Agenda from "./pages/AgendaPage.jsx";
+import PaginaCadastroUsuario from "./pages/PaginaCadastroUsuario.jsx";
+import PaginaCadastroMatricula from "./pages/PaginaCadastroMatricula";
+
 // import CadastroUsuario from "./components/CadastroUsuario";
 
 
@@ -117,9 +121,11 @@ function App() {
         {/* SL */}
         <Route exact path="/add-user" element={<AddUserPage />} />
         <Route exact path="/cadastro-usuario" element={<CadastroUsuario />} />
+        <Route exact path="/cadastro-usuario/:id" element={<PaginaCadastroUsuario />} />
         <Route exact path="/cadastro-escola" element={<CadastroEscola />} />
         <Route exact path="/cadastro-turma" element={<CadastroTurma />} />
         <Route exact path="/cadastro-matricula" element={<CadastroMatricula />} />
+        <Route exact path="/cadastro-matricula/:matriculaId" element={<PaginaCadastroMatricula />} />
         <Route exact path="/cadastro-audio" element={<CadastroAudio />} />
         <Route exact path="/matriculas" element={<MatriculaPage />} />
         <Route exact path="/usuarios" element={<UsuarioPage />} />
@@ -133,7 +139,7 @@ function App() {
         <Route exact path="/sala-de-aula-aluno" element={<SalaDeAulaAluno />} />
         <Route exact path="/agenda" element={<Agenda />} />
 
-        
+
         <Route exact path="/alert" element={<AlertPage />} />
         <Route exact path="/assign-role" element={<AssignRolePage />} />
         <Route exact path="/avatar" element={<AvatarPage />} />

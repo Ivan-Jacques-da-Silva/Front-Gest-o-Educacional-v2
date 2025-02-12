@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Icon } from "@iconify/react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "./config";
 
 const Usuarios = () => {
@@ -13,7 +13,7 @@ const Usuarios = () => {
     const [selectedUserType, setSelectedUserType] = useState("");
     const [showOnlyBirthdays, setShowOnlyBirthdays] = useState(false);
     const [loading, setLoading] = useState(false);
-
+    const navigate = useNavigate();
     useEffect(() => {
         fetchUsers();
     }, []);
@@ -85,16 +85,21 @@ const Usuarios = () => {
     };
 
     // Certifique-se de que o filteredUsers só seja calculado após a função estar definida
+    const schoolId = Number(localStorage.getItem("schoolId"));
+    const userType = Number(localStorage.getItem("userType"));
+
     const filteredUsers = users.filter((user) => {
-        const matchesSearch = user.cp_nome
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase());
-        const matchesType =
-            !selectedUserType || mapUserType(user.cp_tipo_user) === selectedUserType;
-        const matchesBirthday =
-            !showOnlyBirthdays || isBirthdaySoon(user.cp_datanascimento);
-        return matchesSearch && matchesType && matchesBirthday;
+        const isAdmin = userType === 1; // Se userType for 1, pode ver todos os usuários
+        const matchesSchool = isAdmin || user.cp_escola_id === schoolId; // Admin vê todos, outros só da escola
+        const notDeleted = user.cp_excluido !== 1; // Não exibir usuários excluídos
+        const matchesSearch = user.cp_nome.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesType = !selectedUserType || mapUserType(user.cp_tipo_user) === selectedUserType;
+        const matchesBirthday = !showOnlyBirthdays || isBirthdaySoon(user.cp_datanascimento);
+
+        return matchesSchool && notDeleted && matchesSearch && matchesType && matchesBirthday;
     });
+
+
 
     const totalPaginas = Math.ceil(filteredUsers.length / usersPerPage);
 
@@ -158,13 +163,13 @@ const Usuarios = () => {
                     </button>
                 </div>
                 <Link
-                    to="#"
-                    onClick={() => setShowModal(true)}
+                    to="/cadastro-usuario"
                     className="btn btn-primary text-sm btn-sm px-12 py-12 radius-8 d-flex align-items-center gap-2"
                 >
                     <Icon icon="ic:baseline-plus" className="icon text-xl line-height-1" />
                     Adicionar Novo
                 </Link>
+
             </div>
             <div className="card-body p-24">
                 <div className="table-responsive scroll-sm">
@@ -203,9 +208,8 @@ const Usuarios = () => {
                                                 <Icon icon="iconamoon:eye-light" />
                                             </Link>
                                             <Link
-                                                to="#"
+                                                to={`/cadastro-usuario/${user.cp_id}`}
                                                 className="w-32-px h-32-px me-8 bg-success-focus text-success-main rounded-circle d-inline-flex align-items-center justify-content-center"
-                                                onClick={() => openEditModal(user)}
                                             >
                                                 <Icon icon="lucide:edit" />
                                             </Link>

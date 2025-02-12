@@ -7,11 +7,16 @@ import { FaEye, FaEyeSlash } from "react-icons/fa";
 import InputMask from "react-input-mask";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useNavigate } from "react-router-dom";
+
 
 
 
 // const CadastroUsuarioModal = ({ closeModal, escolas = [] }) => {
-const CadastroUsuarioModal = () => {
+const CadastroUsuarioModal = ({ userId }) => {
+    // const { id } = useParams();
+    const navigate = useNavigate();
+
     const [userData, setUserData] = useState({
         cp_nome: "",
         cp_email: "",
@@ -60,6 +65,19 @@ const CadastroUsuarioModal = () => {
         fetchEscolas();
     }, []);
 
+    useEffect(() => {
+        if (userId) {
+            axios.get(`${API_BASE_URL}/users/${userId}`)
+                .then(response => {
+                    setUserData(response.data); // Preenche o formulário
+                })
+                .catch(error => {
+                    console.error("Erro ao buscar usuário:", error);
+                    toast.error("Erro ao carregar os dados do usuário.");
+                });
+        }
+    }, [userId]);
+
 
     useEffect(() => {
         const userTypeFromStorage = localStorage.getItem("userType");
@@ -100,36 +118,52 @@ const CadastroUsuarioModal = () => {
     };
     const handleSubmit = async (e) => {
         e.preventDefault();
-        handleCloseModal(); // Fecha o modal
 
         try {
-            const formData = new FormData();
-            Object.keys(userData).forEach((key) => {
-                formData.append(key, userData[key]);
-            });
-
-            const response = await axios.post(`${API_BASE_URL}/register`, formData, {
-                headers: {
-                    "Content-Type": "multipart/form-data",
-                },
-            });
-
-            if (response.data.exists) {
-                toast.error("Usuário já cadastrado");
-            } else {
-                toast.success("Usuário cadastrado com sucesso!");
-                setUserData({  // Limpar todos os campos
-                    cp_nome: "", cp_email: "", cp_login: "", cp_password: "",
-                    cp_tipo_user: "", cp_rg: "", cp_cpf: "", cp_datanascimento: "",
-                    cp_estadocivil: "", cp_cnpj: "", cp_ie: "", cp_whatsapp: "",
-                    cp_telefone: "", cp_empresaatuacao: "", cp_profissao: "",
-                    cp_end_cidade_estado: "", cp_end_rua: "", cp_end_num: "",
-                    cp_end_cep: "", cp_descricao: "", cp_escola_id: ""
+            if (userId) {
+                // Modo de edição: Enviar como JSON, pois o backend espera JSON e não FormData
+                const response = await axios.put(`${API_BASE_URL}/edit-user/${userId}`, userData, {
+                    headers: { "Content-Type": "application/json" }, // Alterado para JSON
                 });
+
+                if (response.status === 200) {
+                    toast.success("Usuário editado com sucesso!");
+                    handleCloseModal();
+                    navigate("/usuarios");
+                } else {
+                    toast.error("Erro ao editar usuário.");
+                }
+            } else {
+                // Modo de cadastro: Criar novo usuário
+                const formData = new FormData();
+                Object.keys(userData).forEach((key) => {
+                    formData.append(key, userData[key]);
+                });
+
+                const response = await axios.post(`${API_BASE_URL}/register`, formData, {
+                    headers: { "Content-Type": "multipart/form-data" }, // Mantém para cadastro
+                });
+
+                if (response.data.exists) {
+                    toast.error("Usuário já cadastrado");
+                    handleCloseModal();
+                } else {
+                    toast.success("Usuário cadastrado com sucesso!");
+
+                    // Resetar os campos após o cadastro
+                    setUserData({
+                        cp_nome: "", cp_email: "", cp_login: "", cp_password: "",
+                        cp_tipo_user: "", cp_rg: "", cp_cpf: "", cp_datanascimento: "",
+                        cp_estadocivil: "", cp_cnpj: "", cp_ie: "", cp_whatsapp: "",
+                        cp_telefone: "", cp_empresaatuacao: "", cp_profissao: "",
+                        cp_end_cidade_estado: "", cp_end_rua: "", cp_end_num: "",
+                        cp_end_cep: "", cp_descricao: "", cp_escola_id: ""
+                    });
+                }
             }
         } catch (error) {
-            console.error("Erro ao cadastrar:", error.response?.data || error.message);
-            toast.error("Erro ao cadastrar usuário. Tente novamente.");
+            console.error("Erro ao salvar:", error.response?.data || error.message);
+            toast.error("Erro ao salvar usuário. Tente novamente.");
         }
     };
 
@@ -507,25 +541,28 @@ const CadastroUsuarioModal = () => {
 
                 <div className="mt-4 text-center">
                     <button type="button" className="btn btn-primary" onClick={handleShowModal}>
-                        Cadastrar Usuário
+                        {userId ? "Salvar Edição" : "Cadastrar Usuário"}
                     </button>
 
                 </div>
             </form>
             <Modal show={showModal} onHide={handleCloseModal} centered>
                 <Modal.Header closeButton>
-                    <Modal.Title>Confirmar Cadastro</Modal.Title>
+                    <Modal.Title>{userId ? "Confirmar Edição" : "Confirmar Cadastro"}</Modal.Title>
                 </Modal.Header>
-                <Modal.Body>Tem certeza que deseja cadastrar este usuário?</Modal.Body>
+                <Modal.Body>
+                    {userId ? "Tem certeza que deseja salvar as alterações deste usuário?" : "Tem certeza que deseja cadastrar este usuário?"}
+                </Modal.Body>
                 <Modal.Footer>
                     <Button variant="secondary" onClick={handleCloseModal}>
                         Cancelar
                     </Button>
                     <Button variant="primary" onClick={handleSubmit}>
-                        Confirmar
+                        {userId ? "Salvar Alterações" : "Cadastrar"}
                     </Button>
                 </Modal.Footer>
             </Modal>
+
 
         </div>
     );

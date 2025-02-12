@@ -186,11 +186,12 @@ const Usuarios = () => {
                                                 <Icon icon="iconamoon:eye-light" />
                                             </Link>
                                             <Link
-                                                to="#"
+                                                to={`/cadastro-matricula/${matricula.cp_mt_id}`}
                                                 className="w-32-px h-32-px me-8 bg-success-focus text-success-main rounded-circle d-inline-flex align-items-center justify-content-center"
                                             >
                                                 <Icon icon="lucide:edit" />
                                             </Link>
+
                                             <Link
                                                 to="#"
                                                 className="w-32-px h-32-px me-8 bg-danger-focus text-danger-main rounded-circle d-inline-flex align-items-center justify-content-center"
@@ -240,8 +241,8 @@ const Usuarios = () => {
                             <li key={page} className={`page-item ${currentPage === page ? "active" : ""}`}>
                                 <button
                                     className={`page-link text-md fw-semibold radius-8 border-0 d-flex align-items-center justify-content-center h-32-px w-32-px ${currentPage === page
-                                            ? "bg-primary-600 text-white"
-                                            : "bg-neutral-200 text-secondary-light"
+                                        ? "bg-primary-600 text-white"
+                                        : "bg-neutral-200 text-secondary-light"
                                         }`}
                                     onClick={() => setCurrentPage(page)}
                                 >
