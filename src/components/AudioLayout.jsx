@@ -202,13 +202,18 @@ const Audios = () => {
                                                         {audio.cp_nome_audio}
                                                     </td>
                                                     <td className="text-center">
-                                                        <audio controls controlsList="nodownload">
+                                                        {/* <audio controls controlsList="nodownload">
                                                             <source
                                                                 src={`${API_BASE_URL}/audios/${audio.cp_nome_audio}`}
                                                                 type="audio/mpeg"
                                                             />
                                                             Seu navegador não suporta o elemento <code>audio</code>.
+                                                        </audio> */}
+                                                        <audio controls preload="none" controlsList="nodownload">
+                                                            <source src={`${API_BASE_URL}/audio/${audio.cp_nome_audio}`} type="audio/mpeg" />
+                                                            Seu navegador não suporta o elemento <code>audio</code>.
                                                         </audio>
+
                                                     </td>
                                                 </tr>
                                             ))
