@@ -10,11 +10,11 @@ const menuItems = [
     { texto: "Matrícula", icone: "fa6-solid:chalkboard-user", classe: "bg-yellow", to: "/cadastro-matricula", permissoes: [1, 2, 3] },
     { texto: "Audios", icone: "fa-solid:book", classe: "bg-orange", to: "/audios", permissoes: [1, 2, 4] },
     { texto: "Turmas", icone: "gridicons:multiple-users", classe: "bg-cyan", to: "/turmas", permissoes: [1, 2, 3, 4, 5] },
-    { texto: "Sala de Aula", icone: "fa-solid:clipboard-list", classe: "bg-pink", to: "/chamada", permissoes: [1, 2, 3, 4, 5] },
+    { texto: "Sala de Aula", icone: "fa-solid:clipboard-list", classe: "bg-pink", to: localStorage.getItem("userType") === "5" ? "/sala-de-aula-aluno" : "/sala-de-aula", permissoes: [1, 2, 3, 4, 5] },
     { texto: "Certificado", icone: "mdi:certificate", classe: "bg-orange", to: "/certificado", permissoes: [1] },
     { texto: "Avaliações", icone: "fa-solid:clipboard-check", classe: "bg-purple", to: "/avaliacoes", permissoes: [1] },
-    { texto: "Material", icone: "fa-solid:file-alt", classe: "bg-yellow", to: "/material", permissoes: [1, 2, 3] },
-    { texto: "Material Extra", icone: "mdi:folder-open", classe: "bg-yellow", to: "/material-extra", permissoes: [1, 2, 3] },
+    { texto: "Treinamento", icone: "fa-solid:file-alt", classe: "bg-yellow", to: "/treinamento", permissoes: [1, 2] },
+    { texto: "Material Extra", icone: "mdi:folder-open", classe: "bg-yellow", to: "/material-extra", permissoes: [1, 2] },
 ];
 
 

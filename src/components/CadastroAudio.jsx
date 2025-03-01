@@ -69,7 +69,7 @@ const CadastroAudio = ({ isEdit, audioDataToEdit }) => {
         { value: "MOMENTE B1", label: "[ALE] - MOMENTE B1" },
         { value: "ASPEKTE B2", label: "[ALE] - ASPEKTE B2" },
         { value: "DAF+", label: "[ALE] - DAF+" },
-        { value: "TESTE", label: "[TT] - TESTE" }
+        // { value: "TESTE", label: "[TT] - TESTE" }
     ];
 
     useEffect(() => {

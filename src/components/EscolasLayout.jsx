@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Icon } from "@iconify/react";
+import { Link } from "react-router-dom";
 import { API_BASE_URL } from "./config";
+import { Modal, Button } from "react-bootstrap";
 
 const Escolas = () => {
     const [escolas, setEscolas] = useState([]);
@@ -11,6 +13,8 @@ const Escolas = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [sortDirection, setSortDirection] = useState("asc");
     const [loading, setLoading] = useState(false);
+    const [mostrarModalExclusao, setMostrarModalExclusao] = useState(false);
+    const [idEscolaParaExcluir, setIdEscolaParaExcluir] = useState(null);
 
     useEffect(() => {
         fetchEscolas();
@@ -29,16 +33,34 @@ const Escolas = () => {
         }
     };
 
-    const handleDelete = async (escolaId) => {
+    const abrirModalExclusao = (id) => {
+        setIdEscolaParaExcluir(id);
+        setMostrarModalExclusao(true);
+    };
+
+    // Função para confirmar a exclusão
+    const handleConfirmDelete = async () => {
         try {
-            await fetch(`${API_BASE_URL}/delete-escola/${escolaId}`, {
+            await fetch(`${API_BASE_URL}/delete-escola/${idEscolaParaExcluir}`, {
                 method: "DELETE",
             });
+            setMostrarModalExclusao(false);
             fetchEscolas();
         } catch (error) {
             console.error("Erro ao excluir escola:", error);
         }
     };
+
+    // const handleDelete = async (escolaId) => {
+    //     try {
+    //         await fetch(`${API_BASE_URL}/delete-escola/${escolaId}`, {
+    //             method: "DELETE",
+    //         });
+    //         fetchEscolas();
+    //     } catch (error) {
+    //         console.error("Erro ao excluir escola:", error);
+    //     }
+    // };
 
     const openEditModal = (escolaId) => {
         const escola = escolas.find((escola) => escola.cp_ec_id === escolaId);
@@ -125,13 +147,13 @@ const Escolas = () => {
                         Ordenar por {sortDirection === "asc" ? "A-Z" : "Z-A"}
                     </button>
                 </div>
-                <button
-                    onClick={handleAddModal}
+                <Link
+                    to={`/cadastro-escola`}
                     className="btn btn-primary text-sm btn-sm px-12 py-12 radius-8 d-flex align-items-center gap-2"
                 >
                     <Icon icon="ic:baseline-plus" className="icon text-xl line-height-1" />
                     Adicionar Novo
-                </button>
+                </Link>
             </div>
             <div className="card-body p-24">
                 <div className="table-responsive scroll-sm">
@@ -164,18 +186,20 @@ const Escolas = () => {
                                         </td>
                                         <td>{escola.cp_ec_endereco_cidade}</td>
                                         <td className="text-center">
-                                            <button
-                                                onClick={() => openEditModal(escola.cp_ec_id)}
+                                            <Link
+                                                to={`/cadastro-escola/${escola.cp_ec_id}`}
                                                 className="w-32-px h-32-px me-8 bg-success-focus text-success-main rounded-circle d-inline-flex align-items-center justify-content-center"
                                             >
                                                 <Icon icon="lucide:edit" />
-                                            </button>
+                                            </Link>
+
                                             <button
-                                                onClick={() => handleDelete(escola.cp_ec_id)}
+                                                onClick={() => abrirModalExclusao(escola.cp_ec_id)}
                                                 className="w-32-px h-32-px me-8 bg-danger-focus text-danger-main rounded-circle d-inline-flex align-items-center justify-content-center"
                                             >
                                                 <Icon icon="mingcute:delete-2-line" />
                                             </button>
+
                                         </td>
                                     </tr>
                                 ))
@@ -213,8 +237,8 @@ const Escolas = () => {
                             >
                                 <button
                                     className={`page-link text-md fw-semibold radius-8 border-0 d-flex align-items-center justify-content-center h-32-px w-32-px ${currentPage === page
-                                            ? "bg-primary-600 text-white"
-                                            : "bg-neutral-200 text-secondary-light"
+                                        ? "bg-primary-600 text-white"
+                                        : "bg-neutral-200 text-secondary-light"
                                         }`}
                                     onClick={() => setCurrentPage(page)}
                                 >
@@ -266,13 +290,22 @@ const Escolas = () => {
                 </div>
 
             </div>
-            {/* {showModal && (
-        <CadastroEscolaModal
-          closeModal={closeModal}
-          isEdit={!!escolaDataToEdit}
-          escolaDataToEdit={escolaDataToEdit}
-        />
-      )} */}
+            <Modal show={mostrarModalExclusao} onHide={() => setMostrarModalExclusao(false)} centered>
+                <Modal.Header closeButton>
+                    <Modal.Title>Confirmar Exclusão</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    Tem certeza que deseja excluir esta escola?
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={() => setMostrarModalExclusao(false)}>
+                        Cancelar
+                    </Button>
+                    <Button variant="primary" onClick={handleConfirmDelete}>
+                        Confirmar
+                    </Button>
+                </Modal.Footer>
+            </Modal>
         </div>
     );
 };

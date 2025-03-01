@@ -11,6 +11,7 @@ import EmailPage from "./pages/EmailPage";
 import AddUserPage from "./pages/AddUserPage";
 import CadastroUsuario from "./pages/PaginaCadastroUsuario";
 import CadastroEscola from "./pages/PaginaCadastroEscola";
+import PaginaCadastroEscola from "./pages/PaginaCadastroEscola";
 import CadastroMatricula from "./pages/PaginaCadastroMatricula";
 import CadastroTurma from "./pages/PaginaCadastroTurma";
 import CadastroAudio from "./pages/PaginaCadastroAudio";
@@ -100,6 +101,7 @@ import SalaDeAulaAluno from "./pages/SalaDeAulaAlunoPage.jsx";
 import Agenda from "./pages/AgendaPage.jsx";
 import PaginaCadastroUsuario from "./pages/PaginaCadastroUsuario.jsx";
 import PaginaCadastroMatricula from "./pages/PaginaCadastroMatricula";
+import PaginaCadastroTurma from "./pages/PaginaCadastroTurma";
 
 // import CadastroUsuario from "./components/CadastroUsuario";
 
@@ -123,7 +125,9 @@ function App() {
         <Route exact path="/cadastro-usuario" element={<CadastroUsuario />} />
         <Route exact path="/cadastro-usuario/:id" element={<PaginaCadastroUsuario />} />
         <Route exact path="/cadastro-escola" element={<CadastroEscola />} />
+        <Route exact path="/cadastro-escola/:id" element={<PaginaCadastroEscola />} />
         <Route exact path="/cadastro-turma" element={<CadastroTurma />} />
+        <Route exact path="/cadastro-turma/:id" element={<PaginaCadastroTurma />} />
         <Route exact path="/cadastro-matricula" element={<CadastroMatricula />} />
         <Route exact path="/cadastro-matricula/:matriculaId" element={<PaginaCadastroMatricula />} />
         <Route exact path="/cadastro-audio" element={<CadastroAudio />} />

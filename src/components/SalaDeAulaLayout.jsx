@@ -7,6 +7,7 @@ import Turmas from "./components/Turmas.jsx";
 import HistoricoChamadas from "./components/HistoricoChamadas.jsx";
 // import ResumoMaterial from "./components/ResumoMaterial.jsx";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "./config";
 
 const SalaDeAula = () => {
@@ -16,6 +17,16 @@ const SalaDeAula = () => {
     const [historicoChamadas, setHistoricoChamadas] = useState([]);
     const [showResumoCard, setShowResumoCard] = useState(false);
     const [selectedChamadaId, setSelectedChamadaId] = useState(null);
+
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        const userType = localStorage.getItem("userType");
+        if (userType === "5") {
+            navigate("/sala-de-aula-aluno");
+        }
+    }, [navigate]);
+
 
     const carregarTurmas = async () => {
         try {

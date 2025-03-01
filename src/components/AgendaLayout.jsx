@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
+import './calendar.css'
 
 function AgendaLayout() {
     const [events, setEvents] = useState([]);
@@ -31,46 +32,53 @@ function AgendaLayout() {
     };
 
     return (
-        <div className="agenda-container d-flex">
-            {/* Card da Esquerda */}
-            <div className="card p-3 me-3" style={{ flex: 1 }}>
-                <span className="card-title">Eventos do Dia</span>
-                <div className="event-list mt-3">
-                    {events.map((event, index) => (
-                        <div key={index} className="event-item mb-2">
-                            <p><strong>{event.title}</strong></p>
-                            <p>{event.date}</p>
-                            <p>{event.description}</p>
+        <div className="agenda-container container-fluid p-3">
+            <div className="row">
+                {/* Card da Esquerda */}
+                <div className="col-md-4 col-12 mb-3">
+                    <div className="card h-100 p-3">
+                        <span className="card-title">Eventos do Dia</span>
+                        <div className="event-list mt-3">
+                            {events.map((event, index) => (
+                                <div key={index} className="event-item mb-2">
+                                    <p><strong>{event.title}</strong></p>
+                                    <p>{event.date}</p>
+                                    <p>{event.description}</p>
+                                </div>
+                            ))}
                         </div>
-                    ))}
+                        <button className="btn btn-primary mt-3" onClick={() => setModalOpen(true)}>Cadastrar Evento</button>
+                        <span>Em desenvolvimento</span>
+                    </div>
                 </div>
-                <button className="btn btn-primary mt-3" onClick={() => setModalOpen(true)}>Cadastrar Evento</button>
-            </div>
 
-            {/* Card da Direita */}
-            <div className="card p-3" style={{ flex: 2 }}>
-                <span className="card-title">Calendário</span>
-                <div className="calendar-wrapper mt-3">
-                    <FullCalendar
-                        plugins={[dayGridPlugin, interactionPlugin]}
-                        initialView="dayGridMonth"
-                        events={events}
-                        dateClick={handleDateClick}
-                        eventClick={handleEventClick}
-                        locale="pt-br"
-                        headerToolbar={{
-                            left: 'prev,next today',
-                            center: 'title',
-                            right: 'dayGridMonth,dayGridWeek,dayGridDay',
-                        }}
-                        buttonText={{
-                            today: 'Hoje',
-                            month: 'Mês',
-                            week: 'Semana',
-                            day: 'Dia',
-                        }}
-                        editable={true}
-                    />
+                {/* Card da Direita */}
+                <div className="col-md-8 col-12">
+                    <div className="card h-100 p-3">
+                        <span className="card-title">Calendário</span>
+                        <div className="calendar-wrapper mt-3">
+                            <FullCalendar
+                                plugins={[dayGridPlugin, interactionPlugin]}
+                                initialView="dayGridMonth"
+                                events={events}
+                                dateClick={handleDateClick}
+                                eventClick={handleEventClick}
+                                locale="pt-br"
+                                headerToolbar={{
+                                    left: 'prev,next',
+                                    center: 'title',
+                                    right: window.innerWidth <= 768 ? 'dayGridMonth,dayGridWeek,dayGridDay' : 'dayGridMonth,dayGridWeek,dayGridDay',
+                                }}
+                                buttonText={{
+                                    today: 'Hoje',
+                                    month: 'Mês',
+                                    week: 'Semana',
+                                    day: 'Dia',
+                                }}
+                                editable={true}
+                            />
+                        </div>
+                    </div>
                 </div>
             </div>
 

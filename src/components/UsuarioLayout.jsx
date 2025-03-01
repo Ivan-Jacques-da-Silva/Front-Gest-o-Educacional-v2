@@ -201,12 +201,12 @@ const Usuarios = () => {
                                         <td>{new Date(user.cp_datanascimento).toLocaleDateString()}</td>
                                         <td>{mapUserType(user.cp_tipo_user)}</td>
                                         <td className="text-center">
-                                            <Link
+                                            {/* <Link
                                                 to="#"
                                                 className="w-32-px h-32-px me-8 bg-primary-light text-primary-600 rounded-circle d-inline-flex align-items-center justify-content-center"
                                             >
                                                 <Icon icon="iconamoon:eye-light" />
-                                            </Link>
+                                            </Link> */}
                                             <Link
                                                 to={`/cadastro-usuario/${user.cp_id}`}
                                                 className="w-32-px h-32-px me-8 bg-success-focus text-success-main rounded-circle d-inline-flex align-items-center justify-content-center"

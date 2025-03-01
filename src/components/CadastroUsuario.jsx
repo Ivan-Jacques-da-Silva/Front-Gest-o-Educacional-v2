@@ -136,9 +136,15 @@ const CadastroUsuarioModal = ({ userId }) => {
             } else {
                 // Modo de cadastro: Criar novo usuário
                 const formData = new FormData();
-                Object.keys(userData).forEach((key) => {
-                    formData.append(key, userData[key]);
+                if (userData.cp_foto_perfil) {
+                    formData.append("cp_foto_perfil", userData.cp_foto_perfil);
+                }
+                Object.keys(userData).forEach((chave) => {
+                    if (chave !== "cp_foto_perfil") {
+                        formData.append(chave, userData[chave]);
+                    }
                 });
+
 
                 const response = await axios.post(`${API_BASE_URL}/register`, formData, {
                     headers: { "Content-Type": "multipart/form-data" }, // Mantém para cadastro

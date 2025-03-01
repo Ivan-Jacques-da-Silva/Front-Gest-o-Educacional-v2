@@ -131,7 +131,7 @@ const Usuarios = () => {
                     </select>
                 </div>
                 <Link
-                    to="#"
+                    to="/cadastro-matricula"
                     onClick={() => setShowModal(true)}
                     className="btn btn-primary text-sm btn-sm px-12 py-12 radius-8 d-flex align-items-center gap-2"
                 >
@@ -179,12 +179,12 @@ const Usuarios = () => {
                                         </td>
                                         <td>{`${matricula.cp_mt_parcelas_pagas}/${matricula.cp_mt_quantas_parcelas}`}</td>
                                         <td className="text-center">
-                                            <Link
+                                            {/* <Link
                                                 to="#"
                                                 className="w-32-px h-32-px me-8 bg-primary-light text-primary-600 rounded-circle d-inline-flex align-items-center justify-content-center"
                                             >
                                                 <Icon icon="iconamoon:eye-light" />
-                                            </Link>
+                                            </Link> */}
                                             <Link
                                                 to={`/cadastro-matricula/${matricula.cp_mt_id}`}
                                                 className="w-32-px h-32-px me-8 bg-success-focus text-success-main rounded-circle d-inline-flex align-items-center justify-content-center"

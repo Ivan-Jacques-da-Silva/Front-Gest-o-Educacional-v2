@@ -6,7 +6,8 @@ import "react-toastify/dist/ReactToastify.css";
 import { Row, Col, Button, Form, Table, Modal } from "react-bootstrap";
 import { FaSearch } from "react-icons/fa";
 
-const CadastroTurmaModal = ({ isEdit, turmaDataToEdit }) => {
+const CadastroTurmaModal = ({ turmaID }) => {
+  console.log("Prop turmaID recebida:", turmaID);
   const [turmaData, setTurmaData] = useState({
     cp_tr_nome: "",
     cp_tr_data: "",
@@ -15,6 +16,10 @@ const CadastroTurmaModal = ({ isEdit, turmaDataToEdit }) => {
     cp_tr_alunos: [],
     cp_tr_curso_id: "",
   });
+  useEffect(() => {
+    console.log("turmaID recebido:", turmaID);
+  }, [turmaID]);
+
 
   const [professores, setProfessores] = useState([]);
   const [escolas, setEscolas] = useState([]);
@@ -36,26 +41,79 @@ const CadastroTurmaModal = ({ isEdit, turmaDataToEdit }) => {
     fetchCursos();
   }, []);
 
+  // Só busca alunos se não for edição (turmaID inexistente)
   useEffect(() => {
-    if (turmaData.cp_tr_id_escola) {
+    if (!turmaID && turmaData.cp_tr_id_escola) {
       fetchAlunosPorEscola(turmaData.cp_tr_id_escola);
     }
-  }, [turmaData.cp_tr_id_escola]);
+  }, [turmaData.cp_tr_id_escola, turmaID]);
+
+  // Reordena os alunos sempre que a lista ou os alunos selecionados mudarem
+  useEffect(() => {
+    if (alunosPorEscola.length) {
+      const alunosOrdenados = [...alunosPorEscola].sort((a, b) => {
+        const aNaTurma = turmaData.cp_tr_alunos.includes(a.cp_id) ? -1 : 1;
+        const bNaTurma = turmaData.cp_tr_alunos.includes(b.cp_id) ? -1 : 1;
+        return aNaTurma - bNaTurma || a.cp_nome.localeCompare(b.cp_nome);
+      });
+      setAlunosFiltrados(alunosOrdenados);
+    }
+  }, [turmaData.cp_tr_alunos, alunosPorEscola]);
+
+
+  const fetchAlunosPorEscola = async (escolaId) => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/escola/alunos/${escolaId}`);
+      setAlunosPorEscola(response.data);
+      setAlunosFiltrados(response.data);
+    } catch (error) {
+      console.error("Erro ao buscar os alunos da escola:", error);
+    }
+  };
 
   useEffect(() => {
-    if (isEdit && turmaDataToEdit) {
-      const formattedDate = new Date(turmaDataToEdit.cp_tr_data)
-        .toISOString()
-        .split("T")[0];
-      setTurmaData({
-        ...turmaDataToEdit,
-        cp_tr_data: formattedDate,
-        cp_tr_alunos: Array.isArray(turmaDataToEdit.cp_tr_alunos)
-          ? turmaDataToEdit.cp_tr_alunos.map((aluno) => aluno.cp_id)
-          : [],
-      });
+    if (turmaID) {
+      axios.get(`${API_BASE_URL}/turmas/${turmaID}`)
+        .then(async (response) => {
+          if (response.data) {
+            setTurmaData({
+              ...response.data,
+              cp_tr_data: new Date(response.data.cp_tr_data).toISOString().split("T")[0],
+            });
+
+            // ✅ Busca os alunos apenas uma vez
+            const res = await axios.get(`${API_BASE_URL}/escola/alunos/${response.data.cp_tr_id_escola}`);
+
+            if (res.data.length > 0) {
+              const todosAlunos = res.data;
+              const alunosDaTurma = todosAlunos.filter(aluno => aluno.cp_turma_id == turmaID);
+              const alunosIDs = alunosDaTurma.map(aluno => aluno.cp_id);
+
+              setTurmaData(prev => ({
+                ...prev,
+                cp_tr_alunos: alunosIDs
+              }));
+
+              // ✅ Ordenação correta para manter os alunos da turma no topo
+              const alunosOrdenados = [...todosAlunos].sort((a, b) => {
+                const aNaTurma = alunosIDs.includes(a.cp_id) ? -1 : 1;
+                const bNaTurma = alunosIDs.includes(b.cp_id) ? -1 : 1;
+                return aNaTurma - bNaTurma || a.cp_nome.localeCompare(b.cp_nome);
+              });
+
+              setAlunosPorEscola(todosAlunos);
+              setAlunosFiltrados(alunosOrdenados);
+            }
+          }
+        })
+        .catch((error) => {
+          console.error("Erro ao buscar a turma:", error);
+          toast.error("Erro ao carregar dados da turma!");
+        });
     }
-  }, [isEdit, turmaDataToEdit]);
+  }, [turmaID]);
+
+
 
   const fetchProfessores = async () => {
     try {
@@ -75,16 +133,6 @@ const CadastroTurmaModal = ({ isEdit, turmaDataToEdit }) => {
     }
   };
 
-  const fetchAlunosPorEscola = async (escolaId) => {
-    try {
-      const response = await axios.get(`${API_BASE_URL}/escola/alunos/${escolaId}`);
-      setAlunosPorEscola(response.data);
-      setAlunosFiltrados(response.data);
-    } catch (error) {
-      console.error("Erro ao buscar os alunos da escola:", error);
-    }
-  };
-
   const fetchCursos = async () => {
     try {
       const response = await axios.get(`${API_BASE_URL}/cursos`);
@@ -99,7 +147,6 @@ const CadastroTurmaModal = ({ isEdit, turmaDataToEdit }) => {
 
     if (name === "cp_tr_id_escola") {
       setTurmaData((prev) => ({ ...prev, [name]: value, cp_tr_alunos: [] }));
-      fetchAlunosPorEscola(value);
     } else {
       setTurmaData((prev) => ({ ...prev, [name]: value }));
     }
@@ -133,44 +180,47 @@ const CadastroTurmaModal = ({ isEdit, turmaDataToEdit }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setShowModal(false); // Fecha o modal de confirmação
-  
+
     try {
-      const alunosSelecionados = turmaData.cp_tr_alunos.map((alunoId) =>
-        alunosFiltrados.find((aluno) => aluno.cp_id === alunoId)
-      );
-  
       const dataToSend = {
-        ...turmaData,
-        cp_tr_alunos: alunosSelecionados.map((aluno) => aluno.cp_id),
+        cp_tr_nome: turmaData.cp_tr_nome,
+        cp_tr_data: turmaData.cp_tr_data,
+        cp_tr_id_professor: turmaData.cp_tr_id_professor,
+        cp_tr_id_escola: turmaData.cp_tr_id_escola,
+        cp_tr_curso_id: turmaData.cp_tr_curso_id,
+        cp_tr_alunos: turmaData.cp_tr_alunos
       };
-  
-      const response = await axios.post(`${API_BASE_URL}/register-turma`, dataToSend);
-  
-      if (response.status === 200 || response.status === 201) {
-        toast.success("Turma cadastrada com sucesso!"); // Mantendo Toastify
-  
+
+      let response;
+
+      if (turmaID) {
+        // Atualizar turma existente
+        response = await axios.put(`${API_BASE_URL}/update-turma/${turmaID}`, dataToSend);
+        toast.success("Turma atualizada com sucesso!");
+      } else {
+        // Criar nova turma
+        response = await axios.post(`${API_BASE_URL}/register-turma`, dataToSend);
+        toast.success("Turma cadastrada com sucesso!");
+        // Limpar campos após cadastrar
         setTurmaData({
           cp_tr_nome: "",
           cp_tr_data: "",
           cp_tr_id_professor: "",
           cp_tr_id_escola: "",
-          cp_tr_alunos: [],
           cp_tr_curso_id: "",
+          cp_tr_alunos: []
         });
-  
-        setAlunosPorEscola([]);
-        setAlunosFiltrados([]);
-        setSearchTerm("");
-      } else {
-        throw new Error("Falha ao cadastrar turma");
+      }
+
+      if (response.status === 200) {
+        setShowModal(false); // Fecha o modal
       }
     } catch (error) {
-      console.error("Erro durante o processamento:", error);
-      toast.error("Erro ao realizar a solicitação!"); // Mantendo Toastify
+      console.error("Erro ao salvar a turma:", error);
+      toast.error("Erro ao salvar a turma");
     }
   };
-  
+
 
   return (
     <div>
@@ -304,30 +354,33 @@ const CadastroTurmaModal = ({ isEdit, turmaDataToEdit }) => {
                   </Col>
 
                   <Col md={12}>
-                    <div className="table-responsive">
+                    <div className="table-container">
                       {alunosFiltrados.length > 0 ? (
-                        <Table striped bordered hover>
-                          <thead>
-                            <tr>
-                              <th>#</th>
-                              <th>Nome</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {alunosFiltrados.map((aluno) => (
-                              <tr key={aluno.cp_id}>
-                                <td>
-                                  <Form.Check
-                                    type="checkbox"
-                                    checked={turmaData.cp_tr_alunos.includes(aluno.cp_id)}
-                                    onChange={(e) => handleCheckboxChange(e, aluno.cp_id)}
-                                  />
-                                </td>
-                                <td>{aluno.cp_nome}</td>
+                        <div className="table-responsive overflow-auto" style={{ maxHeight: "300px" }}>
+                          <Table striped bordered hover className="overflow-auto">
+                            <thead>
+                              <tr>
+                                <th>#</th>
+                                <th>Nome</th>
                               </tr>
-                            ))}
-                          </tbody>
-                        </Table>
+                            </thead>
+                            <tbody>
+                              {alunosFiltrados.map((aluno) => (
+                                <tr key={aluno.cp_id}>
+                                  <td>
+                                    <Form.Check
+                                      type="checkbox"
+                                      checked={Array.isArray(turmaData.cp_tr_alunos) && turmaData.cp_tr_alunos.includes(aluno.cp_id)}
+                                      onChange={(e) => handleCheckboxChange(e, aluno.cp_id)}
+                                    />
+
+                                  </td>
+                                  <td>{aluno.cp_nome}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </Table>
+                        </div>
                       ) : (
                         <p className="text-muted">Nenhum aluno encontrado. Selecione uma escola!</p>
                       )}
@@ -342,7 +395,7 @@ const CadastroTurmaModal = ({ isEdit, turmaDataToEdit }) => {
 
         <div className="mt-4 text-center">
           <Button variant="primary" onClick={handleShowModal}>
-            {isEdit ? "Salvar Alterações" : "Cadastrar Turma"}
+            {turmaID ? "Salvar Alterações" : "Cadastrar Turma"}
           </Button>
         </div>
       </form>
@@ -351,7 +404,7 @@ const CadastroTurmaModal = ({ isEdit, turmaDataToEdit }) => {
           <Modal.Title>Confirmar Cadastro</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          Tem certeza que deseja {isEdit ? "salvar as alterações" : "cadastrar esta turma"}?
+          Tem certeza que deseja {turmaID ? "salvar as alterações" : "cadastrar esta turma"}?
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={handleCloseModal}>

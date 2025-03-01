@@ -8,16 +8,16 @@ import { FaEye, FaEyeSlash } from "react-icons/fa";
 import InputMask from "react-input-mask";
 
 
-const CadastroEscolaModal = ({ closeModal, isEdit, escolaDataToEdit }) => {
+const CadastroEscolaModal = ({ escolaId }) => {
     const [showModal, setShowModal] = useState(false);
     const [loading, setLoading] = useState(false);
     const [usuariosResponsaveis, setUsuariosResponsaveis] = useState([]);
     const formatarDataAtual = () => {
         const data = new Date();
-        data.setMinutes(data.getMinutes() - data.getTimezoneOffset()); 
+        data.setMinutes(data.getMinutes() - data.getTimezoneOffset());
         return data.toISOString().slice(0, 10);
     };
-    
+
 
     const [escolaData, setEscolaData] = useState({
         cp_ec_nome: '',
@@ -27,25 +27,29 @@ const CadastroEscolaModal = ({ closeModal, isEdit, escolaDataToEdit }) => {
         cp_ec_endereco_cidade: '',
         cp_ec_endereco_bairro: '',
         cp_ec_endereco_estado: '',
-        cp_ec_data_cadastro: '', // Ajusta para o formato correto
+        cp_ec_data_cadastro: '',
+        cp_ec_descricao: '',
     });
 
-    const handleShowModal = () => setShowModal(true);
-    const handleCloseModal = () => setShowModal(false);
-
     useEffect(() => {
-        if (isEdit && escolaDataToEdit) {
-            setEscolaData({
-                ...escolaDataToEdit,
-                cp_ec_data_cadastro: escolaDataToEdit.cp_ec_data_cadastro
-                    ? escolaDataToEdit.cp_ec_data_cadastro.slice(0, 10) // Mantém YYYY-MM-DD
-                    : formatarDataAtual()
-            });
+        if (escolaId) {
+            axios.get(`${API_BASE_URL}/escolas/${escolaId}`)
+                .then(response => {
+                    const escola = response.data;
+                    setEscolaData({
+                        ...escola,
+                        cp_ec_data_cadastro: escola.cp_ec_data_cadastro
+                            ? escola.cp_ec_data_cadastro.slice(0, 10)
+                            : new Date().toISOString().slice(0, 10)
+                    });
+                })
+                .catch(error => {
+                    console.error("Erro ao buscar escola:", error);
+                    toast.error("Erro ao carregar os dados da escola.");
+                });
         }
-    }, [isEdit, escolaDataToEdit]);
+    }, [escolaId]);
 
-    // const [errorMessage, setErrorMessage] = useState('');
-    // const [successMessage, setSuccessMessage] = useState('');
 
     useEffect(() => {
         fetchResponsaveis();
@@ -79,43 +83,48 @@ const CadastroEscolaModal = ({ closeModal, isEdit, escolaDataToEdit }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setShowModal(false); // Fechar o modal de confirmação
-
+        setShowModal(false);
         if (loading) return;
         setLoading(true);
 
+        const escolaFormatada = {
+            ...escolaData,
+            cp_ec_data_cadastro: escolaData.cp_ec_data_cadastro
+                ? new Date(escolaData.cp_ec_data_cadastro).toISOString().slice(0, 10)
+                : new Date().toISOString().slice(0, 10),
+            cp_ec_excluido: 0,
+        };
+
         try {
-            const escolaDataFormatado = {
-                ...escolaData,
-                cp_ec_data_cadastro: escolaData.cp_ec_data_cadastro 
-                    ? new Date(escolaData.cp_ec_data_cadastro).toISOString().slice(0, 10) 
-                    : new Date().toISOString().slice(0, 10), // Define a data atual se estiver vazia
-                cp_ec_excluido: 0
-            };
+            const modoEdicao = Boolean(escolaId);
+            const resposta = modoEdicao
+                ? await axios.put(`${API_BASE_URL}/edit-escola/${escolaId}`, escolaFormatada, {
+                    headers: { "Content-Type": "application/json" },
+                })
+                : await axios.post(`${API_BASE_URL}/register-escola`, escolaFormatada);
 
-            const response = await axios.post(`${API_BASE_URL}/register-escola`, escolaDataFormatado);
-
-            if (response.status === 200) {
-                toast.success("Escola cadastrada com sucesso!");
+            if (resposta.status === 200) {
+                toast.success(modoEdicao ? "Escola atualizada com sucesso!" : "Escola cadastrada com sucesso!");
             } else {
-                throw new Error("Erro inesperado ao cadastrar");
+                throw new Error("Erro inesperado");
             }
 
-            setEscolaData({
-                cp_ec_nome: "",
-                cp_ec_responsavel: "",
-                cp_ec_endereco_rua: "",
-                cp_ec_endereco_numero: "",
-                cp_ec_endereco_cidade: "",
-                cp_ec_endereco_bairro: "",
-                cp_ec_endereco_estado: "",
-                cp_ec_data_cadastro: "",
-                cp_ec_excluido: 0
-            });
-
+            if (!modoEdicao) {
+                setEscolaData({
+                    cp_ec_nome: "",
+                    cp_ec_responsavel: "",
+                    cp_ec_endereco_rua: "",
+                    cp_ec_endereco_numero: "",
+                    cp_ec_endereco_cidade: "",
+                    cp_ec_endereco_bairro: "",
+                    cp_ec_endereco_estado: "",
+                    cp_ec_data_cadastro: "",
+                    cp_ec_descricao: "",
+                });
+            }
         } catch (error) {
-            console.error("Erro no cadastro:", error);
-            toast.error("Erro ao realizar a solicitação. Tente novamente.");
+            console.error("Erro:", error);
+            toast.error("Erro ao realizar a operação. Tente novamente.");
         } finally {
             setLoading(false);
         }
@@ -293,7 +302,7 @@ const CadastroEscolaModal = ({ closeModal, isEdit, escolaDataToEdit }) => {
 
                 <div className="mt-4 text-center">
                     <button type="button" className="btn btn-primary" disabled={loading} onClick={() => setShowModal(true)}>
-                        {loading ? "Salvando..." : isEdit ? "Salvar Alterações" : "Cadastrar Escola"}
+                        {loading ? "Salvando..." : escolaId ? "Salvar Alterações" : "Cadastrar Escola"}
                     </button>
 
                 </div>
@@ -303,7 +312,7 @@ const CadastroEscolaModal = ({ closeModal, isEdit, escolaDataToEdit }) => {
                     <Modal.Title>Confirmar Cadastro</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    Tem certeza que deseja {isEdit ? "salvar as alterações" : "cadastrar esta escola"}?
+                    Tem certeza que deseja {escolaId ? "salvar as alterações" : "cadastrar esta escola"}?
                 </Modal.Body>
                 <Modal.Footer>
                     <Button variant="secondary" onClick={() => setShowModal(false)}>

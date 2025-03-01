@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Icon } from "@iconify/react";
 import { API_BASE_URL } from "./config";
+import "./audio.css"
 
 const Audios = () => {
     const [cursos, setCursos] = useState([]);
@@ -22,14 +23,31 @@ const Audios = () => {
     }, []);
 
     const fetchCursos = async () => {
+        const professorId = localStorage.getItem('userId'); // Pega o ID do professor do localStorage
         try {
-            const response = await fetch(`${API_BASE_URL}/cursos`);
-            const data = await response.json();
-            setCursos(data);
+            const responseTurmas = await fetch(`${API_BASE_URL}/cp_turmas/professor/${professorId}`);
+            const turmas = await responseTurmas.json();
+            const cursoIds = turmas.map(turma => turma.cp_tr_curso_id);
+
+            // Verifica se há IDs de cursos para buscar
+            if (cursoIds.length > 0) {
+                const responseCursos = await fetch(`${API_BASE_URL}/cursos/batch`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ cursoIds }) // Envia os IDs como JSON
+                });
+                const cursos = await responseCursos.json();
+                setCursos(cursos);
+            } else {
+                setCursos([]); // Define cursos como vazio se não houver IDs
+            }
         } catch (error) {
             console.error("Erro ao buscar cursos:", error);
         }
     };
+
 
     const fetchAudios = async (cursoId) => {
         setLoading(true);
@@ -129,7 +147,7 @@ const Audios = () => {
                 </div>
             </div>
             <div className="row">
-                <div className="col-md-4 border-end">
+                <div className="col-12 col-md-4 border-md-end mb-3 mb-md-0">
                     <div className="card-body p-24">
                         <ul className="align-items-center justify-content-center" sty>
                             {currentCursos.map((curso, index) => (
@@ -139,7 +157,7 @@ const Audios = () => {
                                 }}>
                                     <li
                                         key={curso.cp_curso_id}
-                                        
+
                                         className={`p-2 d-flex justify-content-between align-items-center ${selectedCursoId === curso.cp_curso_id ? "active" : ""}`}
                                     >
                                         <span>{curso.cp_nome_curso}</span>
@@ -156,47 +174,54 @@ const Audios = () => {
 
                     </div>
                 </div>
-                <div className="col-8">
+                <div className="col-12 col-md-8">
                     <div className="card-body p-24">
-                        <div className="table-responsive scroll-sm">
-                            <table className="table bordered-table sm-table mb-0">
-                                <thead>
-                                    <tr>
-                                        <th>Nome do Áudio</th>
-                                        <th className="text-center">Ação</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {loading ? (
+                        {(!selectedCursoId || audios.length === 0) && !loading ? (
+                            <div className="fw-bold text-primary">Clique em "Ver Áudios"</div>
+                        ) : (
+                            <div className="table-responsive scroll-sm">
+
+                                <table className="table bordered-table sm-table mb-0">
+                                    <thead>
                                         <tr>
-                                            <td colSpan="2" className="text-center">
-                                                Carregando...
-                                            </td>
+                                            <th>Nome do Áudio</th>
+                                            <th className="text-center">Ação</th>
                                         </tr>
-                                    ) : (
-                                        filteredAudios.map((audio) => (
-                                            <tr key={audio.cp_audio_id}>
-                                                <td>{audio.cp_nome_audio}</td>
-                                                <td className="text-center">
-                                                    <audio controls controlsList="nodownload">
-                                                        <source
-                                                            src={`${API_BASE_URL}/audios/${audio.cp_nome_audio}`}
-                                                            type="audio/mpeg"
-                                                        />
-                                                        Seu navegador não suporta o elemento <code>audio</code>.
-                                                    </audio>
+                                    </thead>
+                                    <tbody>
+                                        {loading ? (
+                                            <tr>
+                                                <td colSpan="2" className="text-center">
+                                                    Carregando...
                                                 </td>
                                             </tr>
-                                        ))
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                        <div className="d-flex align-items-center justify-content-between mt-24">
-                            <span>
+                                        ) : (
+                                            filteredAudios.map((audio) => (
+                                                <tr key={audio.cp_audio_id}>
+                                                    <td style={{ maxWidth: '260px', wordWrap: 'break-word' }}>
+                                                        {audio.cp_nome_audio}
+                                                    </td>
+                                                    <td className="text-center">
+                                                        <audio controls controlsList="nodownload">
+                                                            <source
+                                                                src={`${API_BASE_URL}/audios/${audio.cp_nome_audio}`}
+                                                                type="audio/mpeg"
+                                                            />
+                                                            Seu navegador não suporta o elemento <code>audio</code>.
+                                                        </audio>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                        <div className="d-flex flex-column flex-md-row align-items-center justify-content-between mt-24">
+                            <span className="mb-3 mb-md-0">
                                 Mostrando {paginaAtual} de {totalPaginasAudiosCurso} páginas
                             </span>
-                            <ul className="pagination d-flex flex-wrap align-items-center gap-2 justify-content-center">
+                            <ul className="pagination d-flex flex-wrap align-items-center gap-2 justify-content-center mb-3 mb-md-0">
                                 <li className="page-item">
                                     <button
                                         className="page-link bg-neutral-200 text-secondary-light fw-semibold radius-8 border-0 d-flex align-items-center justify-content-center h-32-px text-md"
@@ -281,7 +306,6 @@ const Audios = () => {
                                 ))}
                             </select>
                         </div>
-
 
                     </div>
                 </div>
