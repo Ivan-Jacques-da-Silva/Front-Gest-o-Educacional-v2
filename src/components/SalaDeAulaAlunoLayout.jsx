@@ -260,7 +260,6 @@ const Audios = () => {
                                     ) : null;
                                 })}
 
-                                {/* Acordeão de Resumos */}
                                 {/* Seção de Resumos */}
                                 <h6 className="mt-4">Resumos de Aula</h6>
                                 <div className="accordion" id="resumosAcordeon">
@@ -346,8 +345,9 @@ const Audios = () => {
                                                 <td className="text-center">
                                                     <audio
                                                         controls
+                                                        preload="none"
                                                         controlsList="nodownload"
-                                                        onPlay={() => handleAudioPlay(audio.cp_audio_id)} // Só registra a primeira vez
+                                                        onPlay={() => handleAudioPlay(audio.cp_audio_id)}
                                                     >
                                                         <source
                                                             src={`${API_BASE_URL}/audios/${audio.cp_nome_audio}`}
@@ -355,6 +355,7 @@ const Audios = () => {
                                                         />
                                                         Seu navegador não suporta o elemento <code>audio</code>.
                                                     </audio>
+
                                                 </td>
                                                 <td className="text-center">
                                                     <Icon

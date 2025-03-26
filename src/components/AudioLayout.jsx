@@ -22,31 +22,70 @@ const Audios = () => {
         fetchCursos();
     }, []);
 
+    // const fetchCursos = async () => {
+    //     const professorId = localStorage.getItem('userId'); // Pega o ID do professor do localStorage
+    //     try {
+    //         const responseTurmas = await fetch(`${API_BASE_URL}/cp_turmas/professor/${professorId}`);
+    //         const turmas = await responseTurmas.json();
+    //         const cursoIds = turmas.map(turma => turma.cp_tr_curso_id);
+
+    //         // Verifica se há IDs de cursos para buscar
+    //         if (cursoIds.length > 0) {
+    //             const responseCursos = await fetch(`${API_BASE_URL}/cursos/batch`, {
+    //                 method: 'POST',
+    //                 headers: {
+    //                     'Content-Type': 'application/json',
+    //                 },
+    //                 body: JSON.stringify({ cursoIds }) // Envia os IDs como JSON
+    //             });
+    //             const cursos = await responseCursos.json();
+    //             setCursos(cursos);
+    //         } else {
+    //             setCursos([]); // Define cursos como vazio se não houver IDs
+    //         }
+    //     } catch (error) {
+    //         console.error("Erro ao buscar cursos:", error);
+    //     }
+    // };
+
     const fetchCursos = async () => {
-        const professorId = localStorage.getItem('userId'); // Pega o ID do professor do localStorage
+        const professorId = localStorage.getItem('userId');
+        const tipoUsuario = localStorage.getItem('userType'); // pega o tipo
+
+        // SE for tipo 1 (admin), busca todos os cursos direto
+        if (tipoUsuario === "1") {
+            try {
+                const response = await fetch(`${API_BASE_URL}/cursos`);
+                const todosCursos = await response.json();
+                setCursos(todosCursos);
+            } catch (error) {
+                console.error("Erro ao buscar todos os cursos:", error);
+            }
+            return;
+        }
+
+        // caso contrário, segue lógica atual (professor)
         try {
             const responseTurmas = await fetch(`${API_BASE_URL}/cp_turmas/professor/${professorId}`);
             const turmas = await responseTurmas.json();
             const cursoIds = turmas.map(turma => turma.cp_tr_curso_id);
 
-            // Verifica se há IDs de cursos para buscar
             if (cursoIds.length > 0) {
                 const responseCursos = await fetch(`${API_BASE_URL}/cursos/batch`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ cursoIds }) // Envia os IDs como JSON
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cursoIds })
                 });
                 const cursos = await responseCursos.json();
                 setCursos(cursos);
             } else {
-                setCursos([]); // Define cursos como vazio se não houver IDs
+                setCursos([]);
             }
         } catch (error) {
             console.error("Erro ao buscar cursos:", error);
         }
     };
+
 
 
     const fetchAudios = async (cursoId) => {

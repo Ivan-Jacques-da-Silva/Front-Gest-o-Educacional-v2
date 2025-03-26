@@ -70,6 +70,11 @@ function MaterialExtra() {
     setShowPDF(true);
   };
 
+  const truncarTexto = (texto, max = 15) => {
+    if (!texto) return "";
+    return texto.length > max ? texto.substring(0, max) + "..." : texto;
+  };
+
 
   // const handleOpenVideo = (url) => {
   //   const videoUrlNormalizado = normalizarUrlYoutube(url);
@@ -558,7 +563,10 @@ function MaterialExtra() {
                                 className="text-dark mt-2"
                                 style={{ fontSize: "12px", fontWeight: "bold" }}
                               >
-                                PDF {index + 1}
+                                {/* PDF {index + 1} */}
+                                {typeof pdf === "string"
+                                  ? truncarTexto(pdf.split("/").pop(), 15)
+                                  : truncarTexto(pdf.name, 15)}
                               </span>
                               <Button
                                 variant="link"
@@ -661,31 +669,31 @@ function MaterialExtra() {
                             justifyContent: "center",
                             alignItems: "center",
                             overflow: "hidden",
-                            margin: "10px auto", // Centraliza horizontalmente no Col
+                            margin: "10px auto",
                           }}
                           className="position-relative"
                         >
                           <img
                             src={material.cp_mat_extra_thumbnail}
+                            alt={material.cp_mat_extra_title}
                             style={{
                               maxWidth: "100%",
                               maxHeight: "100%",
                               objectFit: "contain",
                             }}
-                            alt={material.cp_mat_extra_title}
                           />
-                          <Link
-                            onClick={() => handleOpenVideo(material.cp_mat_extra_youtube_url)}
-                            to="#"
-                            className="magnific-video bordered-shadow w-56-px h-56-px bg-white rounded-circle d-flex justify-content-center align-items-center position-absolute start-50 top-50 translate-middle z-1"
-                          >
-                            <Icon
-                              icon="ion:play"
-                              className="text-primary-600 text-xxl"
-                            />
-                          </Link>
+                          {material.cp_mat_extra_youtube_url && (
+                            <Link
+                              onClick={() => handleOpenVideo(material.cp_mat_extra_youtube_url)}
+                              to="#"
+                              className="magnific-video bordered-shadow w-56-px h-56-px bg-white rounded-circle d-flex justify-content-center align-items-center position-absolute start-50 top-50 translate-middle z-1"
+                            >
+                              <Icon icon="ion:play" className="text-primary-600 text-xxl" />
+                            </Link>
+                          )}
                         </div>
                       )}
+
                     </Col>
 
 
@@ -722,7 +730,10 @@ function MaterialExtra() {
                                   border: "none",
                                 }}
                               >
-                                Abrir PDF {index + 1}
+                                {/* Abrir PDF {index + 1} */}
+                                Abrir {typeof pdfUrl === "string"
+                                  ? truncarTexto(pdfUrl.split("/").pop(), 15)
+                                  : truncarTexto(pdfUrl.name, 15)}
                               </Button>
 
                               {/* Botão de Baixar (aparece somente se permitido) */}
