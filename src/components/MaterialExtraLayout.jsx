@@ -347,7 +347,7 @@ function MaterialExtra() {
           <Form>
             <Card className="mb-3 shadow-sm h-100 p-0 radius-12">
               <Card.Header className="border-bottom bg-base py-16 px-24 d-flex align-items-center flex-wrap gap-3 justify-content-between">
-                <h6 className="mb-0">Categorias</h6>
+                <h6 className="mb-0">TAG's</h6>
               </Card.Header>
               <Card.Body>
                 <div className="category-list">
@@ -617,10 +617,10 @@ function MaterialExtra() {
                       </div>
 
                       <Form.Group controlId="formCategories" className="mt-3">
-                        <Form.Label>Categorias</Form.Label>
+                        <Form.Label>TAG's</Form.Label>
                         <Form.Control
                           type="text"
-                          placeholder="Digite as categorias separadas por vírgula"
+                          placeholder="Digite as tag's separadas por vírgula"
                           value={categories}
                           onChange={(e) => setCategories(e.target.value)}
                         />
@@ -704,16 +704,22 @@ function MaterialExtra() {
                     </Col>
 
                     <Col md={4}>
-                      <h6 style={{ fontWeight: "bold" }}>Categorias</h6>
-                      <p>
-                        {material.cp_mat_extra_categories
-                          .split(",")
-                          .map((cat, index) => (
-                            <span key={index} className="badge bg-secondary me-1">
-                              {cat.trim()}
-                            </span>
-                          ))}
-                      </p>
+                      {material.cp_mat_extra_categories &&
+                        material.cp_mat_extra_categories.trim() !== "" && (
+                          <>
+                            <h6 style={{ fontWeight: "bold" }}>TAG's</h6>
+                            <p>
+                              {material.cp_mat_extra_categories
+                                .split(",")
+                                .map((cat, index) => (
+                                  <span key={index} className="badge bg-secondary me-1">
+                                    {cat.trim()}
+                                  </span>
+                                ))}
+                            </p>
+                            <hr style={{paddingBottom:"20px"}} />
+                          </>
+                        )}
                       {/* Botões lado a lado */}
                       <div className="d-flex flex-wrap gap-2">
                         {[material.cp_mat_extra_pdf1, material.cp_mat_extra_pdf2, material.cp_mat_extra_pdf3]
