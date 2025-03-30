@@ -277,7 +277,7 @@ const MasterLayout = ({ children }) => {
             {(temPermissao("gestao") || temPermissao("professor")) && (
               <li className="sidebar-menu-group-title">Material</li>
             )}
-            {temPermissao("professor") && (
+           {(temPermissao("gestao") || temPermissao("professor")) && (
               <li>
                 <NavLink to="/audios" className={(navData) =>
                   navData.isActive ? "active-page" : ""
@@ -288,7 +288,7 @@ const MasterLayout = ({ children }) => {
                 </NavLink>
               </li>
             )}
-            {temPermissao("direcao") && (
+              {(temPermissao("direcao") || temPermissao("professor")) && (
               <>
                 <li>
                   <NavLink to="/treinamento" className={(navData) =>
