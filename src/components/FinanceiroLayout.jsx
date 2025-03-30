@@ -352,7 +352,7 @@ const Financeiro = () => {
                                                     new Date(item.cp_mtPar_dataParcela) < new Date()
                                                     ? "Vencido"
                                                     : item.cp_mtPar_status}
-                                                {(userType === 1 || userType === 2) && (
+                                                {(userType === 1 || userType === 2 || userType === 3) && (
                                                     <Icon
                                                         style={{ marginLeft: '5px' }}
                                                         icon="mdi:pencil-outline"
