@@ -1596,7 +1596,7 @@ const MasterLayout = ({ children }) => {
         <footer className="d-footer">
           <div className="row align-items-center justify-content-between">
             <div className="col-auto">
-              <p className="mb-0">© 2025 Cipex. Todos os direitos reservados.</p>
+              <p className="mb-0">© 2025 CIPEX. Todos os direitos reservados.</p>
             </div>
             <div className="col-auto">
               <p className="mb-0">

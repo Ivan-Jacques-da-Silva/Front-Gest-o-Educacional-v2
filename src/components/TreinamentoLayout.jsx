@@ -33,7 +33,7 @@ const Treinamento = () => {
     data: "",
     categorias: "",
   });
-
+  const [codigos, setCodigos] = useState([]);
   const [filteredMateriais, setFilteredMateriais] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -43,10 +43,32 @@ const Treinamento = () => {
   const [userType, setUserType] = useState(null);
   const [isOpen, setOpen] = useState(false);
   const [videoId, setVideoId] = useState("");
+  const [selectedCodigos, setSelectedCodigos] = useState([]);
 
   const getUserType = () => {
     const userType = localStorage.getItem("userType");
     return userType ? parseInt(userType, 10) : null;
+  };
+
+  const opcoesCodigos = [
+    { valor: "KIDS", etiqueta: "KIDS" },
+    { valor: "TWEENS", etiqueta: "TWEENS" },
+    { valor: "CES", etiqueta: "CES" },
+    { valor: "CONVERSATION", etiqueta: "CONVERSATION" },
+    { valor: "ESPANHOL", etiqueta: "ESPANHOL" },
+    { valor: "DEUTSCH", etiqueta: "DEUTSCH" }
+  ];
+  const lidarCheckBox = (valor) => {
+    setCodigos(prev =>
+      prev.includes(valor) ? prev.filter(v => v !== valor) : [...prev, valor]
+    );
+  };
+
+  const handleCodigoFilterChange = (event) => {
+    const codigo = event.target.name;
+    setSelectedCodigos(prev =>
+      prev.includes(codigo) ? prev.filter(c => c !== codigo) : [...prev, codigo]
+    );
   };
 
   const handleEdit = (material) => {
@@ -68,6 +90,10 @@ const Treinamento = () => {
   };
 
 
+  const truncarTexto = (texto, max = 15) => {
+    if (!texto) return "";
+    return texto.length > max ? texto.substring(0, max) + "..." : texto;
+  };
 
 
 
@@ -80,17 +106,92 @@ const Treinamento = () => {
     fetchMateriais();
   }, []);
 
+  const mapaCursosParaCodigo = {
+    "CIPEX ENGLISH BOOK 1": "CES",
+    "CIPEX ENGLISH BOOK 2": "CES",
+    "CIPEX ENGLISH BOOK 3": "CES",
+    "CIPEX ENGLISH BOOK 4": "CES",
+    "CIPEX ENGLISH BOOK 5": "CES",
+    "CIPEX ENGLISH BOOK 6": "CES",
+    "CIPEX TWEENS 2": "TWEENS",
+    "CIPEX TWEENS 3": "TWEENS",
+    "CIPEX TWEENS 4": "TWEENS",
+    "CIPEX TEENS BOOK 5": "TWEENS",
+    "FERRIS WHEEL BOOK 1": "KIDS",
+    "FERRIS WHEEL BOOK 2": "KIDS",
+    "NEXT STATION STARTER": "KIDS",
+    "NEXT STATION BOOK 1": "KIDS",
+    "NEXT STATION BOOK 2": "KIDS",
+    "TV BOX CONVERSATION VOL. 1": "CONVERSATION",
+    "TV BOX CONVERSATION VOL. 2": "CONVERSATION",
+    "MOMENTE A1": "DEUTSCH",
+    "MOMENTE A2": "DEUTSCH",
+    "ASPEKTE B2": "DEUTSCH",
+    "NUEVO ESPAÑOL EN MARCHA 1": "ESPANHOL",
+    "NUEVO ESPAÑOL EN MARCHA 2": "ESPANHOL"
+  };
+
+
+
+  useEffect(() => {
+    if (userType !== 1) {
+      const professorId = localStorage.getItem("userId");
+      axios.get(`${API_BASE_URL}/cp_turmas/professor/${professorId}`)
+        .then(res => {
+          const cursosDoProfessor = res.data.map(turma => turma.cp_tr_curso_id);
+          axios.post(`${API_BASE_URL}/cursos/batch`, { cursoIds: cursosDoProfessor })
+            .then(resCursos => {
+              const nomesCursos = resCursos.data.map(curso => curso.cp_nome_curso);
+              const codigosPermitidos = [...new Set(
+                nomesCursos.map(nome => mapaCursosParaCodigo[nome]).filter(Boolean)
+              )];
+              const materiaisPermitidos = materiais.filter(material => {
+                const codigosMaterial = material.cp_mat_extra_codigos
+                  ? material.cp_mat_extra_codigos.split(",").map(c => c.trim())
+                  : [];
+                return codigosMaterial.some(codigo => codigosPermitidos.includes(codigo));
+              });
+              setFilteredMateriais(materiaisPermitidos);
+            })
+            .catch(err => console.error("Erro no batch de cursos:", err));
+        })
+        .catch(err => console.error("Erro ao buscar turmas do professor:", err));
+    }
+  }, [materiais, userType]);
+
 
   const fetchMateriais = async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/materiais`);
-      setMateriais(response.data);
-      setFilteredMateriais(response.data);
-      console.log("Verificação: ", materiais);
+      const res = await axios.get(`${API_BASE_URL}/materiais`);
+      const todosMateriais = res.data;
+      setMateriais(todosMateriais);
+
+      if (getUserType() === 1) {
+        // Usuário admin: mostra tudo
+        setFilteredMateriais(todosMateriais);
+      } else {
+        // Professor: filtra antes de atualizar o estado
+        const professorId = localStorage.getItem("userId");
+        const resTurmas = await axios.get(`${API_BASE_URL}/cp_turmas/professor/${professorId}`);
+        const cursosDoProfessor = resTurmas.data.map(turma => turma.cp_tr_curso_id);
+        const resCursos = await axios.post(`${API_BASE_URL}/cursos/batch`, { cursoIds: cursosDoProfessor });
+        const nomesCursos = resCursos.data.map(curso => curso.cp_nome_curso);
+        const codigosPermitidos = [...new Set(
+          nomesCursos.map(nome => mapaCursosParaCodigo[nome]).filter(Boolean)
+        )];
+        const materiaisPermitidos = todosMateriais.filter(material => {
+          const codigosMaterial = material.cp_mat_extra_codigos
+            ? material.cp_mat_extra_codigos.split(",").map(c => c.trim())
+            : [];
+          return codigosMaterial.some(codigo => codigosPermitidos.includes(codigo));
+        });
+        setFilteredMateriais(materiaisPermitidos);
+      }
     } catch (error) {
-      console.error("Erro ao buscar materiais:", error);
+      console.error("Erro ao buscar materiais", error);
     }
   };
+
 
   const handleViewPDF = (url) => {
     setPdfUrl(url);
@@ -127,6 +228,7 @@ const Treinamento = () => {
     formDataObj.append("linkYoutube", formData.linkYoutube);
     formDataObj.append("data", formData.data);
     formDataObj.append("categorias", formData.categorias);
+    formDataObj.append("codigos", codigos.join(","));
     formDataObj.append("permitirDownload", formData.permitirDownload ? 1 : 0); // Inclua o campo permitirDownload
 
     if (formData.arquivoPdf1 instanceof File) {
@@ -262,6 +364,16 @@ const Treinamento = () => {
       });
     }
 
+    if (selectedCodigos.length > 0) {
+      filtered = filtered.filter((material) => {
+        const materialCodigos = material.cp_mat_extra_codigos
+          ? material.cp_mat_extra_codigos.split(",").map(c => c.trim())
+          : [];
+        return selectedCodigos.some(codigo => materialCodigos.includes(codigo));
+      });
+    }
+
+
     // Filtro de Nome
     if (searchTerm) {
       const lowerCaseTerm = searchTerm.toLowerCase();
@@ -333,43 +445,82 @@ const Treinamento = () => {
             Filtrar
           </h5> */}
           <Form>
-            <Card className="mb-3 shadow-sm h-100 p-0 radius-12">
-              <Card.Header className="border-bottom bg-base py-16 px-24 d-flex align-items-center flex-wrap gap-3 justify-content-between">
-                <h6>Categorias</h6>
-              </Card.Header>
-              <Card.Body>
-                <div className="category-list">
-                  <Form.Group className="mb-3">
-                    {Array.from(
-                      new Set(
-                        materiais.flatMap((material) =>
-                          material.cp_mat_extra_categories &&
-                            typeof material.cp_mat_extra_categories === "string"
-                            ? material.cp_mat_extra_categories
-                              .split(",")
-                              .map((cat) => cat.trim())
-                            : []
-                        )
-                      )
-                    ).map((category, index) => (
+            {userType === 1 && (
+              <Card className="mb-3 shadow-sm">
+                <Card.Header className="text-white">
+                  <h6 className="mb-0">Filtrar por Categoria</h6>
+                </Card.Header>
+                <Card.Body>
+                  <div className="d-flex flex-wrap gap-2 custom-checkboxes">
+                    {opcoesCodigos.map((item, index) => (
                       <Form.Check
                         key={index}
                         type="checkbox"
-                        label={category}
-                        name={category}
-                        onChange={handleCategoryChange}
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "10px", // Espaço entre o checkbox e a label
-                        }}
-                        checked={selectedCategories.includes(category)}
+                        label={item.etiqueta}
+                        name={item.valor}
+                        onChange={handleCodigoFilterChange}
+                        checked={selectedCodigos.includes(item.valor)}
+                        className="mb-2"
                       />
                     ))}
-                  </Form.Group>
-                </div>
-              </Card.Body>
-            </Card>
+                  </div>
+                </Card.Body>
+              </Card>
+            )}
+
+            {Array.from(
+              new Set(
+                materiais.flatMap((material) =>
+                  material.cp_mat_extra_categories &&
+                    typeof material.cp_mat_extra_categories === "string"
+                    ? material.cp_mat_extra_categories
+                      .split(",")
+                      .map((cat) => cat.trim())
+                      .filter((cat) => cat !== "")
+                    : []
+                )
+              )
+            ).length > 0 && (
+                <Card className="mb-3 shadow-sm h-100 p-0 radius-12">
+                  <Card.Header className="border-bottom bg-base py-16 px-24 d-flex align-items-center flex-wrap gap-3 justify-content-between">
+                    <h6>TAG's</h6>
+                  </Card.Header>
+                  <Card.Body>
+                    <div className="category-list">
+                      <Form.Group className="mb-3">
+                        {Array.from(
+                          new Set(
+                            materiais.flatMap((material) =>
+                              material.cp_mat_extra_categories &&
+                                typeof material.cp_mat_extra_categories === "string"
+                                ? material.cp_mat_extra_categories
+                                  .split(",")
+                                  .map((cat) => cat.trim())
+                                  .filter((cat) => cat !== "")
+                                : []
+                            )
+                          )
+                        ).map((category, index) => (
+                          <Form.Check
+                            key={index}
+                            type="checkbox"
+                            label={category}
+                            name={category}
+                            onChange={handleCategoryChange}
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "10px",
+                            }}
+                            checked={selectedCategories.includes(category)}
+                          />
+                        ))}
+                      </Form.Group>
+                    </div>
+                  </Card.Body>
+                </Card>
+              )}
+
 
             <Card className="mb-3">
               <Card.Header>
@@ -558,12 +709,18 @@ const Treinamento = () => {
                               }}
                             >
                               <FaFilePdf className="text-danger text-xl" />
-                              <span
+                              {/* <span
                                 className="text-dark mt-2"
                                 style={{ fontSize: "12px", fontWeight: "bold" }}
                               >
                                 PDF {index + 1}
+                              </span> */}
+                              <span className="text-dark mt-2" style={{ fontSize: "12px", fontWeight: "bold" }}>
+                                {typeof pdf === "string"
+                                  ? truncarTexto(pdf.split("/").pop(), 15)
+                                  : truncarTexto(pdf.name, 15)}
                               </span>
+
                               <Button
                                 variant="link"
                                 className="position-absolute top-0 end-0 p-1"
@@ -613,9 +770,45 @@ const Treinamento = () => {
                           </div>
                         )}
                       </div>
+                      <Form.Group controlId="formCodigos" className="mt-3">
+                        <Form.Label>Categorias</Form.Label>
+                        <div className="d-flex flex-wrap gap-2 custom-checkboxes">
+                          {opcoesCodigos.map((item) => (
+                            <Form.Check
+                              inline
+                              key={item.valor}
+                              type="checkbox"
+                              label={item.etiqueta}
+                              value={item.valor}
+                              checked={codigos.includes(item.valor)}
+                              onChange={() => lidarCheckBox(item.valor)}
+                            />
+                          ))}
+                        </div>
+                      </Form.Group>
+                      <style>
+                        {`
+                            .custom-checkboxes .form-check {
+                              margin-bottom: 0;
+                            }
+
+                            .custom-checkboxes .form-check-input {
+                              margin-top: 0;
+                              margin-right: 4px;
+                              vertical-align: middle;
+                            }
+
+                            .custom-checkboxes .form-check-label {
+                              line-height: 1;
+                              vertical-align: middle;
+                              margin-bottom: 0;
+                            }
+                          `}
+                      </style>
+
 
                       <Form.Group controlId="formCategories" className="mt-3">
-                        <Form.Label>Categorias</Form.Label>
+                        <Form.Label>TAG's</Form.Label>
                         <Form.Control
                           type="text"
                           name="categorias"
@@ -654,23 +847,27 @@ const Treinamento = () => {
 
 
           <Col>
-            {filteredMateriais.map((material, index) => (
+            {filteredMateriais.length === 0 ? (
+              <p className="text-center">Nenhum material disponivel no momento</p>
+            ) : (filteredMateriais.map((material, index) => (
               <Card className="my-3" key={index}>
                 <Card.Body>
-                  <Row>
-                    <Col md={4}>
+                  <Row className="g-3 flex-column flex-md-row">
+                    <Col xs={12} md={4}>
                       {material.cp_mat_miniatura && (
                         <div
                           style={{
                             backgroundColor: "#eaeaea",
                             borderRadius: "10px",
-                            height: "180px",
-                            width: "300px",
+                            width: "100%",
+                            maxWidth: "300px",
+                            height: "auto",
+                            aspectRatio: "5 / 3",
                             display: "flex",
                             justifyContent: "center",
                             alignItems: "center",
                             overflow: "hidden",
-                            margin: "10px auto", // Centraliza horizontalmente no Col
+                            margin: "10px auto",
                           }}
                           className="position-relative"
                         >
@@ -681,66 +878,66 @@ const Treinamento = () => {
                               objectFit: "contain",
                             }}
                             src={material.cp_mat_miniatura}
-                            // className="w-100 h-100 object-fit-cover radius-8"
                             alt={material.cp_mat_titulo}
                           />
-                          <Button
-                            onClick={() => handleOpenVideo(material.cp_mat_linkYoutube)}
-                            className="magnific-video bordered-shadow w-56-px h-56-px bg-white rounded-circle d-flex justify-content-center align-items-center position-absolute start-50 top-50 translate-middle z-1"
-                          >
-                            <Icon
-                              icon="ion:play"
-                              className="text-primary-600 text-xxl"
-                            />
-                          </Button>
+                          {material.cp_mat_linkYoutube && (
+                            <Button
+                              onClick={() => handleOpenVideo(material.cp_mat_linkYoutube)}
+                              className="magnific-video bordered-shadow w-56-px h-56-px bg-white rounded-circle d-flex justify-content-center align-items-center position-absolute start-50 top-50 translate-middle z-1"
+                            >
+                              <Icon icon="ion:play" className="text-primary-600 text-xxl" />
+                            </Button>
+                          )}
                         </div>
-
                       )}
                     </Col>
-                    <Col md={4}>
+                    <Col xs={12} md={4}>
                       <h5>{material.cp_mat_titulo}</h5>
                       <p>{material.cp_mat_descricao}</p>
                       <p>{formatDateString(material.cp_mat_extra_date)}</p>
                     </Col>
-                    <Col md={4}>
-                      <h6 style={{ fontWeight: "bold" }}>Categorias</h6>
-                      <p>
-                        {material.cp_mat_extra_categories &&
-                          material.cp_mat_extra_categories
-                            .split(",")
-                            .map((cat, index) => (
-                              <span key={index} className="badge bg-secondary me-1">
-                                {cat.trim()}
-                              </span>
-                            ))}
-                      </p>
-
-                      {/* Botões lado a lado */}
+                    <Col xs={12} md={4}>
+                      {material.cp_mat_extra_categories &&
+                        material.cp_mat_extra_categories.trim() !== "" && (
+                          <>
+                            <h6 style={{ fontWeight: "bold" }}>TAG's</h6>
+                            <p>
+                              {material.cp_mat_extra_categories
+                                .split(",")
+                                .map((cat, index) => (
+                                  <span key={index} className="badge bg-secondary me-1">
+                                    {cat.trim()}
+                                  </span>
+                                ))}
+                            </p>
+                            <hr style={{ paddingBottom: "20px" }} />
+                          </>
+                        )}
                       <div className="d-flex flex-wrap gap-2 mt-3">
                         {[material.cp_mat_arquivoPdf, material.cp_mat_extra_pdf2, material.cp_mat_extra_pdf3]
                           .filter(Boolean)
                           .map((pdfUrl, index) => (
-                            <div key={index} className="d-flex">
-                              {/* Botão de Abrir PDF */}
+                            <div key={index} className="d-flex flex-wrap gap-0">
                               <Button
                                 variant="primary"
                                 className="px-3"
                                 onClick={() => handleViewPDF(pdfUrl)}
                                 style={{
+                                  flex: "1 1 auto",
+                                  minWidth: "150px",
                                   borderRadius: material.cp_mat_permitirDownload === 1 ? "5px 0 0 5px" : "5px",
                                   border: "none",
                                 }}
                               >
-                                Abrir PDF {index + 1}
+                                Abrir {typeof pdfUrl === "string" ? truncarTexto(pdfUrl.split("/").pop(), 15) : truncarTexto(pdfUrl.name, 15)}
                               </Button>
-
-                              {/* Botão de Baixar PDF */}
                               {material.cp_mat_permitirDownload === 1 && (
                                 <Button
                                   variant="success"
                                   className="px-3"
                                   onClick={() => handleDownload([pdfUrl])}
                                   style={{
+                                    flex: "0 1 auto",
                                     borderRadius: "0 5px 5px 0",
                                     border: "none",
                                   }}
@@ -749,36 +946,27 @@ const Treinamento = () => {
                                 </Button>
                               )}
                             </div>
+
                           ))}
                       </div>
-
-                      {/* Botões de Editar e Excluir */}
-                      <div className="d-flex gap-2 mt-3">
-                        <Button
-                          variant="warning"
-                          onClick={() => handleEdit(material)}
-                          className="d-flex align-items-center"
-                          style={{ fontSize: "0.9rem" }}
-                        >
-                          <FaEdit className="me-2" />
-                          Editar
-                        </Button>
-                        <Button
-                          variant="danger"
-                          onClick={() => handleDelete(material.cp_mat_id)}
-                          className="d-flex align-items-center"
-                          style={{ fontSize: "0.9rem" }}
-                        >
-                          <FaTrash className="me-2" />
-                          Excluir
-                        </Button>
-                      </div>
+                      {userType === 1 && (
+                        <div className="d-flex gap-2 mt-3">
+                          <Button variant="warning" onClick={() => handleEdit(material)} className="d-flex align-items-center" style={{ fontSize: "0.9rem" }}>
+                            <FaEdit className="me-2" /> Editar
+                          </Button>
+                          <Button variant="danger" onClick={() => handleDelete(material.cp_mat_id)} className="d-flex align-items-center" style={{ fontSize: "0.9rem" }}>
+                            <FaTrash className="me-2" /> Excluir
+                          </Button>
+                        </div>
+                      )}
                     </Col>
-
                   </Row>
+
                 </Card.Body>
               </Card>
-            ))}
+            ))
+            )}
+
           </Col>
         </Col>
       </Row>

@@ -40,7 +40,9 @@ function MaterialExtra() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [permitirDownload, setPermitirDownload] = useState(false);
   const [isOpen, setOpen] = useState(false);
+  const [codigos, setCodigos] = useState([]);
   const [videoId, setVideoId] = useState("");
+  const [selectedCodigos, setSelectedCodigos] = useState([]);
   const resetForm = () => {
     setThumbnail(null);
     setTitle("");
@@ -53,7 +55,12 @@ function MaterialExtra() {
     setEditingMaterialId(null);
   };
 
-
+  const handleCodigoFilterChange = (event) => {
+    const codigo = event.target.name;
+    setSelectedCodigos((prev) =>
+      prev.includes(codigo) ? prev.filter(c => c !== codigo) : [...prev, codigo]
+    );
+  };
 
   const getUserType = () => {
     const userType = localStorage.getItem("userType");
@@ -139,17 +146,49 @@ function MaterialExtra() {
 
   const fetchMaterials = async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/material-extra`);
-      setMaterials(response.data);
-      setFilteredMaterials(response.data);
+      const tipoUsuario = localStorage.getItem("userType");
+      const professorId = localStorage.getItem("userId");
+
+      const res = await axios.get(`${API_BASE_URL}/material-extra`);
+      const todosMateriais = res.data;
+
+      // Admin vê tudo
+      if (tipoUsuario === "1") {
+        setMaterials(todosMateriais);
+        setFilteredMaterials(todosMateriais);
+        return;
+      }
+
+      // Professor: busca cursos e filtra
+      const turmasRes = await axios.get(`${API_BASE_URL}/cp_turmas/professor/${professorId}`);
+      const cursoIds = turmasRes.data.map(t => t.cp_tr_curso_id);
+
+      const cursosRes = await axios.post(`${API_BASE_URL}/cursos/batch`, { cursoIds });
+      const nomesCursos = cursosRes.data.map(curso => curso.cp_nome_curso);
+
+      const codigosPermitidos = [...new Set(
+        nomesCursos.map(nome => mapaCursosParaCodigo[nome]).filter(Boolean)
+      )];
+
+      const materiaisPermitidos = todosMateriais.filter(material => {
+        const codigosMaterial = material.cp_mat_extra_codigos
+          ? material.cp_mat_extra_codigos.split(",").map(c => c.trim())
+          : [];
+        return codigosMaterial.some(codigo => codigosPermitidos.includes(codigo));
+      });
+
+      setMaterials(materiaisPermitidos);
+      setFilteredMaterials(materiaisPermitidos);
     } catch (error) {
       console.error("Erro ao buscar materiais", error);
     }
   };
 
+
   useEffect(() => {
     fetchMaterials();
   }, []);
+
 
   const handleThumbnailChange = (event) => {
     if (event.target.files && event.target.files[0]) {
@@ -196,10 +235,6 @@ function MaterialExtra() {
     ]);
   };
 
-
-
-
-
   const handleSubmit = async (event) => {
     event.preventDefault();
     const formData = new FormData();
@@ -213,6 +248,7 @@ function MaterialExtra() {
 
     formData.append("youtube_url", youtubeUrl);
     formData.append("categories", categories);
+    formData.append("codigos", codigos.join(","));
     formData.append("permitirDownload", permitirDownload ? 1 : 0);
 
     pdfs.forEach((pdf, index) => {
@@ -249,10 +285,6 @@ function MaterialExtra() {
     }
   };
 
-
-
-
-
   const handleCategoryChange = (event) => {
     const category = event.target.name;
     setSelectedCategories((prevCategories) =>
@@ -261,6 +293,85 @@ function MaterialExtra() {
         : [...prevCategories, category]
     );
   };
+
+  // Defina as opções dos códigos
+  const opcoesCodigos = [
+    { valor: "KIDS", etiqueta: "KIDS" },
+    { valor: "TWEENS", etiqueta: "TWEENS" },
+    { valor: "CES", etiqueta: "CES" },
+    { valor: "CONVERSATION", etiqueta: "CONVERSATION" },
+    { valor: "ESPANHOL", etiqueta: "ESPANHOL" },
+    { valor: "DEUTSCH", etiqueta: "DEUTSCH" }
+  ];
+
+  const mapaCursosParaCodigo = {
+    "CIPEX ENGLISH BOOK 1": "CES",
+    "CIPEX ENGLISH BOOK 2": "CES",
+    "CIPEX ENGLISH BOOK 3": "CES",
+    "CIPEX ENGLISH BOOK 4": "CES",
+    "CIPEX ENGLISH BOOK 5": "CES",
+    "CIPEX ENGLISH BOOK 6": "CES",
+
+    "CIPEX TWEENS 2": "TWEENS",
+    "CIPEX TWEENS 3": "TWEENS",
+    "CIPEX TWEENS 4": "TWEENS",
+    "CIPEX TEENS BOOK 5": "TWEENS",
+
+    "FERRIS WHEEL BOOK 1": "KIDS",
+    "FERRIS WHEEL BOOK 2": "KIDS",
+
+    "NEXT STATION STARTER": "KIDS",
+    "NEXT STATION BOOK 1": "KIDS",
+    "NEXT STATION BOOK 2": "KIDS",
+
+    "TV BOX CONVERSATION VOL. 1": "CONVERSATION",
+    "TV BOX CONVERSATION VOL. 2": "CONVERSATION",
+
+    "MOMENTE A1": "DEUTSCH",
+    "MOMENTE A2": "DEUTSCH",
+    "ASPEKTE B2": "DEUTSCH",
+
+    "NUEVO ESPAÑOL EN MARCHA 1": "ESPANHOL",
+    "NUEVO ESPAÑOL EN MARCHA 2": "ESPANHOL"
+  };
+
+  // Manipulador de seleção
+  const lidarCheckBox = (valor) => {
+    setCodigos((prev) =>
+      prev.includes(valor) ? prev.filter((v) => v !== valor) : [...prev, valor]
+    );
+  };
+
+  useEffect(() => {
+    const tipoUsuario = localStorage.getItem("userType");
+    const professorId = localStorage.getItem("userId");
+
+    if (tipoUsuario !== "1") {
+      axios.get(`${API_BASE_URL}/cp_turmas/professor/${professorId}`)
+        .then(res => {
+          const cursosDoProfessor = res.data.map(turma => turma.cp_tr_curso_id);
+
+          axios.post(`${API_BASE_URL}/cursos/batch`, { cursoIds: cursosDoProfessor })
+            .then(resCursos => {
+              const nomesCursos = resCursos.data.map(curso => curso.cp_nome_curso);
+              const codigosPermitidos = [...new Set(
+                nomesCursos.map(nome => mapaCursosParaCodigo[nome]).filter(Boolean)
+              )];
+
+              const materiaisFiltrados = materials.filter(material => {
+                const codigosMaterial = material.cp_mat_extra_codigos
+                  ? material.cp_mat_extra_codigos.split(",").map(c => c.trim())
+                  : [];
+                return codigosMaterial.some(c => codigosPermitidos.includes(c));
+              });
+
+              setFilteredMaterials(materiaisFiltrados);
+            });
+        });
+    }
+  }, [materials]);
+
+
 
   const formatDateString = (dateString) => {
     const date = new Date(dateString);
@@ -279,6 +390,15 @@ function MaterialExtra() {
             .includes(category)
         )
       );
+    }
+
+    if (selectedCodigos.length > 0) {
+      filtered = filtered.filter((material) => {
+        const materialCodigos = material.cp_mat_extra_codigos
+          ? material.cp_mat_extra_codigos.split(",").map(c => c.trim())
+          : [];
+        return selectedCodigos.some(codigo => materialCodigos.includes(codigo));
+      });
     }
 
     if (searchTerm) {
@@ -345,43 +465,67 @@ function MaterialExtra() {
         <Col xs={12} md={3} className="border-end p-3">
           {/* <h5 className="text-center fw-bold mt-3">Filtrar</h5> */}
           <Form>
-            <Card className="mb-3 shadow-sm h-100 p-0 radius-12">
-              <Card.Header className="border-bottom bg-base py-16 px-24 d-flex align-items-center flex-wrap gap-3 justify-content-between">
-                <h6 className="mb-0">TAG's</h6>
-              </Card.Header>
-              <Card.Body>
-                <div className="category-list">
-                  <Form.Group className="mb-3">
-                    {Array.from(
-                      new Set(
-                        materials.flatMap((material) =>
-                          material.cp_mat_extra_categories
-                            .split(",")
-                            .map((cat) => cat.trim())
-                        )
-                      )
-                    ).map((category, index) => (
+            {userType === 1 && (
+              <Card className="mb-3 shadow-sm">
+                <Card.Header className="text-white">
+                  <h6 className="mb-0">Filtrar por Categoria</h6>
+                </Card.Header>
+                <Card.Body>
+                  <div className="d-flex flex-wrap gap-2 custom-checkboxes">
+                    {opcoesCodigos.map((item, index) => (
                       <Form.Check
                         key={index}
                         type="checkbox"
-                        label={category}
-                        name={category}
-                        onChange={handleCategoryChange}
-                        checked={selectedCategories.includes(category)}
+                        label={item.etiqueta}
+                        name={item.valor}
+                        onChange={handleCodigoFilterChange}
+                        checked={selectedCodigos.includes(item.valor)}
                         className="mb-2"
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "10px", // Espaço entre o checkbox e a label
-                        }}
                       />
                     ))}
-                  </Form.Group>
-                </div>
+                  </div>
+                </Card.Body>
+              </Card>
+            )}
+            {materials.some(m => m.cp_mat_extra_categories && m.cp_mat_extra_categories.trim() !== "") && (
+              <Card className="mb-3 shadow-sm h-100 p-0 radius-12">
+                <Card.Header className="border-bottom bg-base py-16 px-24 d-flex align-items-center flex-wrap gap-3 justify-content-between">
+                  <h6 className="mb-0">TAG's</h6>
+                </Card.Header>
+                <Card.Body>
+                  <div className="category-list">
+                    <Form.Group className="mb-3">
+                      {Array.from(
+                        new Set(
+                          materials
+                            .map((m) => m.cp_mat_extra_categories)
+                            .filter(Boolean) // remove null/vazio
+                            .flatMap((cats) =>
+                              cats.split(",").map((cat) => cat.trim()).filter(Boolean)
+                            )
+                        )
+                      ).map((category, index) => (
+                        <Form.Check
+                          key={index}
+                          type="checkbox"
+                          label={category}
+                          name={category}
+                          onChange={handleCategoryChange}
+                          checked={selectedCategories.includes(category)}
+                          className="mb-2"
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "10px", // Espaço entre o checkbox e a label
+                          }}
+                        />
+                      ))}
+                    </Form.Group>
+                  </div>
 
-              </Card.Body>
-            </Card>
-
+                </Card.Body>
+              </Card>
+            )}
             <Card className="mb-3 shadow-sm">
               <Card.Header className=" text-white">
                 <h6 className="mb-0">Pesquisar por Nome</h6>
@@ -616,6 +760,43 @@ function MaterialExtra() {
                         )}
                       </div>
 
+                      <Form.Group controlId="formCodigos" className="mt-3">
+                        <Form.Label>Categoria</Form.Label>
+                        <div className="d-flex flex-wrap gap-2 custom-checkboxes">
+                          {opcoesCodigos.map((item) => (
+                            <Form.Check
+                              inline
+                              key={item.valor}
+                              type="checkbox"
+                              label={item.etiqueta}
+                              value={item.valor}
+                              checked={codigos.includes(item.valor)}
+                              onChange={() => lidarCheckBox(item.valor)}
+                            />
+                          ))}
+                        </div>
+                      </Form.Group>
+
+                      <style>
+                        {`
+                            .custom-checkboxes .form-check {
+                              margin-bottom: 0;
+                            }
+
+                            .custom-checkboxes .form-check-input {
+                              margin-top: 0;
+                              margin-right: 4px;
+                              vertical-align: middle;
+                            }
+
+                            .custom-checkboxes .form-check-label {
+                              line-height: 1;
+                              vertical-align: middle;
+                              margin-bottom: 0;
+                            }
+                          `}
+                      </style>
+
                       <Form.Group controlId="formCategories" className="mt-3">
                         <Form.Label>TAG's</Form.Label>
                         <Form.Control
@@ -653,18 +834,24 @@ function MaterialExtra() {
 
 
           <Col>
-            {filteredMaterials.map((material, index) => (
+
+            {filteredMaterials.length === 0 ? (
+              <p className="text-center">Nenhum material disponivel no momento</p>
+            ) : (
+              filteredMaterials.map((material, index) => (
               <Card className="my-3" key={index}>
                 <Card.Body>
-                  <Row>
-                    <Col md={4}>
+                  <Row className="g-3 flex-column flex-md-row">
+                    <Col xs={12} md={4} className="d-flex justify-content-center">
                       {material.cp_mat_extra_thumbnail && (
                         <div
                           style={{
                             backgroundColor: "#eaeaea",
                             borderRadius: "10px",
-                            height: "180px",
-                            width: "300px",
+                            width: "100%",
+                            maxWidth: "300px",
+                            height: "auto",
+                            aspectRatio: "5 / 3",
                             display: "flex",
                             justifyContent: "center",
                             alignItems: "center",
@@ -684,7 +871,9 @@ function MaterialExtra() {
                           />
                           {material.cp_mat_extra_youtube_url && (
                             <Link
-                              onClick={() => handleOpenVideo(material.cp_mat_extra_youtube_url)}
+                              onClick={() =>
+                                handleOpenVideo(material.cp_mat_extra_youtube_url)
+                              }
                               to="#"
                               className="magnific-video bordered-shadow w-56-px h-56-px bg-white rounded-circle d-flex justify-content-center align-items-center position-absolute start-50 top-50 translate-middle z-1"
                             >
@@ -693,61 +882,60 @@ function MaterialExtra() {
                           )}
                         </div>
                       )}
-
                     </Col>
 
-
-                    <Col md={4}>
+                    <Col xs={12} md={4}>
                       <h5>{material.cp_mat_extra_title}</h5>
                       <p>{material.cp_mat_extra_description}</p>
                       <p>{formatDateString(material.cp_mat_extra_date)}</p>
                     </Col>
 
-                    <Col md={4}>
+                    <Col xs={12} md={4}>
                       {material.cp_mat_extra_categories &&
                         material.cp_mat_extra_categories.trim() !== "" && (
                           <>
                             <h6 style={{ fontWeight: "bold" }}>TAG's</h6>
                             <p>
-                              {material.cp_mat_extra_categories
-                                .split(",")
-                                .map((cat, index) => (
-                                  <span key={index} className="badge bg-secondary me-1">
-                                    {cat.trim()}
-                                  </span>
-                                ))}
+                              {material.cp_mat_extra_categories.split(",").map((cat, index) => (
+                                <span key={index} className="badge bg-secondary me-1">
+                                  {cat.trim()}
+                                </span>
+                              ))}
                             </p>
-                            <hr style={{paddingBottom:"20px"}} />
+                            <hr style={{ paddingBottom: "20px" }} />
                           </>
                         )}
-                      {/* Botões lado a lado */}
                       <div className="d-flex flex-wrap gap-2">
                         {[material.cp_mat_extra_pdf1, material.cp_mat_extra_pdf2, material.cp_mat_extra_pdf3]
                           .filter(Boolean)
                           .map((pdfUrl, index) => (
-                            <div key={index} className="d-flex">
-                              {/* Botão de Abrir PDF (sempre disponível) */}
+                            <div key={index} className="d-flex flex-wrap align-items-center gap-0">
                               <Button
                                 variant="primary"
                                 className="px-3"
                                 onClick={() => handleViewPDF(pdfUrl)}
                                 style={{
-                                  borderRadius: Number(material.cp_mat_extra_permitirDownload) === 1 ? "5px 0 0 5px" : "5px",
+                                  flex: "1 1 auto",
+                                  minWidth: "150px",
+                                  borderRadius:
+                                    Number(material.cp_mat_extra_permitirDownload) === 1
+                                      ? "5px 0 0 5px"
+                                      : "5px",
                                   border: "none",
                                 }}
                               >
-                                {/* Abrir PDF {index + 1} */}
-                                Abrir {typeof pdfUrl === "string"
+                                Abrir{" "}
+                                {typeof pdfUrl === "string"
                                   ? truncarTexto(pdfUrl.split("/").pop(), 15)
                                   : truncarTexto(pdfUrl.name, 15)}
                               </Button>
 
-                              {/* Botão de Baixar (aparece somente se permitido) */}
                               {Number(material.cp_mat_extra_permitirDownload) === 1 && (
                                 <Button
                                   variant="success"
                                   onClick={() => handleDownload([pdfUrl])}
                                   style={{
+                                    flex: "0 1 auto",
                                     borderRadius: "0 5px 5px 0",
                                     border: "none",
                                   }}
@@ -759,7 +947,6 @@ function MaterialExtra() {
                           ))}
                       </div>
 
-                      {/* Botões de editar e excluir */}
                       {(userType === 1 || userType === 2) && (
                         <div className="mt-3 d-flex gap-2">
                           <Button
@@ -783,11 +970,11 @@ function MaterialExtra() {
                         </div>
                       )}
                     </Col>
-
                   </Row>
                 </Card.Body>
               </Card>
-            ))}
+            ))
+            )}
           </Col>
 
         </Col>
