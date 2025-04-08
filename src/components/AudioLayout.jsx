@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Icon } from "@iconify/react";
 import { API_BASE_URL } from "./config";
+import { useNavigate } from "react-router-dom";
 import "./audio.css"
 
 const Audios = () => {
@@ -14,9 +15,11 @@ const Audios = () => {
     const [selectedCursoId, setSelectedCursoId] = useState(null);
     const [loading, setLoading] = useState(false);
     const [paginaAtualCursos, setPaginaAtualCursos] = useState(1);
-
-
-
+    const navigate = useNavigate();
+    const tipoUser = localStorage.getItem("userType");
+    const editarCurso = (idCurso) => {
+        navigate(`/cadastro-audio/${idCurso}`);
+    };
 
     useEffect(() => {
         fetchCursos();
@@ -190,16 +193,27 @@ const Audios = () => {
                     <div className="card-body p-24">
                         <ul className="align-items-center justify-content-center" sty>
                             {currentCursos.map((curso, index) => (
-                                <div style={{
-                                    borderBottom: index === currentCursos.length - 1 ? "none" : "1px solid #ddd",
-                                    padding: "3px",
-                                }}>
+                                <div
+                                    key={curso.cp_curso_id}
+                                    style={{
+                                        borderBottom: index === currentCursos.length - 1 ? "none" : "1px solid #ddd",
+                                        padding: "3px",
+                                    }}
+                                >
                                     <li
-                                        key={curso.cp_curso_id}
-
-                                        className={`p-2 d-flex justify-content-between align-items-center ${selectedCursoId === curso.cp_curso_id ? "active" : ""}`}
+                                        className={`p-2 d-flex justify-content-between align-items-center ${selectedCursoId === curso.cp_curso_id ? "active" : ""
+                                            }`}
                                     >
-                                        <span>{curso.cp_nome_curso}</span>
+                                        <span>
+                                            {tipoUser === "1" && (
+                                                <Icon
+                                                    icon="ic:round-edit"
+                                                    onClick={() => editarCurso(curso.cp_curso_id)}
+                                                    style={{ marginRight: "5px", cursor: "pointer" }}
+                                                />
+                                            )}
+                                            {curso.cp_nome_curso}
+                                        </span>
                                         <button
                                             className="btn btn-sm btn-primary"
                                             onClick={() => fetchAudios(curso.cp_curso_id)}

@@ -15,6 +15,7 @@ import PaginaCadastroEscola from "./pages/PaginaCadastroEscola";
 import CadastroMatricula from "./pages/PaginaCadastroMatricula";
 import CadastroTurma from "./pages/PaginaCadastroTurma";
 import CadastroAudio from "./pages/PaginaCadastroAudio";
+import CadastroAudioEditar from "./pages/PaginaCadastroAudio";
 import AlertPage from "./pages/AlertPage";
 import AssignRolePage from "./pages/AssignRolePage";
 import AvatarPage from "./pages/AvatarPage";
@@ -131,6 +132,8 @@ function App() {
         <Route exact path="/cadastro-matricula" element={<CadastroMatricula />} />
         <Route exact path="/cadastro-matricula/:matriculaId" element={<PaginaCadastroMatricula />} />
         <Route exact path="/cadastro-audio" element={<CadastroAudio />} />
+        <Route exact path="/cadastro-audio/:id" element={<CadastroAudioEditar />} />
+
         <Route exact path="/matriculas" element={<MatriculaPage />} />
         <Route exact path="/usuarios" element={<UsuarioPage />} />
         <Route exact path="/escolas" element={<Escolas />} />
