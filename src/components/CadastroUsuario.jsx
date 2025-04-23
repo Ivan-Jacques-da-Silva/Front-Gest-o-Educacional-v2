@@ -70,6 +70,7 @@ const CadastroUsuarioModal = ({ userId }) => {
             axios.get(`${API_BASE_URL}/users/${userId}`)
                 .then(response => {
                     setUserData(response.data); // Preenche o formulário
+
                 })
                 .catch(error => {
                     console.error("Erro ao buscar usuário:", error);
@@ -83,6 +84,14 @@ const CadastroUsuarioModal = ({ userId }) => {
         const userTypeFromStorage = localStorage.getItem("userType");
         setUserType(parseInt(userTypeFromStorage, 10));
     }, []);
+
+    useEffect(() => {
+        if (!userId) {
+            const escolaId = localStorage.getItem("schoolId");
+            setUserData((prev) => ({ ...prev, cp_escola_id: escolaId }));
+        }
+    }, []);
+
 
     const getFilteredOptions = () => {
         const options = [
@@ -272,6 +281,7 @@ const CadastroUsuarioModal = ({ userId }) => {
                                             id="cp_escola_id"
                                             name="cp_escola_id"
                                             value={userData.cp_escola_id}
+                                            // value={userData.cp_escola_id || localStorage.getItem("schoolId")}
                                             onChange={handleChange}
                                             className="form-control"
                                             required

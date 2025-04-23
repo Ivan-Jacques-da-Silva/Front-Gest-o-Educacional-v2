@@ -153,7 +153,8 @@ function MaterialExtra() {
       const todosMateriais = res.data;
 
       // Admin vê tudo
-      if (tipoUsuario === "1") {
+      if (tipoUsuario === "1" || localStorage.getItem("userName") === "Andrea Carneiro Monteiro Dumoncel") {
+
         setMaterials(todosMateriais);
         setFilteredMaterials(todosMateriais);
         return;
@@ -344,9 +345,10 @@ function MaterialExtra() {
 
   useEffect(() => {
     const tipoUsuario = localStorage.getItem("userType");
+    const userName = localStorage.getItem("userName");
     const professorId = localStorage.getItem("userId");
 
-    if (tipoUsuario !== "1") {
+    if (tipoUsuario !== "1" && userName !== "Andrea Carneiro Monteiro Dumoncel") {
       axios.get(`${API_BASE_URL}/cp_turmas/professor/${professorId}`)
         .then(res => {
           const cursosDoProfessor = res.data.map(turma => turma.cp_tr_curso_id);
@@ -465,7 +467,7 @@ function MaterialExtra() {
         <Col xs={12} md={3} className="border-end p-3">
           {/* <h5 className="text-center fw-bold mt-3">Filtrar</h5> */}
           <Form>
-            {userType === 1 && (
+            {(userType === 1 || localStorage.getItem("userName") === "Andrea Carneiro Monteiro Dumoncel") && (
               <Card className="mb-3 shadow-sm">
                 <Card.Header className="text-white">
                   <h6 className="mb-0">Filtrar por Categoria</h6>
@@ -582,7 +584,8 @@ function MaterialExtra() {
 
         <Col xs={12} md={9}>
           <Card className="my-3">
-            {userType === 1 && (
+          {(userType === 1 || localStorage.getItem("userName") === "Andrea Carneiro Monteiro Dumoncel") && (
+
               <Card.Body>
                 <Form onSubmit={handleSubmit}>
                   <Row>
@@ -839,141 +842,141 @@ function MaterialExtra() {
               <p className="text-center">Nenhum material disponivel no momento</p>
             ) : (
               filteredMaterials.map((material, index) => (
-              <Card className="my-3" key={index}>
-                <Card.Body>
-                  <Row className="g-3 flex-column flex-md-row">
-                    <Col xs={12} md={4} className="d-flex justify-content-center">
-                      {material.cp_mat_extra_thumbnail && (
-                        <div
-                          style={{
-                            backgroundColor: "#eaeaea",
-                            borderRadius: "10px",
-                            width: "100%",
-                            maxWidth: "300px",
-                            height: "auto",
-                            aspectRatio: "5 / 3",
-                            display: "flex",
-                            justifyContent: "center",
-                            alignItems: "center",
-                            overflow: "hidden",
-                            margin: "10px auto",
-                          }}
-                          className="position-relative"
-                        >
-                          <img
-                            src={material.cp_mat_extra_thumbnail}
-                            alt={material.cp_mat_extra_title}
+                <Card className="my-3" key={index}>
+                  <Card.Body>
+                    <Row className="g-3 flex-column flex-md-row">
+                      <Col xs={12} md={4} className="d-flex justify-content-center">
+                        {material.cp_mat_extra_thumbnail && (
+                          <div
                             style={{
-                              maxWidth: "100%",
-                              maxHeight: "100%",
-                              objectFit: "contain",
+                              backgroundColor: "#eaeaea",
+                              borderRadius: "10px",
+                              width: "100%",
+                              maxWidth: "300px",
+                              height: "auto",
+                              aspectRatio: "5 / 3",
+                              display: "flex",
+                              justifyContent: "center",
+                              alignItems: "center",
+                              overflow: "hidden",
+                              margin: "10px auto",
                             }}
-                          />
-                          {material.cp_mat_extra_youtube_url && (
-                            <Link
-                              onClick={() =>
-                                handleOpenVideo(material.cp_mat_extra_youtube_url)
-                              }
-                              to="#"
-                              className="magnific-video bordered-shadow w-56-px h-56-px bg-white rounded-circle d-flex justify-content-center align-items-center position-absolute start-50 top-50 translate-middle z-1"
-                            >
-                              <Icon icon="ion:play" className="text-primary-600 text-xxl" />
-                            </Link>
-                          )}
-                        </div>
-                      )}
-                    </Col>
-
-                    <Col xs={12} md={4}>
-                      <h5>{material.cp_mat_extra_title}</h5>
-                      <p>{material.cp_mat_extra_description}</p>
-                      <p>{formatDateString(material.cp_mat_extra_date)}</p>
-                    </Col>
-
-                    <Col xs={12} md={4}>
-                      {material.cp_mat_extra_categories &&
-                        material.cp_mat_extra_categories.trim() !== "" && (
-                          <>
-                            <h6 style={{ fontWeight: "bold" }}>TAG's</h6>
-                            <p>
-                              {material.cp_mat_extra_categories.split(",").map((cat, index) => (
-                                <span key={index} className="badge bg-secondary me-1">
-                                  {cat.trim()}
-                                </span>
-                              ))}
-                            </p>
-                            <hr style={{ paddingBottom: "20px" }} />
-                          </>
-                        )}
-                      <div className="d-flex flex-wrap gap-2">
-                        {[material.cp_mat_extra_pdf1, material.cp_mat_extra_pdf2, material.cp_mat_extra_pdf3]
-                          .filter(Boolean)
-                          .map((pdfUrl, index) => (
-                            <div key={index} className="d-flex flex-wrap align-items-center gap-0">
-                              <Button
-                                variant="primary"
-                                className="px-3"
-                                onClick={() => handleViewPDF(pdfUrl)}
-                                style={{
-                                  flex: "1 1 auto",
-                                  minWidth: "150px",
-                                  borderRadius:
-                                    Number(material.cp_mat_extra_permitirDownload) === 1
-                                      ? "5px 0 0 5px"
-                                      : "5px",
-                                  border: "none",
-                                }}
+                            className="position-relative"
+                          >
+                            <img
+                              src={material.cp_mat_extra_thumbnail}
+                              alt={material.cp_mat_extra_title}
+                              style={{
+                                maxWidth: "100%",
+                                maxHeight: "100%",
+                                objectFit: "contain",
+                              }}
+                            />
+                            {material.cp_mat_extra_youtube_url && (
+                              <Link
+                                onClick={() =>
+                                  handleOpenVideo(material.cp_mat_extra_youtube_url)
+                                }
+                                to="#"
+                                className="magnific-video bordered-shadow w-56-px h-56-px bg-white rounded-circle d-flex justify-content-center align-items-center position-absolute start-50 top-50 translate-middle z-1"
                               >
-                                Abrir{" "}
-                                {typeof pdfUrl === "string"
-                                  ? truncarTexto(pdfUrl.split("/").pop(), 15)
-                                  : truncarTexto(pdfUrl.name, 15)}
-                              </Button>
+                                <Icon icon="ion:play" className="text-primary-600 text-xxl" />
+                              </Link>
+                            )}
+                          </div>
+                        )}
+                      </Col>
 
-                              {Number(material.cp_mat_extra_permitirDownload) === 1 && (
+                      <Col xs={12} md={4}>
+                        <h5>{material.cp_mat_extra_title}</h5>
+                        <p>{material.cp_mat_extra_description}</p>
+                        <p>{formatDateString(material.cp_mat_extra_date)}</p>
+                      </Col>
+
+                      <Col xs={12} md={4}>
+                        {material.cp_mat_extra_categories &&
+                          material.cp_mat_extra_categories.trim() !== "" && (
+                            <>
+                              <h6 style={{ fontWeight: "bold" }}>TAG's</h6>
+                              <p>
+                                {material.cp_mat_extra_categories.split(",").map((cat, index) => (
+                                  <span key={index} className="badge bg-secondary me-1">
+                                    {cat.trim()}
+                                  </span>
+                                ))}
+                              </p>
+                              <hr style={{ paddingBottom: "20px" }} />
+                            </>
+                          )}
+                        <div className="d-flex flex-wrap gap-2">
+                          {[material.cp_mat_extra_pdf1, material.cp_mat_extra_pdf2, material.cp_mat_extra_pdf3]
+                            .filter(Boolean)
+                            .map((pdfUrl, index) => (
+                              <div key={index} className="d-flex flex-wrap align-items-center gap-0">
                                 <Button
-                                  variant="success"
-                                  onClick={() => handleDownload([pdfUrl])}
+                                  variant="primary"
+                                  className="px-3"
+                                  onClick={() => handleViewPDF(pdfUrl)}
                                   style={{
-                                    flex: "0 1 auto",
-                                    borderRadius: "0 5px 5px 0",
+                                    flex: "1 1 auto",
+                                    minWidth: "150px",
+                                    borderRadius:
+                                      Number(material.cp_mat_extra_permitirDownload) === 1
+                                        ? "5px 0 0 5px"
+                                        : "5px",
                                     border: "none",
                                   }}
                                 >
-                                  <FaDownload />
+                                  Abrir{" "}
+                                  {typeof pdfUrl === "string"
+                                    ? truncarTexto(pdfUrl.split("/").pop(), 15)
+                                    : truncarTexto(pdfUrl.name, 15)}
                                 </Button>
-                              )}
-                            </div>
-                          ))}
-                      </div>
 
-                      {(userType === 1 || userType === 2) && (
-                        <div className="mt-3 d-flex gap-2">
-                          <Button
-                            variant="warning"
-                            onClick={() => handleEdit(material)}
-                            className="d-flex align-items-center"
-                            style={{ fontSize: "0.9rem" }}
-                          >
-                            <FaEdit className="me-2" />
-                            Editar
-                          </Button>
-                          <Button
-                            variant="danger"
-                            onClick={() => handleDelete(material.cp_mat_extra_id)}
-                            className="d-flex align-items-center"
-                            style={{ fontSize: "0.9rem" }}
-                          >
-                            <FaTrash className="me-2" />
-                            Excluir
-                          </Button>
+                                {Number(material.cp_mat_extra_permitirDownload) === 1 && (
+                                  <Button
+                                    variant="success"
+                                    onClick={() => handleDownload([pdfUrl])}
+                                    style={{
+                                      flex: "0 1 auto",
+                                      borderRadius: "0 5px 5px 0",
+                                      border: "none",
+                                    }}
+                                  >
+                                    <FaDownload />
+                                  </Button>
+                                )}
+                              </div>
+                            ))}
                         </div>
-                      )}
-                    </Col>
-                  </Row>
-                </Card.Body>
-              </Card>
-            ))
+
+                        {(userType === 1 || userType === 2) && (
+                          <div className="mt-3 d-flex gap-2">
+                            <Button
+                              variant="warning"
+                              onClick={() => handleEdit(material)}
+                              className="d-flex align-items-center"
+                              style={{ fontSize: "0.9rem" }}
+                            >
+                              <FaEdit className="me-2" />
+                              Editar
+                            </Button>
+                            <Button
+                              variant="danger"
+                              onClick={() => handleDelete(material.cp_mat_extra_id)}
+                              className="d-flex align-items-center"
+                              style={{ fontSize: "0.9rem" }}
+                            >
+                              <FaTrash className="me-2" />
+                              Excluir
+                            </Button>
+                          </div>
+                        )}
+                      </Col>
+                    </Row>
+                  </Card.Body>
+                </Card>
+              ))
             )}
           </Col>
 

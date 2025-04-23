@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Icon } from "@iconify/react";
 import { API_BASE_URL } from "./config";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import "./audio.css"
+import axios from "axios";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const Audios = () => {
     const [cursos, setCursos] = useState([]);
@@ -16,6 +19,9 @@ const Audios = () => {
     const [loading, setLoading] = useState(false);
     const [paginaAtualCursos, setPaginaAtualCursos] = useState(1);
     const navigate = useNavigate();
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [cursoParaExcluir, setCursoParaExcluir] = useState(null);
+
     const tipoUser = localStorage.getItem("userType");
     const editarCurso = (idCurso) => {
         navigate(`/cadastro-audio/${idCurso}`);
@@ -25,31 +31,21 @@ const Audios = () => {
         fetchCursos();
     }, []);
 
-    // const fetchCursos = async () => {
-    //     const professorId = localStorage.getItem('userId'); // Pega o ID do professor do localStorage
-    //     try {
-    //         const responseTurmas = await fetch(`${API_BASE_URL}/cp_turmas/professor/${professorId}`);
-    //         const turmas = await responseTurmas.json();
-    //         const cursoIds = turmas.map(turma => turma.cp_tr_curso_id);
+    const deletarCurso = async () => {
+        try {
+            await axios.delete(`${API_BASE_URL}/delete-curso/${cursoParaExcluir}`);
+            toast.success("Curso excluído com sucesso");
+            setShowDeleteModal(false);
+            setSelectedCursoId(null);
+            setAudios([]);
+            fetchCursos();
+        } catch (error) {
+            console.error("Erro ao excluir curso:", error);
+            toast.error("Erro ao excluir curso");
+        }
+    };
 
-    //         // Verifica se há IDs de cursos para buscar
-    //         if (cursoIds.length > 0) {
-    //             const responseCursos = await fetch(`${API_BASE_URL}/cursos/batch`, {
-    //                 method: 'POST',
-    //                 headers: {
-    //                     'Content-Type': 'application/json',
-    //                 },
-    //                 body: JSON.stringify({ cursoIds }) // Envia os IDs como JSON
-    //             });
-    //             const cursos = await responseCursos.json();
-    //             setCursos(cursos);
-    //         } else {
-    //             setCursos([]); // Define cursos como vazio se não houver IDs
-    //         }
-    //     } catch (error) {
-    //         console.error("Erro ao buscar cursos:", error);
-    //     }
-    // };
+
 
     const fetchCursos = async () => {
         const professorId = localStorage.getItem('userId');
@@ -206,11 +202,25 @@ const Audios = () => {
                                     >
                                         <span>
                                             {tipoUser === "1" && (
-                                                <Icon
-                                                    icon="ic:round-edit"
-                                                    onClick={() => editarCurso(curso.cp_curso_id)}
-                                                    style={{ marginRight: "5px", cursor: "pointer" }}
-                                                />
+                                                <div className="d-inline-flex align-items-center gap-1">
+                                                    <Link
+                                                        style={{ marginRight: "4px" }}
+                                                        to={`/cadastro-audio/${curso.cp_curso_id}`}
+                                                        className="w-32-px h-32-px bg-success-focus text-success-main rounded-circle d-inline-flex align-items-center justify-content-center"
+                                                    >
+                                                        <Icon icon="lucide:edit" />
+                                                    </Link>
+                                                    {/* <button
+                                                        style={{ marginRight: "4px" }}
+                                                        className="w-32-px h-32-px bg-danger-focus text-danger-main rounded-circle d-inline-flex align-items-center justify-content-center border-0"
+                                                        onClick={() => {
+                                                            setCursoParaExcluir(curso.cp_curso_id);
+                                                            setShowDeleteModal(true);
+                                                        }}
+                                                    >
+                                                        <Icon icon="lucide:trash" />
+                                                    </button> */}
+                                                </div>
                                             )}
                                             {curso.cp_nome_curso}
                                         </span>
@@ -368,6 +378,27 @@ const Audios = () => {
                     </div>
                 </div>
             </div>
+            {showDeleteModal && (
+                <div className="modal fade show d-block" tabIndex="-1" role="dialog">
+                    <div className="modal-dialog modal-dialog-centered" role="document">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <h5 className="modal-title">Confirmar Exclusão</h5>
+                                <button type="button" className="btn-close" onClick={() => setShowDeleteModal(false)} />
+                            </div>
+                            <div className="modal-body">
+                                Tem certeza que deseja excluir este curso? Essa ação não poderá ser desfeita.
+                            </div>
+                            <div className="modal-footer">
+                                <button className="btn btn-secondary" onClick={() => setShowDeleteModal(false)}>Cancelar</button>
+                                <button className="btn btn-danger" onClick={deletarCurso}>Excluir</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <ToastContainer />
         </div>
     );
 };

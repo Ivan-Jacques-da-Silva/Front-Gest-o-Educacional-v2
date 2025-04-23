@@ -4,12 +4,14 @@ import { API_BASE_URL } from "./config";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Row, Col, Button, Form, Modal } from "react-bootstrap";
+axios.defaults.maxContentLength = Infinity;
+axios.defaults.maxBodyLength = Infinity;
 
 const CadastroAudio = ({ audioID }) => {
   const estadoInicial = {
     cp_curso_id: "",
     cp_audio: [],
-    cp_link_youtube: "",
+    cp_youtube_link_curso: "",
     cp_pdfs: [],
   };
   const [isLoading, setIsLoading] = useState(false);
@@ -34,7 +36,9 @@ const CadastroAudio = ({ audioID }) => {
     { value: "CIPEX TWEENS 2", label: "[ING] - CIPEX TWEENS 2" },
     { value: "CIPEX TWEENS 3", label: "[ING] - CIPEX TWEENS 3" },
     { value: "CIPEX TWEENS 4", label: "[ING] - CIPEX TWEENS 4" },
-    { value: "CIPEX TEENS 5", label: "[ING] - CIPEX TEENS 5" },
+    { value: "CIPEX TWEENS 5", label: "[ING] - CIPEX TWEENS 5" },
+    { value: "CIPEX TWEENS 6", label: "[ING] - CIPEX TWEENS 6" },
+    { value: "CIPEX TWEENS 7", label: "[ING] - CIPEX TWEENS 7" },
     { value: "CIPEX ENGLISH BOOK 1", label: "[ING] - CIPEX ENGLISH BOOK 1" },
     { value: "CIPEX ENGLISH BOOK 2", label: "[ING] - CIPEX ENGLISH BOOK 2" },
     { value: "CIPEX ENGLISH BOOK 3", label: "[ING] - CIPEX ENGLISH BOOK 3" },
@@ -96,9 +100,15 @@ const CadastroAudio = ({ audioID }) => {
       setAudioData((dadosAntigos) => ({
         ...dadosAntigos,
         cp_curso_id: matchingOption ? matchingOption.value : "",
-        cp_link_youtube: resp.data.cp_youtube_link_curso,
+        cp_youtube_link_curso: resp.data.cp_youtube_link_curso || "",
+        cp_pdfs: [
+          resp.data.cp_pdf1_curso,
+          resp.data.cp_pdf2_curso,
+          resp.data.cp_pdf3_curso,
+        ].filter(Boolean), // remove nulls
         nomeCurso: courseName,
       }));
+
     } catch (erro) {
       toast.error("Erro ao carregar curso");
     }
@@ -166,46 +176,48 @@ const CadastroAudio = ({ audioID }) => {
     setIsLoading(true);
     try {
       if (audioID) {
-        // Atualizar curso e áudios
+        // 1. Atualiza dados do curso (nome, link e PDFs)
         const cursoFormData = new FormData();
         cursoFormData.append("cp_nome_curso", audioData.cp_curso_id);
-        cursoFormData.append("cp_youtube_link_curso", audioData.cp_link_youtube);
-        if (audioData.cp_pdfs.length > 0) {
-          audioData.cp_pdfs.forEach((pdf, index) => {
-            cursoFormData.append(`pdf${index + 1}`, pdf);
-          });
-        }
-        // Supondo que audioDataToEdit possua a propriedade cursoId
-        // const cursoId = audioID.cursoId;
-        const cursoId = audioID;
+        cursoFormData.append("cp_youtube_link_curso", audioData.cp_youtube_link_curso || "");
 
-        await axios.put(`${API_BASE_URL}/update-cursos/${cursoId}`, cursoFormData, {
+        audioData.cp_pdfs.forEach((pdf, index) => {
+          if (pdf instanceof File) {
+            cursoFormData.append(`pdf${index + 1}`, pdf);
+          }
+        });
+
+        await axios.put(`${API_BASE_URL}/update-curso/${audioID}`, cursoFormData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
-        if (audioData.cp_audio.length > 0) {
+
+        // 2. Atualiza os áudios separadamente, usando a rota /update-audio
+        const audiosNovos = audioData.cp_audio.filter((a) => a instanceof File);
+        if (audiosNovos.length > 0) {
           const audioFormData = new FormData();
-          audioData.cp_audio.forEach((audio) => {
+          audiosNovos.forEach((audio) => {
             audioFormData.append("audios", audio);
           });
-          await axios.put(`${API_BASE_URL}/update-audio/${cursoId}`, audioFormData, {
+          await axios.put(`${API_BASE_URL}/update-audio/${audioID}`, audioFormData, {
             headers: { "Content-Type": "multipart/form-data" },
           });
         }
+
         toast.success("Curso e áudios atualizados com sucesso!");
       } else {
-        // Criar novo curso e áudios
         const cursoFormData = new FormData();
         cursoFormData.append("cp_nome_curso", audioData.cp_curso_id);
-        cursoFormData.append("cp_youtube_link_curso", audioData.cp_link_youtube);
-        if (audioData.cp_pdfs.length > 0) {
-          audioData.cp_pdfs.forEach((pdf, index) => {
-            cursoFormData.append(`pdf${index + 1}`, pdf);
-          });
-        }
+        cursoFormData.append("cp_youtube_link_curso", audioData.cp_youtube_link_curso);
+
+        audioData.cp_pdfs.forEach((pdf, index) => {
+          cursoFormData.append(`pdf${index + 1}`, pdf);
+        });
+
         const response = await axios.post(`${API_BASE_URL}/cursos`, cursoFormData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
         const cursoId = response.data.cursoId;
+
         if (audioData.cp_audio.length > 0) {
           const audioFormData = new FormData();
           audioData.cp_audio.forEach((audio) => {
@@ -215,19 +227,21 @@ const CadastroAudio = ({ audioID }) => {
             headers: { "Content-Type": "multipart/form-data" },
           });
         }
+
         toast.success("Curso e áudios cadastrados com sucesso!");
         setAudioData(estadoInicial);
       }
     } catch (error) {
-      console.error("Erro ao processar o áudio:", error);
+      console.error("❌ Erro ao processar o áudio:", error);
       toast.error("Erro ao processar o áudio");
-      if (!audioID && error.response && error.response.data && error.response.data.cursoId) {
+      if (!audioID && error.response?.data?.cursoId) {
         await axios.delete(`${API_BASE_URL}/cursos/${error.response.data.cursoId}`);
       }
     } finally {
       setIsLoading(false);
     }
   };
+
 
   const handleConfirmSubmit = (e) => {
     e.preventDefault();
@@ -237,6 +251,23 @@ const CadastroAudio = ({ audioID }) => {
 
   return (
     <div>
+      {isLoading && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100vw",
+          height: "100vh",
+          backgroundColor: "rgba(0, 0, 0, 0.5)",
+          zIndex: 9999,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center"
+        }}>
+          <div className="spinner-border text-light" role="status"></div>
+        </div>
+      )}
+
       <form className="form-container-cad" onSubmit={handleSubmit}>
         <Row>
           <Col md={6}>
@@ -266,9 +297,9 @@ const CadastroAudio = ({ audioID }) => {
                   <Form.Label>Link do YouTube</Form.Label>
                   <Form.Control
                     type="url"
-                    id="cp_link_youtube"
-                    name="cp_link_youtube"
-                    value={audioData.cp_link_youtube}
+                    id="cp_youtube_link_curso"
+                    name="cp_youtube_link_curso"
+                    value={audioData.cp_youtube_link_curso}
                     onChange={handleChange}
                     placeholder="Cole o link do YouTube"
                   />

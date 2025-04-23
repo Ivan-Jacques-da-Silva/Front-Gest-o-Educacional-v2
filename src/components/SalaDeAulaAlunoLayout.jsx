@@ -19,6 +19,8 @@ const Audios = () => {
     const [audioStatus, setAudioStatus] = useState({});
     const [searchTerm, setSearchTerm] = useState("");
     const [sortDirection, setSortDirection] = useState("desc");
+    const [progressoAudios, setProgressoAudios] = useState(0);
+
 
     useEffect(() => {
         if (turmaId) {
@@ -100,6 +102,12 @@ const Audios = () => {
                 }, {});
 
                 setAudioStatus(marcados);
+
+                // cálculo da porcentagem
+                const total = data.length;
+                const ouvidos = data.filter(audio => marcados[audio.cp_audio_id]).length;
+                const porcentagem = total > 0 ? Math.round((ouvidos / total) * 100) : 0;
+                setProgressoAudios(porcentagem);
             }
         } catch (error) {
             console.error("Erro ao buscar áudios:", error);
@@ -285,7 +293,7 @@ const Audios = () => {
                                                         {getFilteredResumos()[data].map((resumo) => (
                                                             <div key={resumo.cp_res_id} className="mb-3 p-2 border rounded">
                                                                 <h6>Aula {resumo.cp_res_aula} - {resumo.cp_res_hora}</h6>
-                                                                <p>{resumo.cp_res_resumo}</p>
+                                                                {/* <p>{resumo.cp_res_resumo}</p> */}
 
                                                                 <div className="d-flex gap-2 mt-2">
                                                                     {resumo.cp_res_link && (
@@ -325,7 +333,22 @@ const Audios = () => {
                 <div className="col-12 col-md-8">
                     <div className="card-body p-24">
                         <div className="table-responsive scroll-sm">
+
+                            <div className="mb-3 px-2">
+                                <label className="fw-bold d-block mb-1">
+                                    Progresso: <span className="text-success">{progressoAudios}%</span>
+                                </label>
+                                <div className="progress" style={{ height: "10px" }}>
+                                    <div
+                                        className="progress-bar bg-success"
+                                        role="progressbar"
+                                        style={{ width: `${progressoAudios}%` }}
+                                    />
+                                </div>
+                            </div>
+
                             <table className="table bordered-table sm-table mb-0">
+
                                 <thead>
                                     <tr>
                                         <th>Nome do Áudio</th>
