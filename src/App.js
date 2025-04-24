@@ -1,4 +1,4 @@
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { HashRouter, BrowserRouter, Route, Routes } from "react-router-dom";
 // import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 // import HomePageTwo from "./pages/HomePageTwo";
@@ -109,7 +109,7 @@ import PaginaCadastroTurma from "./pages/PaginaCadastroTurma";
 
 function App() {
   return (
-    <BrowserRouter>
+    <HashRouter>
       <RouteScrollToTop />
       <Routes>
         <Route exact path="/" element={<Login />} />
@@ -225,7 +225,7 @@ function App() {
 
 
       </Routes>
-    </BrowserRouter>
+    </HashRouter>
   );
 }
 

@@ -66,7 +66,7 @@ const CadastroAudio = ({ audioID }) => {
     { value: "MOMENTE B1", label: "[ALE] - MOMENTE B1" },
     { value: "ASPEKTE B2", label: "[ALE] - ASPEKTE B2" },
     { value: "DAF+", label: "[ALE] - DAF+" },
-    { value: "TESTE", label: "[TT] - TESTE" }
+    // { value: "TESTE", label: "[TT] - TESTE" }
   ];
 
   useEffect(() => {
@@ -95,12 +95,14 @@ const CadastroAudio = ({ audioID }) => {
   const buscarCurso = async (idCurso) => {
     try {
       const resp = await axios.get(`${API_BASE_URL}/cursos/${idCurso}`);
+      const link = resp.data.cp_youtube_link_curso
       const courseName = resp.data.cp_nome_curso;
       const matchingOption = opcoesCursos.find(option => option.value === courseName);
       setAudioData((dadosAntigos) => ({
         ...dadosAntigos,
         cp_curso_id: matchingOption ? matchingOption.value : "",
-        cp_youtube_link_curso: resp.data.cp_youtube_link_curso || "",
+        // cp_youtube_link_curso: resp.data.cp_youtube_link_curso || "",
+        cp_youtube_link_curso: link == "null" ? "" : link,
         cp_pdfs: [
           resp.data.cp_pdf1_curso,
           resp.data.cp_pdf2_curso,
@@ -192,7 +194,9 @@ const CadastroAudio = ({ audioID }) => {
         });
 
         // 2. Atualiza os áudios separadamente, usando a rota /update-audio
-        const audiosNovos = audioData.cp_audio.filter((a) => a instanceof File);
+        // const audiosNovos = audioData.cp_audio.filter((a) => a instanceof File);
+        const audiosNovos = audioData.cp_audio.filter(a => a?.type?.startsWith('audio/'));
+
         if (audiosNovos.length > 0) {
           const audioFormData = new FormData();
           audiosNovos.forEach((audio) => {
@@ -299,7 +303,8 @@ const CadastroAudio = ({ audioID }) => {
                     type="url"
                     id="cp_youtube_link_curso"
                     name="cp_youtube_link_curso"
-                    value={audioData.cp_youtube_link_curso}
+                    // value={audioData.cp_youtube_link_curso}
+                    value={audioData.cp_youtube_link_curso ?? ""}
                     onChange={handleChange}
                     placeholder="Cole o link do YouTube"
                   />
