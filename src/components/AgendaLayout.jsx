@@ -72,19 +72,20 @@ function AgendaLayout() {
         // Transformar eventos manuais no formato do FullCalendar
         const eventosFormatados = eventosManual.map((evento, index) => ({
             id: `manual-${index}`,
-            title: evento.name,
+            title: `🎉 ${evento.name}`, // Adicionar ícone
             start: evento.date.split('T')[0], // Apenas a data, sem hora
             backgroundColor: '#e3f2fd',
             borderColor: '#2196f3',
             textColor: '#1976d2',
             extendedProps: {
                 isManual: true,
-                description: evento.name
+                description: evento.name,
+                icon: '🎉'
             }
         }));
 
         setAllEvents([...eventosFormatados, ...events]);
-    }, [events]);
+    }, [events, eventosManual]);
     const [modalOpen, setModalOpen] = useState(false);
     const [newEvent, setNewEvent] = useState({ title: '', description: '', date: '' });
 
@@ -104,7 +105,7 @@ function AgendaLayout() {
         if (newEvent.title && newEvent.date) {
             const novoEvento = { 
                 id: `user-${Date.now()}`,
-                title: newEvent.title, 
+                title: `📌 ${newEvent.title}`, // Adicionar ícone para eventos de usuário
                 start: newEvent.date, 
                 description: newEvent.description,
                 backgroundColor: '#4caf50',
@@ -112,7 +113,8 @@ function AgendaLayout() {
                 textColor: '#ffffff',
                 extendedProps: {
                     isManual: false,
-                    description: newEvent.description
+                    description: newEvent.description,
+                    icon: '📌'
                 }
             };
             setEvents([...events, novoEvento]);
@@ -131,32 +133,78 @@ function AgendaLayout() {
         });
     };
 
+    const getEventosDeHoje = () => {
+        const hoje = new Date().toDateString();
+        return allEvents.filter(event => {
+            const eventDate = new Date(event.start).toDateString();
+            return eventDate === hoje;
+        });
+    };
+
+    const getProximosEventos = () => {
+        const hoje = new Date();
+        const proximosCincoDias = new Date();
+        proximosCincoDias.setDate(hoje.getDate() + 5);
+        
+        return allEvents.filter(event => {
+            const eventDate = new Date(event.start);
+            return eventDate > hoje && eventDate <= proximosCincoDias;
+        }).sort((a, b) => new Date(a.start) - new Date(b.start));
+    };
+
     return (
         <div className="agenda-container container-fluid p-3">
             <div className="row">
                 {/* Card da Esquerda */}
                 <div className="col-md-4 col-12 mb-3">
                     <div className="card h-100 p-3">
-                        <span className="card-title">Eventos do Dia</span>
-                        <div className="event-list mt-3" style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                            {getEventosDodia(new Date().toISOString().split('T')[0]).map((event, index) => (
-                                <div key={index} className="event-item mb-2 p-2 border rounded">
-                                    <p className="mb-1"><strong>{event.title}</strong></p>
-                                    <p className="mb-1 text-muted small">{new Date(event.start).toLocaleDateString('pt-BR')}</p>
-                                    {event.extendedProps?.description && (
-                                        <p className="mb-0 small">{event.extendedProps.description}</p>
-                                    )}
-                                    {event.extendedProps?.isManual && (
-                                        <span className="badge bg-info small">Evento Oficial</span>
-                                    )}
-                                </div>
-                            ))}
-                            {getEventosDodia(new Date().toISOString().split('T')[0]).length === 0 && (
-                                <p className="text-muted">Nenhum evento para hoje</p>
-                            )}
+                        {/* Eventos de Hoje */}
+                        <div className="mb-4">
+                            <span className="card-title text-success">📅 Eventos de Hoje</span>
+                            <div className="event-list mt-2" style={{ maxHeight: '150px', overflowY: 'auto' }}>
+                                {getEventosDeHoje().map((event, index) => (
+                                    <div key={index} className="event-item mb-2 p-2 border rounded bg-light-success">
+                                        <p className="mb-1"><strong>{event.title}</strong></p>
+                                        {event.extendedProps?.description && (
+                                            <p className="mb-0 small text-muted">{event.extendedProps.description}</p>
+                                        )}
+                                        {event.extendedProps?.isManual && (
+                                            <span className="badge bg-success small">Evento Oficial</span>
+                                        )}
+                                    </div>
+                                ))}
+                                {getEventosDeHoje().length === 0 && (
+                                    <p className="text-muted small">Nenhum evento para hoje</p>
+                                )}
+                            </div>
                         </div>
-                        <button className="btn btn-primary mt-3" onClick={() => setModalOpen(true)}>Cadastrar Evento</button>
-                        <span>Em desenvolvimento</span>
+
+                        {/* Próximos Eventos */}
+                        <div className="mb-4">
+                            <span className="card-title text-warning">🔔 Próximos Eventos (5 dias)</span>
+                            <div className="event-list mt-2" style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                                {getProximosEventos().map((event, index) => (
+                                    <div key={index} className="event-item mb-2 p-2 border rounded bg-light-warning">
+                                        <p className="mb-1"><strong>{event.title}</strong></p>
+                                        <p className="mb-1 text-muted small">
+                                            📆 {new Date(event.start).toLocaleDateString('pt-BR')}
+                                        </p>
+                                        {event.extendedProps?.description && (
+                                            <p className="mb-0 small text-muted">{event.extendedProps.description}</p>
+                                        )}
+                                        {event.extendedProps?.isManual && (
+                                            <span className="badge bg-warning small">Evento Oficial</span>
+                                        )}
+                                    </div>
+                                ))}
+                                {getProximosEventos().length === 0 && (
+                                    <p className="text-muted small">Nenhum evento nos próximos 5 dias</p>
+                                )}
+                            </div>
+                        </div>
+
+                        <button className="btn btn-primary mt-auto" onClick={() => setModalOpen(true)}>➕ Cadastrar Evento</button>
+                        <span className="small text-muted text-center mt-2">Em desenvolvimento</span>
                     </div>
                 </div>
 
