@@ -10,3 +10,15 @@ run = ["sh", "-c", "npm run start"]
 [[ports]]
 localPort = 3000
 externalPort = 80
+
+[workflows]
+runButton = "Start Development"
+
+[[workflows.workflow]]
+name = "Start Development"
+author = 43323220
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "GENERATE_SOURCEMAP=false npm start"

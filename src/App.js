@@ -1,21 +1,19 @@
-import { HashRouter, BrowserRouter, Route, Routes } from "react-router-dom";
-// import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Home from "./pages/Home";
-// import HomePageTwo from "./pages/HomePageTwo";
-import HomePageThree from "./pages/HomePageThree";
-import HomePageFour from "./pages/HomePageFour";
-import HomePageFive from "./pages/HomePageFive";
-import HomePageSix from "./pages/HomePageSix";
-import HomePageSeven from "./pages/HomePageSeven";
+import { HashRouter, Route, Routes } from "react-router-dom";
+import { lazy, Suspense } from "react";
+// Lazy imports para páginas principais
+const Home = lazy(() => import("./pages/Home"));
+const HomePageThree = lazy(() => import("./pages/HomePageThree"));
+const HomePageFour = lazy(() => import("./pages/HomePageFour"));
+const HomePageFive = lazy(() => import("./pages/HomePageFive"));
+const HomePageSix = lazy(() => import("./pages/HomePageSix"));
+const HomePageSeven = lazy(() => import("./pages/HomePageSeven"));
 import EmailPage from "./pages/EmailPage";
 import AddUserPage from "./pages/AddUserPage";
-import CadastroUsuario from "./pages/PaginaCadastroUsuario";
-import CadastroEscola from "./pages/PaginaCadastroEscola";
+import PaginaCadastroUsuario from "./pages/PaginaCadastroUsuario";
 import PaginaCadastroEscola from "./pages/PaginaCadastroEscola";
-import CadastroMatricula from "./pages/PaginaCadastroMatricula";
-import CadastroTurma from "./pages/PaginaCadastroTurma";
-import CadastroAudio from "./pages/PaginaCadastroAudio";
-import CadastroAudioEditar from "./pages/PaginaCadastroAudio";
+import PaginaCadastroMatricula from "./pages/PaginaCadastroMatricula";
+import PaginaCadastroTurma from "./pages/PaginaCadastroTurma";
+import PaginaCadastroAudio from "./pages/PaginaCadastroAudio";
 import AlertPage from "./pages/AlertPage";
 import AssignRolePage from "./pages/AssignRolePage";
 import AvatarPage from "./pages/AvatarPage";
@@ -111,7 +109,8 @@ function App() {
   return (
     <HashRouter>
       <RouteScrollToTop />
-      <Routes>
+      <Suspense fallback={<div className="d-flex justify-content-center align-items-center" style={{height: '100vh'}}><div className="spinner-border text-primary" role="status"><span className="visually-hidden">Loading...</span></div></div>}>
+        <Routes>
         <Route exact path="/" element={<Login />} />
         <Route exact path="/home" element={<Home />} />
         <Route exact path="/index-3" element={<HomePageThree />} />
@@ -123,16 +122,16 @@ function App() {
 
         {/* SL */}
         <Route exact path="/add-user" element={<AddUserPage />} />
-        <Route exact path="/cadastro-usuario" element={<CadastroUsuario />} />
+        <Route exact path="/cadastro-usuario" element={<PaginaCadastroUsuario />} />
         <Route exact path="/cadastro-usuario/:id" element={<PaginaCadastroUsuario />} />
-        <Route exact path="/cadastro-escola" element={<CadastroEscola />} />
+        <Route exact path="/cadastro-escola" element={<PaginaCadastroEscola />} />
         <Route exact path="/cadastro-escola/:id" element={<PaginaCadastroEscola />} />
-        <Route exact path="/cadastro-turma" element={<CadastroTurma />} />
+        <Route exact path="/cadastro-turma" element={<PaginaCadastroTurma />} />
         <Route exact path="/cadastro-turma/:id" element={<PaginaCadastroTurma />} />
-        <Route exact path="/cadastro-matricula" element={<CadastroMatricula />} />
+        <Route exact path="/cadastro-matricula" element={<PaginaCadastroMatricula />} />
         <Route exact path="/cadastro-matricula/:matriculaId" element={<PaginaCadastroMatricula />} />
-        <Route exact path="/cadastro-audio" element={<CadastroAudio />} />
-        <Route exact path="/cadastro-audio/:id" element={<CadastroAudioEditar />} />
+        <Route exact path="/cadastro-audio" element={<PaginaCadastroAudio />} />
+        <Route exact path="/cadastro-audio/:id" element={<PaginaCadastroAudio />} />
 
         <Route exact path="/matriculas" element={<MatriculaPage />} />
         <Route exact path="/usuarios" element={<UsuarioPage />} />
@@ -225,6 +224,7 @@ function App() {
 
 
       </Routes>
+      </Suspense>
     </HashRouter>
   );
 }

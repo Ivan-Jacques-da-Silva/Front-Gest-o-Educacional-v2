@@ -6,14 +6,12 @@ import 'react-toastify/dist/ReactToastify.css';
 import 'react-modal-video/css/modal-video.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import App from "./App";
-import reportWebVitals from "./reportWebVitals";
-
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(
-  <>
-    <App />
-  </>
-);
+root.render(<App />);
 
-reportWebVitals();
+// Remover reportWebVitals em produção para melhor performance
+if (process.env.NODE_ENV === 'development') {
+  const reportWebVitals = require("./reportWebVitals").default;
+  reportWebVitals();
+}
