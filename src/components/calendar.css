@@ -26,8 +26,7 @@
 /* Header dos cards */
 .card-header-modern {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 20px 25px;
+  padding: 15px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -37,7 +36,8 @@
 .card-title-modern {
   margin: 0;
   font-weight: 600;
-  font-size: 1.1rem;
+  font-size: 0.95rem;
+  color: white;
 }
 
 .card-actions {
@@ -45,51 +45,18 @@
   gap: 10px;
 }
 
-/* Controles de visualização */
-.view-controls {
-  padding: 20px 25px 0;
-}
-
-.view-controls .btn-group .btn {
-  border-radius: 10px;
-  border: 2px solid #e2e8f0;
-  font-weight: 500;
-  transition: all 0.2s ease;
-}
-
-.view-controls .btn-group .btn:not(:last-child) {
-  margin-right: 5px;
-}
-
-.view-controls .btn-outline-primary {
-  color: #667eea;
-  border-color: #667eea;
-}
-
-.view-controls .btn-outline-primary:hover {
-  background-color: #667eea;
-  border-color: #667eea;
-  transform: translateY(-1px);
-}
-
-.view-controls .btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-color: #667eea;
-  box-shadow: 0 4px 15px 0 rgba(116, 79, 168, 0.75);
-}
-
 /* Seções de eventos */
 .event-section {
-  padding: 0 25px;
+  padding: 0 20px;
 }
 
 .event-section-title {
   color: #2d3748;
   font-weight: 600;
-  margin-bottom: 15px;
+  margin-bottom: 12px;
   display: flex;
   align-items: center;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
 }
 
 /* Lista de eventos moderna */
@@ -212,12 +179,13 @@
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border: none;
   border-radius: 12px;
-  padding: 15px 20px;
+  padding: 12px 18px;
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   transition: all 0.3s ease;
   box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
-  margin: 20px 25px 25px;
+  margin: 15px 20px 20px;
+  color: white;
 }
 
 .modern-btn:hover {
@@ -228,7 +196,7 @@
 
 /* Wrapper do calendário */
 .calendar-wrapper-modern {
-  padding: 25px;
+  padding: 20px;
 }
 
 /* Estilização do FullCalendar */
@@ -351,8 +319,7 @@
 
 .modal-header-modern {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 20px 25px;
+  padding: 15px 20px;
   border-bottom: none;
   display: flex;
   justify-content: space-between;
@@ -362,13 +329,13 @@
 .modal-title-modern {
   margin: 0;
   font-weight: 600;
-  font-size: 1.2rem;
+  font-size: 1rem;
+  color: white;
 }
 
 .btn-close-modern {
   background: none;
   border: none;
-  color: white;
   font-size: 1.5rem;
   padding: 0;
   width: 30px;
@@ -378,6 +345,7 @@
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
+  color: white;
 }
 
 .btn-close-modern:hover {
@@ -496,11 +464,13 @@
   }
   
   .event-section {
-    padding: 0 20px;
+    padding: 0 15px;
   }
   
   .modern-btn {
-    margin: 15px 20px 20px;
+    margin: 12px 15px 15px;
+    padding: 10px 15px;
+    font-size: 0.8rem;
   }
   
   .calendar-wrapper-modern {

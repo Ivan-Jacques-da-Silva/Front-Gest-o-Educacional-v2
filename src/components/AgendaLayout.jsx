@@ -231,37 +231,10 @@ function AgendaLayout() {
             
             <div className="row g-4 p-4">
                 {/* Sidebar com eventos */}
-                <div className="col-xl-3 col-lg-4 col-md-5 col-12">
+                <div className="col-xl-4 col-lg-5 col-md-6 col-12">
                     <div className="modern-card h-100">
                         <div className="card-header-modern">
-                            <h5 className="card-title-modern">📋 Resumo de Eventos</h5>
-                        </div>
-                        
-                        {/* Filtros de visualização */}
-                        <div className="view-controls mb-4">
-                            <div className="btn-group w-100" role="group">
-                                <button 
-                                    type="button" 
-                                    className={`btn btn-sm ${currentView === 'dayGridMonth' ? 'btn-primary' : 'btn-outline-primary'}`}
-                                    onClick={() => setCurrentView('dayGridMonth')}
-                                >
-                                    Mês
-                                </button>
-                                <button 
-                                    type="button" 
-                                    className={`btn btn-sm ${currentView === 'timeGridWeek' ? 'btn-primary' : 'btn-outline-primary'}`}
-                                    onClick={() => setCurrentView('timeGridWeek')}
-                                >
-                                    Semana
-                                </button>
-                                <button 
-                                    type="button" 
-                                    className={`btn btn-sm ${currentView === 'timeGridDay' ? 'btn-primary' : 'btn-outline-primary'}`}
-                                    onClick={() => setCurrentView('timeGridDay')}
-                                >
-                                    Dia
-                                </button>
-                            </div>
+                            <h6 className="card-title-modern">📋 Resumo de Eventos</h6>
                         </div>
 
                         {/* Eventos de Hoje */}
@@ -353,10 +326,10 @@ function AgendaLayout() {
                 </div>
 
                 {/* Calendário Principal */}
-                <div className="col-xl-9 col-lg-8 col-md-7 col-12">
+                <div className="col-xl-8 col-lg-7 col-md-6 col-12">
                     <div className="modern-card h-100">
                         <div className="card-header-modern">
-                            <h5 className="card-title-modern">📅 Calendário Anual</h5>
+                            <h6 className="card-title-modern">📅 Calendário Anual</h6>
                             <div className="card-actions">
                                 <span className="badge bg-info rounded-pill">
                                     {allEvents.length} eventos
@@ -419,10 +392,10 @@ function AgendaLayout() {
                     <div className="modal-dialog modal-lg">
                         <div className="modal-content modern-modal">
                             <div className="modal-header-modern">
-                                <h5 className="modal-title-modern">
+                                <h6 className="modal-title-modern">
                                     <i className="me-2">➕</i>
                                     Criar Novo Evento
-                                </h5>
+                                </h6>
                                 <button 
                                     type="button" 
                                     className="btn-close-modern" 
@@ -530,10 +503,10 @@ function AgendaLayout() {
                     <div className="modal-dialog">
                         <div className="modal-content modern-modal">
                             <div className="modal-header-modern">
-                                <h5 className="modal-title-modern">
+                                <h6 className="modal-title-modern">
                                     <i className="me-2">📋</i>
                                     Detalhes do Evento
-                                </h5>
+                                </h6>
                                 <button 
                                     type="button" 
                                     className="btn-close-modern" 
