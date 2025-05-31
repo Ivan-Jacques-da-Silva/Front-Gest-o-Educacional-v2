@@ -55,6 +55,7 @@ const CadastroMatricula = ({
         horarioFim: "",
         nivelIdioma: "",
         primeiraDataPagamento: "",
+        isMensalidade: false, // Novo campo: indica se é mensalidade
     });
 
     const limparCampos = () => {
@@ -88,6 +89,7 @@ const CadastroMatricula = ({
             horarioFim: "",
             nivelIdioma: "",
             primeiraDataPagamento: "",
+            isMensalidade: false,
         });
     };
 
@@ -186,20 +188,32 @@ const CadastroMatricula = ({
 
     const calcularValorParcela = () => {
         const valorCurso = parseFloat(matriculaData.valorCurso);
-        const numeroParcelas = parseInt(matriculaData.numeroParcelas, 10);
-
-        if (!isNaN(valorCurso) && !isNaN(numeroParcelas) && numeroParcelas > 0) {
-            const valorParcela = (valorCurso / numeroParcelas).toFixed(2);
-            setMatriculaData(prevData => ({
-                ...prevData,
-                valorParcela: valorParcela
-            }));
+        
+        if (matriculaData.isMensalidade) {
+            // Se for mensalidade, o valor da parcela é igual ao valor do curso
+            if (!isNaN(valorCurso) && valorCurso > 0) {
+                setMatriculaData(prevData => ({
+                    ...prevData,
+                    valorParcela: valorCurso.toFixed(2),
+                    numeroParcelas: "" // Limpa o número de parcelas
+                }));
+            }
+        } else {
+            // Lógica original para parcelamento
+            const numeroParcelas = parseInt(matriculaData.numeroParcelas, 10);
+            if (!isNaN(valorCurso) && !isNaN(numeroParcelas) && numeroParcelas > 0) {
+                const valorParcela = (valorCurso / numeroParcelas).toFixed(2);
+                setMatriculaData(prevData => ({
+                    ...prevData,
+                    valorParcela: valorParcela
+                }));
+            }
         }
     };
 
     useEffect(() => {
         calcularValorParcela();
-    }, [matriculaData.valorCurso, matriculaData.numeroParcelas]);
+    }, [matriculaData.valorCurso, matriculaData.numeroParcelas, matriculaData.isMensalidade]);
 
 
     useEffect(() => {
@@ -279,7 +293,7 @@ const CadastroMatricula = ({
                     nomeUsuario: matriculaData.nomeUsuario,
                     cpfUsuario: matriculaData.cpfUsuario,
                     valorCurso: matriculaData.valorCurso,
-                    numeroParcelas: matriculaData.numeroParcelas,
+                    numeroParcelas: matriculaData.isMensalidade ? null : matriculaData.numeroParcelas,
                     primeiraDataPagamento: matriculaData.primeiraDataPagamento,
                     status: matriculaData.status,
                     nivelIdioma: matriculaData.nivelIdioma,
@@ -292,6 +306,7 @@ const CadastroMatricula = ({
                     contatoPai: matriculaData.contatoPai,
                     nomeMae: matriculaData.nomeMae,
                     contatoMae: matriculaData.contatoMae,
+                    isMensalidade: matriculaData.isMensalidade, // Novo campo
                 };
 
                 const response = await axios.put(`${API_BASE_URL}/editar-matricula/${matriculaId}`, editObj);
@@ -422,6 +437,16 @@ const CadastroMatricula = ({
                 valorParcela: "",
             }));
         }
+    };
+
+    const handleMensalidadeChange = (e) => {
+        const isChecked = e.target.checked;
+        setMatriculaData(prevData => ({
+            ...prevData,
+            isMensalidade: isChecked,
+            numeroParcelas: isChecked ? "" : prevData.numeroParcelas, // Limpa parcelas se for mensalidade
+            valorParcela: isChecked ? prevData.valorCurso : prevData.valorParcela
+        }));
     };
 
     useEffect(() => {
@@ -945,24 +970,39 @@ const CadastroMatricula = ({
                                         />
                                     </Col>
                                     <Col md={12}>
-                                        <label htmlFor="numeroParcelas">Número de Parcelas:</label>
-                                        <select
-                                            id="numeroParcelas"
-                                            name="numeroParcelas"
-                                            value={matriculaData.numeroParcelas || ''}
-                                            onChange={handleNumeroParcelasChange}
-                                            className="form-control"
-                                            disabled={!matriculaData.valorCurso}
-                                            required
-                                        >
-                                            <option value="">Selecione o número de parcelas</option>
-                                            {[...Array(13)].map((_, i) => (
-                                                <option key={i + 1} value={i + 1}>
-                                                    {i + 1}x
-                                                </option>
-                                            ))}
-                                        </select>
+                                        <label>
+                                            <input
+                                                type="checkbox"
+                                                id="isMensalidade"
+                                                name="isMensalidade"
+                                                checked={matriculaData.isMensalidade}
+                                                onChange={handleMensalidadeChange}
+                                                className="form-check-input me-2"
+                                            />
+                                            Mensalidade (valor fixo mensal)
+                                        </label>
                                     </Col>
+                                    {!matriculaData.isMensalidade && (
+                                        <Col md={12}>
+                                            <label htmlFor="numeroParcelas">Número de Parcelas:</label>
+                                            <select
+                                                id="numeroParcelas"
+                                                name="numeroParcelas"
+                                                value={matriculaData.numeroParcelas || ''}
+                                                onChange={handleNumeroParcelasChange}
+                                                className="form-control"
+                                                disabled={!matriculaData.valorCurso}
+                                                required={!matriculaData.isMensalidade}
+                                            >
+                                                <option value="">Selecione o número de parcelas</option>
+                                                {[...Array(13)].map((_, i) => (
+                                                    <option key={i + 1} value={i + 1}>
+                                                        {i + 1}x
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </Col>
+                                    )}
                                     <Col md={12}>
                                         <label htmlFor="primeiraParcela">Primeira Parcela:</label>
                                         <input
@@ -981,7 +1021,9 @@ const CadastroMatricula = ({
                                         />
                                     </Col>
                                     <Col md={12}>
-                                        <label htmlFor="valorParcela">Valor da Parcela:</label>
+                                        <label htmlFor="valorParcela">
+                                            {matriculaData.isMensalidade ? "Valor da Mensalidade:" : "Valor da Parcela:"}
+                                        </label>
                                         <input
                                             type="text"
                                             id="valorParcela"
@@ -993,7 +1035,7 @@ const CadastroMatricula = ({
                                                 }
                                             )}
                                             className="form-control"
-                                            placeholder="Valor da Parcela"
+                                            placeholder={matriculaData.isMensalidade ? "Valor da Mensalidade" : "Valor da Parcela"}
                                             readOnly
                                         />
                                     </Col>
