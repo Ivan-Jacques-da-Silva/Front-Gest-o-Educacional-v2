@@ -98,9 +98,6 @@ import MatriculaPage from "./pages/MatriculaPage";
 import SalaDeAula from "./pages/SalaDeAulaPage.jsx";
 import SalaDeAulaAluno from "./pages/SalaDeAulaAlunoPage.jsx";
 import Agenda from "./pages/AgendaPage.jsx";
-import PaginaCadastroUsuario from "./pages/PaginaCadastroUsuario.jsx";
-import PaginaCadastroMatricula from "./pages/PaginaCadastroMatricula";
-import PaginaCadastroTurma from "./pages/PaginaCadastroTurma";
 
 // import CadastroUsuario from "./components/CadastroUsuario";
 
