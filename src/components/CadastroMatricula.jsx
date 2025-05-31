@@ -56,6 +56,7 @@ const CadastroMatricula = ({
         nivelIdioma: "",
         primeiraDataPagamento: "",
         isMensalidade: false, // Novo campo: indica se é mensalidade
+        diasSemana: [],
     });
 
     const limparCampos = () => {
@@ -90,6 +91,7 @@ const CadastroMatricula = ({
             nivelIdioma: "",
             primeiraDataPagamento: "",
             isMensalidade: false,
+            diasSemana: [],
         });
     };
 
@@ -188,7 +190,7 @@ const CadastroMatricula = ({
 
     const calcularValorParcela = () => {
         const valorCurso = parseFloat(matriculaData.valorCurso);
-        
+
         if (matriculaData.isMensalidade) {
             // Se for mensalidade, o valor da parcela é igual ao valor do curso
             if (!isNaN(valorCurso) && valorCurso > 0) {
@@ -250,6 +252,7 @@ const CadastroMatricula = ({
                             contatoPai: dadosMatricula.cp_mt_contato_pai,
                             nomeMae: dadosMatricula.cp_mt_nome_mae,
                             contatoMae: dadosMatricula.cp_mt_contato_mae,
+                            diasSemana: dadosMatricula.cp_mt_dias_semana ? dadosMatricula.cp_mt_dias_semana.split(',') : [],
                         }));
 
                         // Buscar os dados do usuário vinculado à matrícula
@@ -307,6 +310,7 @@ const CadastroMatricula = ({
                     nomeMae: matriculaData.nomeMae,
                     contatoMae: matriculaData.contatoMae,
                     isMensalidade: matriculaData.isMensalidade, // Novo campo
+                    diasSemana: matriculaData.diasSemana ? matriculaData.diasSemana.join(',') : null,
                 };
 
                 const response = await axios.put(`${API_BASE_URL}/editar-matricula/${matriculaId}`, editObj);
@@ -588,6 +592,22 @@ const CadastroMatricula = ({
         closeUserSearchModal(); // Fecha o modal após selecionar
     };
 
+    const handleDiasSemanaChange = (dia) => {
+        setMatriculaData(prevState => {
+            const diasSemana = [...prevState.diasSemana];
+            const index = diasSemana.indexOf(dia);
+
+            if (index === -1) {
+                diasSemana.push(dia);
+            } else {
+                diasSemana.splice(index, 1);
+            }
+
+            return { ...prevState, diasSemana };
+        });
+    };
+
+
     return (
         <div className="modal-edit">
             <ToastContainer />
@@ -748,7 +768,38 @@ const CadastroMatricula = ({
                                             readOnly
                                         />
                                     </Col>
-
+                                    <Col md={12}>
+                                        <label>Dias da Semana:</label>
+                                        <div className="d-flex flex-wrap gap-2 mt-2">
+                                            {[
+                                                { valor: 'segunda', label: 'Segunda' },
+                                                { valor: 'terca', label: 'Terça' },
+                                                { valor: 'quarta', label: 'Quarta' },
+                                                { valor: 'quinta', label: 'Quinta' },
+                                                { valor: 'sexta', label: 'Sexta' },
+                                                { valor: 'sabado', label: 'Sábado' },
+                                                { valor: 'domingo', label: 'Domingo' }
+                                            ].map((dia) => (
+                                                <div key={dia.valor} className="form-check">
+                                                    <input
+                                                        type="checkbox"
+                                                        id={`dia-${dia.valor}`}
+                                                        checked={matriculaData.diasSemana?.includes(dia.valor) || false}
+                                                        onChange={() => handleDiasSemanaChange(dia.valor)}
+                                                        className="form-check-input"
+                                                    />
+                                                    <label htmlFor={`dia-${dia.valor}`} className="form-check-label">
+                                                        {dia.label}
+                                                    </label>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        {matriculaData.diasSemana?.length > 0 && (
+                                            <small className="text-muted">
+                                                Selecionados: {matriculaData.diasSemana.join(', ')}
+                                            </small>
+                                        )}
+                                    </Col>
                                 </Row>
                             </div>
                         </div>
