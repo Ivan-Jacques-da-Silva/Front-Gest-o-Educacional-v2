@@ -120,7 +120,10 @@ const Financeiro = () => {
                             (userType !== 4 && userType !== 5 && data.cp_mt_escola === schoolId) // Nível 2 (geral para escolas)
                         ) {
                             // console.log("Dado aceito:", data.cp_mt_nome_usuario);
-                            return data.cp_mt_nome_usuario;
+                            return {
+                                nome: data.cp_mt_nome_usuario,
+                                isMensalidade: data.cp_mt_tipo_pagamento === "mensalidade" // COMENTÁRIO PARA O DESENVOLVEDOR: Adicionar campo 'cp_mt_tipo_pagamento' na tabela de matrículas
+                            };
                         }
                     }
 
@@ -167,34 +170,67 @@ const Financeiro = () => {
                 return;
             }
 
-            const dadosComNomes = await Promise.all(
-                parcelas.map(async (parcela) => {
-                    const nome = await fetchNomes(parcela.cp_mt_id);
+            // Agrupar parcelas por matrícula para aplicar lógica de mensalidade
+            const parcelasPorMatricula = {};
+            parcelas.forEach(parcela => {
+                if (!parcelasPorMatricula[parcela.cp_mt_id]) {
+                    parcelasPorMatricula[parcela.cp_mt_id] = [];
+                }
+                parcelasPorMatricula[parcela.cp_mt_id].push(parcela);
+            });
 
-                    if (!nome) {
+            const dadosComNomes = await Promise.all(
+                Object.entries(parcelasPorMatricula).map(async ([matriculaId, parcelasMatricula]) => {
+                    const dadosNome = await fetchNomes(matriculaId);
+
+                    if (!dadosNome) {
                         return null; // Ignorar parcelas sem nome válido
                     }
 
-                    const statusAtualizado = verificarStatus(
-                        parcela.cp_mtPar_status,
-                        parcela.cp_mtPar_dataParcela
-                    );
-                    const dataFormatada = formatarData(parcela.cp_mtPar_dataParcela); // Formata a data
+                    // Se for mensalidade, mostrar apenas uma parcela (a mais recente ou próxima)
+                    if (dadosNome.isMensalidade) {
+                        const parcelaAtual = parcelasMatricula.sort((a, b) => new Date(a.cp_mtPar_dataParcela) - new Date(b.cp_mtPar_dataParcela))[0];
+                        
+                        const statusAtualizado = verificarStatus(
+                            parcelaAtual.cp_mtPar_status,
+                            parcelaAtual.cp_mtPar_dataParcela
+                        );
+                        const dataFormatada = formatarData(parcelaAtual.cp_mtPar_dataParcela);
 
-                    return {
-                        ...parcela,
-                        nome,
-                        cp_mtPar_status: statusAtualizado,
-                        cp_mtPar_dataParcela: dataFormatada, // Usa a data formatada
-                    };
+                        return {
+                            ...parcelaAtual,
+                            nome: dadosNome.nome,
+                            cp_mtPar_status: statusAtualizado,
+                            cp_mtPar_dataParcela: dataFormatada,
+                            isMensalidade: true
+                        };
+                    } else {
+                        // Para parcelamento normal, mostrar todas as parcelas
+                        return parcelasMatricula.map(parcela => {
+                            const statusAtualizado = verificarStatus(
+                                parcela.cp_mtPar_status,
+                                parcela.cp_mtPar_dataParcela
+                            );
+                            const dataFormatada = formatarData(parcela.cp_mtPar_dataParcela);
+
+                            return {
+                                ...parcela,
+                                nome: dadosNome.nome,
+                                cp_mtPar_status: statusAtualizado,
+                                cp_mtPar_dataParcela: dataFormatada,
+                                isMensalidade: false
+                            };
+                        });
+                    }
                 })
             );
 
-            const dadosFiltrados = dadosComNomes.filter((dado) => dado !== null);
+            // Achatar o array (pois parcelamento retorna arrays dentro de arrays)
+            const dadosAchatados = dadosComNomes.flat().filter(dado => dado !== null);
 
-            setDados(dadosFiltrados);
+            setDados(dadosAchatados);
 
-            const totalAtrasado = dadosFiltrados
+            const totalAtrasado = dadosAchatados
                 .filter((dado) => dado.cp_mtPar_status === "Vencido")
                 .reduce((acc, curr) => acc + parseFloat(curr.cp_mtPar_valorParcela), 0);
             setTotalAtrasado(totalAtrasado.toFixed(2));
@@ -203,7 +239,7 @@ const Financeiro = () => {
             const idsJaProcessados = new Set(); // Rastreador de IDs únicos
             let totalMensal = 0;
 
-            dadosFiltrados.forEach((parcela) => {
+            dadosAchatados.forEach((parcela) => {
                 if (!idsJaProcessados.has(parcela.cp_mt_id)) {
                     // Soma o valor da primeira parcela do ID único
                     totalMensal += parseFloat(parcela.cp_mtPar_valorParcela);
@@ -323,19 +359,28 @@ const Financeiro = () => {
                                 <th>Status</th>
                                 <th>Data de Vencimento</th>
                                 <th>Valor</th>
+                                <th>Tipo</th>
                             </tr>
                         </thead>
                         <tbody>
                             {loading ? (
                                 <tr>
-                                    <td colSpan="4" className="text-center">
+                                    <td colSpan="5" className="text-center">
                                         Carregando...
                                     </td>
                                 </tr>
                             ) : (
                                 currentItems.map((item, index) => (
                                     <tr key={item.cp_mtPar_id || index}>
-                                        <td>{item.nome || "Desconhecido"}</td>
+                                        <td>
+                                            {item.nome || "Desconhecido"}
+                                            {item.isMensalidade && (
+                                                <span className="badge bg-info-600 text-white text-xs fw-semibold rounded-pill px-8 py-4 ms-2">
+                                                    <Icon icon="mdi:calendar-month" width="12" height="12" className="me-1" />
+                                                    MENSAL
+                                                </span>
+                                            )}
+                                        </td>
                                         <td>
                                             <span
                                                 className={`badge text-sm fw-semibold rounded-pill px-20 py-9 radius-4 text-white ${item.cp_mtPar_status === "Pago"
@@ -366,6 +411,11 @@ const Financeiro = () => {
                                         </td>
                                         <td>{item.cp_mtPar_dataParcela}</td>
                                         <td>R$ {item.cp_mtPar_valorParcela}</td>
+                                        <td>
+                                            <span className={`badge text-xs fw-semibold rounded-pill px-12 py-6 ${item.isMensalidade ? 'bg-info-100 text-info-600' : 'bg-primary-100 text-primary-600'}`}>
+                                                {item.isMensalidade ? 'Mensalidade' : 'Parcelamento'}
+                                            </span>
+                                        </td>
                                     </tr>
                                 ))
                             )}
