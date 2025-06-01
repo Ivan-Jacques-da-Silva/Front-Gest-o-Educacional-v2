@@ -1,0 +1,137 @@
+app.put('/editar-matricula/:matriculaId', async (req, res) => {
+  const matriculaId = req.params.matriculaId;
+  const {
+    cursoId,
+    usuarioId,
+    cpfUsuario,
+    valorCurso,
+    numeroParcelas,
+    status,
+    escolaId,
+    escolaridade,
+    localNascimento,
+    redeSocial,
+    nomePai,
+    contatoPai,
+    nomeMae,
+    contatoMae,
+    horarioInicio,
+    horarioFim,
+    nivelIdioma,
+    primeiraDataPagamento,
+    nomeUsuario,
+  } = req.body;
+
+  try {
+    db.beginTransaction(err => {
+      if (err) {
+        console.error('Erro ao iniciar transação:', err);
+        return res.status(500).send({ msg: 'Erro ao editar matrícula' });
+      }
+
+      db.query(
+        'SELECT * FROM cp_matriculas WHERE cp_mt_id = ?',
+        [matriculaId],
+        (err, resultado) => {
+          if (err) {
+            console.error('Erro ao buscar matrícula:', err);
+            return db.rollback(() =>
+              res.status(500).send({ msg: 'Erro ao buscar matrícula' })
+            );
+          }
+          if (resultado.length === 0) {
+            return db.rollback(() =>
+              res.status(404).send({ msg: 'Matrícula não encontrada' })
+            );
+          }
+
+          const updateQuery = `
+            UPDATE cp_matriculas SET
+              cp_mt_curso = ?, cp_mt_usuario = ?, cp_mt_cadastro_usuario = ?, cp_mt_valor_curso = ?,
+              cp_mt_quantas_parcelas = ?, cp_status_matricula = ?, cp_mt_escola = ?, cp_mt_escolaridade = ?,
+              cp_mt_nivel = ?, cp_mt_local_nascimento = ?, cp_mt_rede_social = ?, cp_mt_nome_pai = ?,
+              cp_mt_contato_pai = ?, cp_mt_nome_mae = ?, cp_mt_contato_mae = ?, cp_mt_horario_inicio = ?,
+              cp_mt_horario_fim = ?, cp_mt_primeira_parcela = ?, cp_mt_nome_usuario = ?
+            WHERE cp_mt_id = ?
+          `;
+
+          const valoresUpdate = [
+            cursoId, usuarioId, cpfUsuario, valorCurso, numeroParcelas, status, escolaId,
+            escolaridade, nivelIdioma, localNascimento, redeSocial, nomePai, contatoPai,
+            nomeMae, contatoMae, horarioInicio, horarioFim, primeiraDataPagamento, nomeUsuario,
+            matriculaId
+          ];
+
+          db.query(updateQuery, valoresUpdate, err => {
+            if (err) {
+              console.error('Erro ao editar matrícula:', err);
+              return db.rollback(() =>
+                res.status(500).send({ msg: 'Erro ao editar matrícula' })
+              );
+            }
+
+            // apaga e recria parcelas a partir de primeiraDataPagamento
+            db.query(
+              'DELETE FROM cp_matriculaParcelas WHERE cp_mt_id = ?',
+              [matriculaId],
+              err => {
+                if (err) {
+                  console.error('Erro ao remover parcelas antigas:', err);
+                  return db.rollback(() =>
+                    res.status(500).send({ msg: 'Erro ao remover parcelas antigas' })
+                  );
+                }
+
+                const valorPorParcela = parseFloat((valorCurso / numeroParcelas).toFixed(2));
+                const [ano, mes, dia] = primeiraDataPagamento.split('-').map(Number);
+                const novasParcelas = [];
+                
+                for (let i = 0; i < numeroParcelas; i++) {
+                    const d = new Date(ano, mes - 1 + i, dia);
+                    const diaStr = String(d.getDate()).padStart(2, '0');
+                    const mesStr = String(d.getMonth() + 1).padStart(2, '0');
+                    const anoStr = d.getFullYear();
+                    novasParcelas.push([
+                      matriculaId,
+                      `${anoStr}-${mesStr}-${diaStr}`,
+                      'à vencer',
+                      valorPorParcela,
+                    ]);
+
+                }
+
+
+                db.query(
+                  `INSERT INTO cp_matriculaParcelas
+                   (cp_mt_id, cp_mtPar_dataParcela, cp_mtPar_status, cp_mtPar_valorParcela)
+                   VALUES ?`,
+                  [novasParcelas],
+                  err => {
+                    if (err) {
+                      console.error('Erro ao inserir parcelas:', err);
+                      return db.rollback(() =>
+                        res.status(500).send({ msg: 'Erro ao cadastrar parcelas' })
+                      );
+                    }
+                    db.commit(err => {
+                      if (err) {
+                        console.error('Erro no commit:', err);
+                        return db.rollback(() =>
+                          res.status(500).send({ msg: 'Erro ao concluir edição' })
+                        );
+                      }
+                      res.send({ msg: 'Matrícula e parcelas atualizadas com sucesso' });
+                    });
+                  }
+                );
+              }
+            );
+          });
+        }
+      );
+    });
+  } catch (error) {
+    console.error('Erro inesperado ao editar matrícula:', error);
+    res.status(500).send({ msg: 'Erro inesperado ao editar matrícula' });
+  }
+});

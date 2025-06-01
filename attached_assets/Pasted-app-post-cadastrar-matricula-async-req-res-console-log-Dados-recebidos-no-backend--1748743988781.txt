@@ -1,0 +1,122 @@
+app.post('/cadastrar-matricula', async (req, res) => {
+  console.log('Dados recebidos no backend:', req.body);
+
+  const {
+    cursoId: cp_mt_curso,
+    usuarioId: cp_mt_usuario,
+    cpfUsuario: cp_mt_cadastro_usuario,
+    valorCurso: cp_mt_valor_curso,
+    numeroParcelas: cp_mt_quantas_parcelas,
+    status: cp_status_matricula,
+    escolaId: cp_mt_escola,
+    escolaridade: cp_mt_escolaridade,
+    localNascimento: cp_mt_local_nascimento,
+    redeSocial: cp_mt_rede_social,
+    nomePai: cp_mt_nome_pai,
+    contatoPai: cp_mt_contato_pai,
+    nomeMae: cp_mt_nome_mae,
+    contatoMae: cp_mt_contato_mae,
+    horarioInicio: cp_mt_horario_inicio,
+    horarioFim: cp_mt_horario_fim,
+    nivelIdioma: cp_mt_nivel,
+    primeiraDataPagamento: cp_mt_primeira_parcela,
+    nomeUsuario: cp_mt_nome_usuario,
+  } = req.body;
+
+  const newMatricula = {
+    cp_mt_curso,
+    cp_mt_usuario,
+    cp_mt_cadastro_usuario,
+    cp_mt_valor_curso,
+    cp_mt_quantas_parcelas,
+    cp_mt_parcelas_pagas: 0,
+    cp_status_matricula,
+    cp_mt_escola,
+    cp_mt_escolaridade,
+    cp_mt_nivel,
+    cp_mt_local_nascimento,
+    cp_mt_rede_social,
+    cp_mt_nome_pai,
+    cp_mt_contato_pai,
+    cp_mt_nome_mae,
+    cp_mt_contato_mae,
+    cp_mt_horario_inicio,
+    cp_mt_horario_fim,
+    cp_mt_excluido: 0,
+    cp_mt_primeira_parcela,
+    cp_mt_nome_usuario,
+  };
+
+  try {
+    // Inicia uma transação
+    db.beginTransaction(async (err) => {
+      if (err) {
+        console.error('Erro ao iniciar transação:', err);
+        res.status(500).send({ msg: 'Erro ao cadastrar matrícula' });
+        return;
+      }
+
+      // Insere os dados da matrícula no banco de dados
+      db.query('INSERT INTO cp_matriculas SET ?', newMatricula, async (err, result) => {
+        if (err) {
+          console.error('Erro ao cadastrar matrícula:', err);
+          db.rollback(() => {
+            res.status(500).send({ msg: 'Erro ao cadastrar matrícula' });
+          });
+          return;
+        }
+
+        const matriculaId = result.insertId;
+        console.log('Matrícula cadastrada com sucesso, ID:', matriculaId);
+
+        // Calcula e insere as parcelas
+        const parcelas = [];
+        const valorParcela = parseFloat((cp_mt_valor_curso / cp_mt_quantas_parcelas).toFixed(2));
+
+        // Data da primeira parcela
+        let dataParcela = new Date(cp_mt_primeira_parcela);
+
+        // Insere as parcelas
+        for (let i = 1; i <= cp_mt_quantas_parcelas; i++) {
+          parcelas.push([
+            matriculaId,
+            new Date(dataParcela), // Copia a data atual da parcela
+            'à vencer', // Status padrão
+            valorParcela,
+          ]);
+
+          // Incrementa o mês da data da próxima parcela
+          dataParcela.setMonth(dataParcela.getMonth() + 1);
+        }
+
+        // Insere as parcelas no banco de dados
+        const query = 'INSERT INTO cp_matriculaParcelas (cp_mt_id, cp_mtPar_dataParcela, cp_mtPar_status, cp_mtPar_valorParcela) VALUES ?';
+        db.query(query, [parcelas], (err, results) => {
+          if (err) {
+            console.error('Erro ao cadastrar parcelas:', err);
+            db.rollback(() => {
+              res.status(500).send({ msg: 'Erro ao cadastrar matrícula' });
+            });
+          } else {
+            console.log('Parcelas cadastradas com sucesso');
+            // Commit da transação
+            db.commit((err) => {
+              if (err) {
+                console.error('Erro ao realizar commit da transação:', err);
+                db.rollback(() => {
+                  res.status(500).send({ msg: 'Erro ao cadastrar matrícula' });
+                });
+              } else {
+                res.send({ msg: 'Matrícula cadastrada com sucesso', matriculaId });
+              }
+            });
+          }
+        });
+      });
+    });
+  } catch (error) {
+    console.error('Erro ao cadastrar matrícula:', error);
+    res.status(500).send({ msg: 'Erro ao cadastrar matrícula' });
+  }
+});
+
