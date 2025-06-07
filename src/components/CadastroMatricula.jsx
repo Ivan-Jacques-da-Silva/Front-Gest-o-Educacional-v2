@@ -118,7 +118,7 @@ const CadastroMatricula = ({
     }, [matriculaId]);
 
     const buscarDadosUsuario = (usuarioId) => {
-        axios.get(`${API_BASE_URL}/matricula/${usuarioId}`)
+        axios.get(`${API_BASE_URL}/buscarusermatricula/${usuarioId}`)
             .then(response => {
                 if (response.data) {
                     setDadosUsuario(response.data);
@@ -126,16 +126,16 @@ const CadastroMatricula = ({
                     setMatriculaData(prevMatriculaData => ({
                         ...prevMatriculaData,
                         usuarioId: usuarioId,
-                        nomeUsuario: response.data.cp_nome || response.data.nomeUsuario || "",
-                        cpfUsuario: response.data.cp_cpf || response.data.cpfUsuario || "",
-                        dataNascimento: formatarData(response.data.cp_datanascimento || response.data.dataNascimento) || "",
-                        profissao: response.data.cp_profissao || response.data.profissao || "",
-                        estadoCivil: response.data.cp_estadocivil || response.data.estadoCivil || "Não informado",
-                        endereco: response.data.endereco || `${response.data.cp_end_cidade_estado || ''}, ${response.data.cp_end_rua || ''}, ${response.data.cp_end_num || ''}`,
-                        whatsapp: response.data.cp_whatsapp || response.data.whatsapp || "",
-                        telefone: response.data.cp_telefone || response.data.telefone || "",
-                        email: response.data.cp_email || response.data.email || "",
-                        escolaId: response.data.cp_escola_id || response.data.escolaId || "",
+                        nomeUsuario: response.data.cp_nome || "",
+                        cpfUsuario: response.data.cp_cpf || "",
+                        dataNascimento: formatarData(response.data.cp_datanascimento) || "",
+                        profissao: response.data.cp_profissao || "",
+                        estadoCivil: response.data.cp_estadocivil || "Não informado",
+                        endereco: `${response.data.cp_end_cidade_estado || ''}, ${response.data.cp_end_rua || ''}, ${response.data.cp_end_num || ''}`,
+                        whatsapp: response.data.cp_whatsapp || "",
+                        telefone: response.data.cp_telefone || "",
+                        email: response.data.cp_email || "",
+                        escolaId: response.data.cp_escola_id || "",
                     }));
 
                 } else {
@@ -166,17 +166,16 @@ const CadastroMatricula = ({
             axios
                 .get(`${API_BASE_URL}/buscarusermatricula`)
                 .then((response) => {
-                    const schoolId = localStorage.getItem("schoolId");
-
-                    const usuariosFiltrados = response.data.filter(usuario =>
-                        usuario.cp_excluido !== 1 && usuario.cp_escola_id == schoolId
-                    );
-
-                    setUsuarios(usuariosFiltrados);
-                    setFilteredUsuarios(usuariosFiltrados);
+                    console.log("Dados dos usuários recebidos:", response.data);
+                    
+                    // Como o backend já filtra por cp_tipo_user = 5 e cp_excluido = 0
+                    // vamos apenas usar os dados retornados
+                    setUsuarios(response.data);
+                    setFilteredUsuarios(response.data);
                 })
                 .catch((error) => {
                     console.error("Erro ao buscar usuários:", error);
+                    console.error("URL tentada:", `${API_BASE_URL}/buscarusermatricula`);
                 });
         }
     }, [matriculaId]);
