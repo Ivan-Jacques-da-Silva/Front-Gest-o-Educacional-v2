@@ -214,6 +214,90 @@
   margin: 0 4px;
 }
 
+/* Estilos para o player de áudio premium */
+.modern-audio-player-container {
+  width: 100%;
+}
+
+.premium-audio-card {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.premium-audio-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  transition: left 0.8s;
+}
+
+.premium-audio-card:hover::before {
+  left: 100%;
+}
+
+/* Estilos customizados para o player de áudio */
+.premium-audio-card audio::-webkit-media-controls-panel {
+  background: rgba(255,255,255,0.15);
+  border-radius: 12px;
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(255,255,255,0.2);
+}
+
+.premium-audio-card audio::-webkit-media-controls-play-button,
+.premium-audio-card audio::-webkit-media-controls-pause-button {
+  background: #fff;
+  border-radius: 50%;
+  margin: 0 10px;
+  width: 40px;
+  height: 40px;
+  filter: drop-shadow(0 3px 6px rgba(0,0,0,0.2));
+  border: 2px solid rgba(102, 126, 234, 0.3);
+}
+
+.premium-audio-card audio::-webkit-media-controls-play-button:hover,
+.premium-audio-card audio::-webkit-media-controls-pause-button:hover {
+  background: #f0f8ff;
+  transform: scale(1.05);
+}
+
+.premium-audio-card audio::-webkit-media-controls-timeline {
+  background: rgba(255,255,255,0.3);
+  border-radius: 10px;
+  margin: 0 10px;
+  height: 6px;
+}
+
+.premium-audio-card audio::-webkit-media-controls-current-time-display,
+.premium-audio-card audio::-webkit-media-controls-time-remaining-display {
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  background: rgba(0,0,0,0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.premium-audio-card audio::-webkit-media-controls-volume-slider {
+  background: rgba(255,255,255,0.3);
+  border-radius: 10px;
+  height: 4px;
+}
+
+.premium-audio-card audio::-webkit-media-controls-mute-button {
+  background: rgba(255,255,255,0.9);
+  border-radius: 50%;
+  margin: 0 6px;
+  width: 30px;
+  height: 30px;
+}
+
 /* Responsividade */
 @media (max-width: 768px) {
   .sm-table thead {
@@ -221,24 +305,42 @@
   }
   .sm-table tr {
     display: block;
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   }
   .sm-table td {
     display: block;
     width: 100%;
+    border: none !important;
+    padding: 8px 0 !important;
   }
   
-  .compact-audio-card {
-    max-width: 100%;
-    margin: 0.5rem 0;
+  .premium-audio-card {
+    min-width: 100% !important;
+    max-width: 100% !important;
+    margin: 10px 0 !important;
+    padding: 16px !important;
   }
   
-  .audio-card-content {
-    padding: 8px !important;
+  .premium-audio-card audio {
+    height: 55px !important;
   }
   
-  .enhanced-audio-player {
-    height: 44px !important;
+  .modern-audio-player-container {
+    margin: 10px 0;
+  }
+}
+
+@media (max-width: 576px) {
+  .premium-audio-card {
+    padding: 12px !important;
+  }
+  
+  .premium-audio-card audio {
+    height: 50px !important;
   }
 }
   

@@ -500,50 +500,110 @@ const Audios = () => {
                                                                 transition: { duration: 0.2 }
                                                             }}
                                                         >
-                                                            <td style={{ maxWidth: '260px', wordWrap: 'break-word' }}>
-                                                                <motion.span
+                                                            <td style={{ 
+                                                                maxWidth: '300px', 
+                                                                wordWrap: 'break-word',
+                                                                lineHeight: '1.4',
+                                                                padding: '16px 12px'
+                                                            }}>
+                                                                <motion.div
                                                                     whileHover={{ color: '#667eea' }}
+                                                                    style={{
+                                                                        fontSize: '14px',
+                                                                        fontWeight: '500'
+                                                                    }}
                                                                 >
                                                                     {audio.cp_nome_audio}
-                                                                </motion.span>
+                                                                </motion.div>
                                                             </td>
-                                                            <td className="text-center">
+                                                            <td className="text-center" style={{ padding: '16px' }}>
                                                                 <motion.div 
-                                                                    className="compact-audio-card"
+                                                                    className="modern-audio-player-container"
                                                                     whileHover={{ scale: 1.02 }}
                                                                     initial={{ opacity: 0, y: 10 }}
                                                                     animate={{ opacity: 1, y: 0 }}
                                                                     transition={{ delay: index * 0.1 }}
                                                                 >
                                                                     <motion.div 
-                                                                        className="audio-card-content"
+                                                                        className="premium-audio-card"
                                                                         style={{
-                                                                            background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
-                                                                            border: '1px solid rgba(102, 126, 234, 0.2)',
-                                                                            borderRadius: '12px',
-                                                                            padding: '12px',
-                                                                            maxWidth: '350px',
-                                                                            margin: '0 auto'
+                                                                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                                                            borderRadius: '16px',
+                                                                            padding: '20px',
+                                                                            minWidth: '400px',
+                                                                            maxWidth: '500px',
+                                                                            margin: '0 auto',
+                                                                            boxShadow: '0 8px 25px rgba(102, 126, 234, 0.25)',
+                                                                            border: '1px solid rgba(255, 255, 255, 0.2)',
+                                                                            backdropFilter: 'blur(10px)',
+                                                                            WebkitBackdropFilter: 'blur(10px)'
                                                                         }}
                                                                         whileHover={{
-                                                                            boxShadow: '0 8px 20px rgba(102, 126, 234, 0.15)',
-                                                                            transform: 'translateY(-2px)'
+                                                                            boxShadow: '0 12px 35px rgba(102, 126, 234, 0.35)',
+                                                                            transform: 'translateY(-3px)'
                                                                         }}
                                                                     >
+                                                                        <div className="d-flex align-items-center gap-3 mb-3">
+                                                                            <motion.div
+                                                                                style={{
+                                                                                    width: '12px',
+                                                                                    height: '12px',
+                                                                                    borderRadius: '50%',
+                                                                                    backgroundColor: '#4ade80'
+                                                                                }}
+                                                                                animate={{
+                                                                                    scale: [1, 1.2, 1],
+                                                                                    opacity: [1, 0.7, 1]
+                                                                                }}
+                                                                                transition={{
+                                                                                    duration: 2,
+                                                                                    repeat: Infinity,
+                                                                                    ease: "easeInOut"
+                                                                                }}
+                                                                            />
+                                                                            <span style={{
+                                                                                color: 'rgba(255, 255, 255, 0.9)',
+                                                                                fontSize: '12px',
+                                                                                fontWeight: '500',
+                                                                                textShadow: '0 1px 2px rgba(0,0,0,0.2)'
+                                                                            }}>
+                                                                                Player de Áudio
+                                                                            </span>
+                                                                        </div>
+                                                                        
                                                                         <audio 
                                                                             controls 
                                                                             preload="none" 
                                                                             controlsList="nodownload"
-                                                                            className="w-100 enhanced-audio-player"
+                                                                            className="w-100"
                                                                             style={{
-                                                                                height: '48px',
-                                                                                borderRadius: '8px',
-                                                                                outline: 'none'
+                                                                                height: '60px',
+                                                                                borderRadius: '12px',
+                                                                                outline: 'none',
+                                                                                background: 'rgba(255, 255, 255, 0.1)',
+                                                                                border: '1px solid rgba(255, 255, 255, 0.2)',
+                                                                                backdropFilter: 'blur(10px)',
+                                                                                WebkitBackdropFilter: 'blur(10px)'
                                                                             }}
                                                                         >
                                                                             <source src={`${API_BASE_URL}/audio/${audio.cp_nome_audio}`} type="audio/mpeg" />
                                                                             Seu navegador não suporta o elemento <code>audio</code>.
                                                                         </audio>
+                                                                        
+                                                                        <div className="d-flex justify-content-center mt-3">
+                                                                            <motion.div
+                                                                                style={{
+                                                                                    color: 'rgba(255, 255, 255, 0.8)',
+                                                                                    fontSize: '11px',
+                                                                                    fontWeight: '400'
+                                                                                }}
+                                                                                initial={{ opacity: 0 }}
+                                                                                animate={{ opacity: 1 }}
+                                                                                transition={{ delay: 0.5 }}
+                                                                            >
+                                                                                Clique no botão play para reproduzir
+                                                                            </motion.div>
+                                                                        </div>
                                                                     </motion.div>
                                                                 </motion.div>
                                                             </td>
