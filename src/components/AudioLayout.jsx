@@ -370,18 +370,36 @@ const Audios = () => {
                                                         {audio.cp_nome_audio}
                                                     </td>
                                                     <td className="text-center">
-                                                        {/* <audio controls controlsList="nodownload">
-                                                            <source
-                                                                src={`${API_BASE_URL}/audios/${audio.cp_nome_audio}`}
-                                                                type="audio/mpeg"
-                                                            />
-                                                            Seu navegador não suporta o elemento <code>audio</code>.
-                                                        </audio> */}
-                                                        <audio controls preload="none" controlsList="nodownload">
-                                                            <source src={`${API_BASE_URL}/audio/${audio.cp_nome_audio}`} type="audio/mpeg" />
-                                                            Seu navegador não suporta o elemento <code>audio</code>.
-                                                        </audio>
-
+                                                        <div className="audio-player-container d-flex flex-column align-items-center gap-2">
+                                                            <div className="audio-info p-2 rounded-3 bg-light border w-100">
+                                                                <div className="d-flex align-items-center justify-content-between">
+                                                                    <div className="audio-icon">
+                                                                        <Icon icon="solar:music-note-2-bold" className="text-primary fs-4" />
+                                                                    </div>
+                                                                    <div className="audio-controls flex-grow-1 mx-2">
+                                                                        <audio 
+                                                                            controls 
+                                                                            preload="none" 
+                                                                            controlsList="nodownload"
+                                                                            className="w-100 modern-audio-player"
+                                                                            style={{
+                                                                                height: '35px',
+                                                                                borderRadius: '20px'
+                                                                            }}
+                                                                        >
+                                                                            <source src={`${API_BASE_URL}/audio/${audio.cp_nome_audio}`} type="audio/mpeg" />
+                                                                            Seu navegador não suporta o elemento <code>audio</code>.
+                                                                        </audio>
+                                                                    </div>
+                                                                    <div className="audio-status">
+                                                                        <span className="badge bg-success-subtle text-success-emphasis">
+                                                                            <Icon icon="solar:play-circle-bold" className="me-1" />
+                                                                            Ready
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             ))

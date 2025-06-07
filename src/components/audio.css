@@ -1,14 +1,100 @@
+/* Estilos modernos para o player de áudio */
+.audio-player-container {
+  position: relative;
+}
+
+.audio-info {
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.audio-info:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  transform: translateY(-1px);
+}
+
+.modern-audio-player {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  outline: none;
+}
+
+.modern-audio-player::-webkit-media-controls-panel {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 20px;
+}
+
+.modern-audio-player::-webkit-media-controls-play-button,
+.modern-audio-player::-webkit-media-controls-pause-button {
+  background-color: white;
+  border-radius: 50%;
+  margin: 0 8px;
+}
+
+.modern-audio-player::-webkit-media-controls-timeline {
+  background: rgba(255,255,255,0.3);
+  border-radius: 10px;
+  margin: 0 8px;
+}
+
+.modern-audio-player::-webkit-media-controls-current-time-display,
+.modern-audio-player::-webkit-media-controls-time-remaining-display {
+  color: white;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.modern-audio-player::-webkit-media-controls-volume-slider {
+  background: rgba(255,255,255,0.3);
+  border-radius: 10px;
+}
+
+.audio-icon {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+/* Responsividade */
 @media (max-width: 768px) {
-    .sm-table thead {
-      display: none;
-    }
-    .sm-table tr {
-      display: block;
-      margin-bottom: 1rem;
-    }
-    .sm-table td {
-      display: block;
-      width: 100%;
-    }
+  .sm-table thead {
+    display: none;
   }
+  .sm-table tr {
+    display: block;
+    margin-bottom: 1rem;
+  }
+  .sm-table td {
+    display: block;
+    width: 100%;
+  }
+  
+  .audio-info {
+    margin: 0.5rem 0;
+  }
+  
+  .modern-audio-player {
+    height: 30px !important;
+  }
+  
+  .audio-info .d-flex {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .audio-controls {
+    order: 1;
+    margin: 0 !important;
+    width: 100%;
+  }
+  
+  .audio-icon, .audio-status {
+    order: 0;
+    align-self: center;
+  }
+}
   
