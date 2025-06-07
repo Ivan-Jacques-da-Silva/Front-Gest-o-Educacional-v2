@@ -1,7 +1,10 @@
+
 import React, { useState, useEffect } from "react";
 import { Icon } from "@iconify/react";
 import { API_BASE_URL } from "./config";
 import { useNavigate, Link } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { useSpring, animated } from "react-spring";
 import "./audio.css"
 import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
@@ -27,6 +30,20 @@ const Audios = () => {
         navigate(`/cadastro-audio/${idCurso}`);
     };
 
+    // Animação para o cabeçalho
+    const headerAnimation = useSpring({
+        from: { opacity: 0, transform: 'translateY(-20px)' },
+        to: { opacity: 1, transform: 'translateY(0px)' },
+        config: { tension: 200, friction: 25 }
+    });
+
+    // Animação para loading
+    const loadingAnimation = useSpring({
+        opacity: loading ? 1 : 0,
+        transform: loading ? 'scale(1)' : 'scale(0.8)',
+        config: { tension: 300, friction: 30 }
+    });
+
     useEffect(() => {
         fetchCursos();
     }, []);
@@ -44,8 +61,6 @@ const Audios = () => {
             toast.error("Erro ao excluir curso");
         }
     };
-
-
 
     const fetchCursos = async () => {
         const professorId = localStorage.getItem('userId');
@@ -107,12 +122,9 @@ const Audios = () => {
         }
     };
 
-
-
-
     const fetchAudios = async (cursoId) => {
         setLoading(true);
-        setPaginaAtual(1); // Sempre volta para a primeira página ao trocar de curso
+        setPaginaAtual(1);
         try {
             const response = await fetch(`${API_BASE_URL}/audios-curso/${cursoId}`);
             const data = await response.json();
@@ -140,17 +152,15 @@ const Audios = () => {
     };
 
     const filteredAudios = audios.slice(
-        (paginaAtual - 1) * 10, // Mantém fixo em 10 itens por página
+        (paginaAtual - 1) * 10,
         paginaAtual * 10
     );
 
-    const totalPaginasAudiosCurso = Math.ceil(audios.length / 10); // Também fixo em 10
-
+    const totalPaginasAudiosCurso = Math.ceil(audios.length / 10);
 
     const filteredCursos = cursos.filter((curso) =>
         curso.cp_nome_curso.toLowerCase().includes(searchTerm.toLowerCase())
     );
-
 
     const currentCursos =
         itemsPerPageCursos === "all"
@@ -165,32 +175,51 @@ const Audios = () => {
             ? 1
             : Math.ceil(filteredCursos.length / itemsPerPageCursos);
 
-
     const totalPaginas = itemsPerPage === "all" ? 1 : Math.ceil(filteredCursos.length / itemsPerPage);
 
-
     return (
-        <div className="card h-100 p-0 radius-12">
-            <div className="card-header border-bottom bg-base py-16 px-24 d-flex align-items-center flex-wrap gap-3 justify-content-between">
+        <motion.div 
+            className="card h-100 p-0 radius-12"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+        >
+            <animated.div 
+                style={headerAnimation}
+                className="card-header border-bottom py-16 px-24 d-flex align-items-center flex-wrap gap-3 justify-content-between"
+                style={{
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    color: 'white'
+                }}
+            >
                 <div className="d-flex align-items-center flex-wrap gap-3">
-                    <span className="text-md fw-medium text-secondary-light mb-0">Mostrar</span>
-                    <select
+                    <motion.span 
+                        className="text-md fw-medium mb-0"
+                        whileHover={{ scale: 1.05 }}
+                    >
+                        Mostrar
+                    </motion.span>
+                    <motion.select
                         className="form-select form-select-sm w-auto ps-12 py-6 radius-12 h-40-px"
                         value={itemsPerPageCursos}
                         onChange={(e) => {
                             const value = e.target.value === "all" ? "all" : Number(e.target.value);
                             setItemsPerPageCursos(value);
-                            setPaginaAtualCursos(1); // Reinicia para a primeira página de cursos
+                            setPaginaAtualCursos(1);
                         }}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
                     >
                         <option value="10">10</option>
                         <option value="20">20</option>
                         <option value="30">30</option>
                         <option value="all">Ver Todos</option>
-                    </select>
+                    </motion.select>
 
-
-                    <form className="navbar-search">
+                    <motion.form 
+                        className="navbar-search"
+                        whileHover={{ scale: 1.02 }}
+                    >
                         <input
                             type="text"
                             className="bg-base h-40-px w-auto"
@@ -199,84 +228,113 @@ const Audios = () => {
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                         <Icon icon="ion:search-outline" className="icon" />
-                    </form>
-                    <button
-                        className="btn btn-outline-secondary text-md py-6 radius-12 h-40-px d-flex align-items-center gap-2"
+                    </motion.form>
+                    
+                    <motion.button
+                        className="btn btn-outline-light text-md py-6 radius-12 h-40-px d-flex align-items-center gap-2"
                         onClick={handleSortChange}
+                        whileHover={{ scale: 1.05, backgroundColor: 'rgba(255,255,255,0.1)' }}
+                        whileTap={{ scale: 0.95 }}
                     >
+                        <motion.div
+                            animate={{ rotate: sortDirection === "asc" ? 0 : 180 }}
+                            transition={{ duration: 0.3 }}
+                        >
+                            <Icon icon="solar:sort-vertical-bold" />
+                        </motion.div>
                         Ordenar por {sortDirection === "asc" ? "A-Z" : "Z-A"}
-                    </button>
+                    </motion.button>
                 </div>
-            </div>
+            </animated.div>
+            
             <div className="row">
                 <div className="col-12 col-md-4 border-md-end mb-3 mb-md-0">
                     <div className="card-body p-24">
-                        <ul className="align-items-center justify-content-center" sty>
-                            {currentCursos.map((curso, index) => (
-                                <div
-                                    key={curso.cp_curso_id}
-                                    style={{
-                                        borderBottom: index === currentCursos.length - 1 ? "none" : "1px solid #ddd",
-                                        padding: "3px",
-                                    }}
-                                >
-                                    <li
-                                        className={`p-2 d-flex justify-content-between align-items-center ${selectedCursoId === curso.cp_curso_id ? "active" : ""
-                                            }`}
+                        <motion.ul 
+                            className="align-items-center justify-content-center"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 0.2 }}
+                        >
+                            <AnimatePresence>
+                                {currentCursos.map((curso, index) => (
+                                    <motion.div
+                                        key={curso.cp_curso_id}
+                                        initial={{ opacity: 0, x: -20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0, x: -20 }}
+                                        transition={{ delay: index * 0.1 }}
+                                        style={{
+                                            borderBottom: index === currentCursos.length - 1 ? "none" : "1px solid #ddd",
+                                            padding: "3px",
+                                        }}
+                                        whileHover={{ 
+                                            backgroundColor: 'rgba(102, 126, 234, 0.05)',
+                                            transition: { duration: 0.2 }
+                                        }}
                                     >
-                                        <span>
-                                            {tipoUser === "1" && (
-                                                <div className="d-inline-flex align-items-center gap-1">
-                                                    <Link
-                                                        style={{ marginRight: "4px" }}
-                                                        to={`/cadastro-audio/${curso.cp_curso_id}`}
-                                                        className="w-32-px h-32-px bg-success-focus text-success-main rounded-circle d-inline-flex align-items-center justify-content-center"
-                                                    >
-                                                        <Icon icon="lucide:edit" />
-                                                    </Link>
-                                                    {/* <button
-                                                        style={{ marginRight: "4px" }}
-                                                        className="w-32-px h-32-px bg-danger-focus text-danger-main rounded-circle d-inline-flex align-items-center justify-content-center border-0"
-                                                        onClick={() => {
-                                                            setCursoParaExcluir(curso.cp_curso_id);
-                                                            setShowDeleteModal(true);
-                                                        }}
-                                                    >
-                                                        <Icon icon="lucide:trash" />
-                                                    </button> */}
-                                                </div>
-                                            )}
-                                            {curso.cp_nome_curso}
-                                        </span>
-                                        <button
-                                            className="btn btn-sm btn-primary"
-                                            onClick={() => fetchAudios(curso.cp_curso_id)}
+                                        <li
+                                            className={`p-2 d-flex justify-content-between align-items-center ${selectedCursoId === curso.cp_curso_id ? "active" : ""
+                                                }`}
                                         >
-                                            Ver Áudios
-                                        </button>
-                                    </li>
-                                </div>
-                            ))}
-                            <div className="d-flex flex-column align-items-center justify-content-center mt-24">
+                                            <span>
+                                                {tipoUser === "1" && (
+                                                    <div className="d-inline-flex align-items-center gap-1">
+                                                        <motion.div
+                                                            whileHover={{ scale: 1.1 }}
+                                                            whileTap={{ scale: 0.9 }}
+                                                        >
+                                                            <Link
+                                                                style={{ marginRight: "4px" }}
+                                                                to={`/cadastro-audio/${curso.cp_curso_id}`}
+                                                                className="w-32-px h-32-px bg-success-focus text-success-main rounded-circle d-inline-flex align-items-center justify-content-center"
+                                                            >
+                                                                <Icon icon="lucide:edit" />
+                                                            </Link>
+                                                        </motion.div>
+                                                    </div>
+                                                )}
+                                                {curso.cp_nome_curso}
+                                            </span>
+                                            <motion.button
+                                                className="btn btn-sm btn-primary"
+                                                onClick={() => fetchAudios(curso.cp_curso_id)}
+                                                whileHover={{ scale: 1.05, boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)' }}
+                                                whileTap={{ scale: 0.95 }}
+                                            >
+                                                Ver Áudios
+                                            </motion.button>
+                                        </li>
+                                    </motion.div>
+                                ))}
+                            </AnimatePresence>
+                            
+                            <motion.div 
+                                className="d-flex flex-column align-items-center justify-content-center mt-24"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: 0.5 }}
+                            >
                                 <div className="d-flex align-items-center justify-content-between w-100 mb-3">
                                     <span>
                                         Mostrando {paginaAtualCursos} de {totalPaginasCursos} páginas
                                     </span>
-                                    <select
+                                    <motion.select
                                         className="form-select form-select-sm w-auto ps-12 py-6 radius-12 h-40-px"
                                         value={paginaAtualCursos}
                                         onChange={(e) => setPaginaAtualCursos(Number(e.target.value))}
+                                        whileHover={{ scale: 1.02 }}
                                     >
                                         {Array.from({ length: totalPaginasCursos }, (_, idx) => (
                                             <option key={idx + 1} value={idx + 1}>
                                                 Página {idx + 1}
                                             </option>
                                         ))}
-                                    </select>
+                                    </motion.select>
                                 </div>
 
                                 <ul className="pagination d-flex flex-wrap align-items-center gap-2 justify-content-center">
-                                    <li className="page-item">
+                                    <motion.li className="page-item" whileHover={{ scale: 1.05 }}>
                                         <button
                                             className="page-link bg-neutral-200 text-secondary-light fw-semibold radius-8 border-0 d-flex align-items-center justify-content-center h-32-px text-md"
                                             onClick={() => setPaginaAtualCursos(1)}
@@ -284,8 +342,8 @@ const Audios = () => {
                                         >
                                             <Icon icon="ep:d-arrow-left" />
                                         </button>
-                                    </li>
-                                    <li className="page-item">
+                                    </motion.li>
+                                    <motion.li className="page-item" whileHover={{ scale: 1.05 }}>
                                         <button
                                             className="page-link bg-neutral-200 text-secondary-light fw-semibold radius-8 border-0 d-flex align-items-center justify-content-center h-32-px text-md"
                                             onClick={() => setPaginaAtualCursos(prev => Math.max(prev - 1, 1))}
@@ -293,7 +351,7 @@ const Audios = () => {
                                         >
                                             Anterior
                                         </button>
-                                    </li>
+                                    </motion.li>
                                     {Array.from({ length: totalPaginasCursos }, (_, idx) => idx + 1)
                                         .filter(page => page === 1 || page === totalPaginasCursos || (page >= paginaAtualCursos - 2 && page <= paginaAtualCursos + 2))
                                         .map((page, idx, pages) => {
@@ -307,17 +365,22 @@ const Audios = () => {
                                                 );
                                             }
                                             return (
-                                                <li key={page} className={`page-item ${paginaAtualCursos === page ? "active" : ""}`}>
+                                                <motion.li 
+                                                    key={page} 
+                                                    className={`page-item ${paginaAtualCursos === page ? "active" : ""}`}
+                                                    whileHover={{ scale: 1.1 }}
+                                                    whileTap={{ scale: 0.9 }}
+                                                >
                                                     <button
                                                         className={`page-link text-md fw-semibold radius-8 border-0 d-flex align-items-center justify-content-center h-32-px w-32-px ${paginaAtualCursos === page ? "bg-primary-600 text-white" : "bg-neutral-200 text-secondary-light"}`}
                                                         onClick={() => setPaginaAtualCursos(page)}
                                                     >
                                                         {page}
                                                     </button>
-                                                </li>
+                                                </motion.li>
                                             );
                                         })}
-                                    <li className="page-item">
+                                    <motion.li className="page-item" whileHover={{ scale: 1.05 }}>
                                         <button
                                             className="page-link bg-neutral-200 text-secondary-light fw-semibold radius-8 border-0 d-flex align-items-center justify-content-center h-32-px text-md"
                                             onClick={() => setPaginaAtualCursos(prev => Math.min(prev + 1, totalPaginasCursos))}
@@ -325,8 +388,8 @@ const Audios = () => {
                                         >
                                             Próximo
                                         </button>
-                                    </li>
-                                    <li className="page-item">
+                                    </motion.li>
+                                    <motion.li className="page-item" whileHover={{ scale: 1.05 }}>
                                         <button
                                             className="page-link bg-neutral-200 text-secondary-light fw-semibold radius-8 border-0 d-flex align-items-center justify-content-center h-32-px text-md"
                                             onClick={() => setPaginaAtualCursos(totalPaginasCursos)}
@@ -334,86 +397,187 @@ const Audios = () => {
                                         >
                                             <Icon icon="ep:d-arrow-right" />
                                         </button>
-                                    </li>
+                                    </motion.li>
                                 </ul>
-                            </div>
-
-                        </ul>
-
+                            </motion.div>
+                        </motion.ul>
                     </div>
                 </div>
+                
                 <div className="col-12 col-md-8">
                     <div className="card-body p-24">
-                        {(!selectedCursoId || audios.length === 0) && !loading ? (
-                            <div className="fw-bold text-primary">Clique em "Ver Áudios"</div>
-                        ) : (
-                            <div className="table-responsive scroll-sm">
-
-                                <table className="table bordered-table sm-table mb-0">
-                                    <thead>
-                                        <tr>
-                                            <th>Nome do Áudio</th>
-                                            <th className="text-center">Ação</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {loading ? (
+                        <AnimatePresence mode="wait">
+                            {(!selectedCursoId || audios.length === 0) && !loading ? (
+                                <motion.div 
+                                    className="fw-bold text-primary d-flex align-items-center justify-content-center flex-column"
+                                    style={{ minHeight: '200px' }}
+                                    initial={{ opacity: 0, scale: 0.8 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 0.8 }}
+                                >
+                                    <motion.div
+                                        animate={{ 
+                                            rotate: [0, 10, -10, 0],
+                                            scale: [1, 1.1, 1]
+                                        }}
+                                        transition={{ 
+                                            duration: 2,
+                                            repeat: Infinity,
+                                            repeatType: "reverse"
+                                        }}
+                                    >
+                                        <Icon icon="solar:music-notes-bold-duotone" className="fs-1 mb-3" />
+                                    </motion.div>
+                                    Clique em "Ver Áudios"
+                                </motion.div>
+                            ) : (
+                                <motion.div 
+                                    className="table-responsive scroll-sm"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                >
+                                    <table className="table bordered-table sm-table mb-0">
+                                        <thead>
                                             <tr>
-                                                <td colSpan="2" className="text-center">
-                                                    Carregando...
-                                                </td>
+                                                <th>Nome do Áudio</th>
+                                                <th className="text-center">Ação</th>
                                             </tr>
-                                        ) : (
-                                            filteredAudios.map((audio) => (
-                                                <tr key={audio.cp_audio_id}>
-                                                    <td style={{ maxWidth: '260px', wordWrap: 'break-word' }}>
-                                                        {audio.cp_nome_audio}
-                                                    </td>
-                                                    <td className="text-center">
-                                                        <div className="audio-player-container d-flex flex-column align-items-center gap-2">
-                                                            <div className="audio-info p-2 rounded-3 bg-light border w-100">
-                                                                <div className="d-flex align-items-center justify-content-between">
-                                                                    <div className="audio-icon">
-                                                                        <Icon icon="solar:music-note-2-bold" className="text-primary fs-4" />
-                                                                    </div>
-                                                                    <div className="audio-controls flex-grow-1 mx-2">
-                                                                        <audio 
-                                                                            controls 
-                                                                            preload="none" 
-                                                                            controlsList="nodownload"
-                                                                            className="w-100 modern-audio-player"
-                                                                            style={{
-                                                                                height: '35px',
-                                                                                borderRadius: '20px'
-                                                                            }}
-                                                                        >
-                                                                            <source src={`${API_BASE_URL}/audio/${audio.cp_nome_audio}`} type="audio/mpeg" />
-                                                                            Seu navegador não suporta o elemento <code>audio</code>.
-                                                                        </audio>
-                                                                    </div>
-                                                                    <div className="audio-status">
-                                                                        <span className="badge bg-success-subtle text-success-emphasis">
-                                                                            <Icon icon="solar:play-circle-bold" className="me-1" />
-                                                                            Ready
-                                                                        </span>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            ))
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-                        <div className="d-flex flex-column flex-md-row align-items-center justify-content-between mt-24">
+                                        </thead>
+                                        <tbody>
+                                            <AnimatePresence>
+                                                {loading ? (
+                                                    <motion.tr
+                                                        initial={{ opacity: 0 }}
+                                                        animate={{ opacity: 1 }}
+                                                        exit={{ opacity: 0 }}
+                                                    >
+                                                        <td colSpan="2" className="text-center">
+                                                            <animated.div style={loadingAnimation}>
+                                                                <motion.div
+                                                                    animate={{ rotate: 360 }}
+                                                                    transition={{ 
+                                                                        duration: 1,
+                                                                        repeat: Infinity,
+                                                                        ease: "linear"
+                                                                    }}
+                                                                    className="d-inline-block"
+                                                                >
+                                                                    <Icon icon="solar:loading-minimalistic-bold" className="fs-3 text-primary" />
+                                                                </motion.div>
+                                                                <div className="mt-2">Carregando...</div>
+                                                            </animated.div>
+                                                        </td>
+                                                    </motion.tr>
+                                                ) : (
+                                                    filteredAudios.map((audio, index) => (
+                                                        <motion.tr 
+                                                            key={audio.cp_audio_id}
+                                                            initial={{ opacity: 0, y: 20 }}
+                                                            animate={{ opacity: 1, y: 0 }}
+                                                            exit={{ opacity: 0, y: -20 }}
+                                                            transition={{ delay: index * 0.1 }}
+                                                            whileHover={{ 
+                                                                backgroundColor: 'rgba(102, 126, 234, 0.02)',
+                                                                transition: { duration: 0.2 }
+                                                            }}
+                                                        >
+                                                            <td style={{ maxWidth: '260px', wordWrap: 'break-word' }}>
+                                                                <motion.span
+                                                                    whileHover={{ color: '#667eea' }}
+                                                                >
+                                                                    {audio.cp_nome_audio}
+                                                                </motion.span>
+                                                            </td>
+                                                            <td className="text-center">
+                                                                <motion.div 
+                                                                    className="audio-player-container d-flex flex-column align-items-center gap-2"
+                                                                    whileHover={{ scale: 1.02 }}
+                                                                >
+                                                                    <motion.div 
+                                                                        className="audio-info p-2 rounded-3 border w-100"
+                                                                        style={{
+                                                                            background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%)',
+                                                                            border: '1px solid rgba(102, 126, 234, 0.2)'
+                                                                        }}
+                                                                        whileHover={{
+                                                                            boxShadow: '0 8px 25px rgba(102, 126, 234, 0.15)',
+                                                                            transform: 'translateY(-2px)'
+                                                                        }}
+                                                                    >
+                                                                        <div className="d-flex align-items-center justify-content-between">
+                                                                            <motion.div 
+                                                                                className="audio-icon"
+                                                                                animate={{ 
+                                                                                    scale: [1, 1.1, 1],
+                                                                                    rotate: [0, 5, -5, 0]
+                                                                                }}
+                                                                                transition={{ 
+                                                                                    duration: 3,
+                                                                                    repeat: Infinity,
+                                                                                    repeatType: "reverse"
+                                                                                }}
+                                                                            >
+                                                                                <Icon icon="solar:music-note-2-bold" className="text-primary fs-4" />
+                                                                            </motion.div>
+                                                                            <div className="audio-controls flex-grow-1 mx-2">
+                                                                                <audio 
+                                                                                    controls 
+                                                                                    preload="none" 
+                                                                                    controlsList="nodownload"
+                                                                                    className="w-100 modern-audio-player"
+                                                                                    style={{
+                                                                                        height: '35px',
+                                                                                        borderRadius: '20px'
+                                                                                    }}
+                                                                                >
+                                                                                    <source src={`${API_BASE_URL}/audio/${audio.cp_nome_audio}`} type="audio/mpeg" />
+                                                                                    Seu navegador não suporta o elemento <code>audio</code>.
+                                                                                </audio>
+                                                                            </div>
+                                                                            <motion.div 
+                                                                                className="audio-status"
+                                                                                whileHover={{ scale: 1.05 }}
+                                                                            >
+                                                                                <span className="badge bg-success-subtle text-success-emphasis">
+                                                                                    <motion.div
+                                                                                        animate={{ scale: [1, 1.2, 1] }}
+                                                                                        transition={{ 
+                                                                                            duration: 2,
+                                                                                            repeat: Infinity
+                                                                                        }}
+                                                                                        className="d-inline-block"
+                                                                                    >
+                                                                                        <Icon icon="solar:play-circle-bold" className="me-1" />
+                                                                                    </motion.div>
+                                                                                    Ready
+                                                                                </span>
+                                                                            </motion.div>
+                                                                        </div>
+                                                                    </motion.div>
+                                                                </motion.div>
+                                                            </td>
+                                                        </motion.tr>
+                                                    ))
+                                                )}
+                                            </AnimatePresence>
+                                        </tbody>
+                                    </table>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                        
+                        <motion.div 
+                            className="d-flex flex-column flex-md-row align-items-center justify-content-between mt-24"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.6 }}
+                        >
                             <span className="mb-3 mb-md-0">
                                 Mostrando {paginaAtual} de {totalPaginasAudiosCurso} páginas
                             </span>
                             <ul className="pagination d-flex flex-wrap align-items-center gap-2 justify-content-center mb-3 mb-md-0">
-                                <li className="page-item">
+                                <motion.li className="page-item" whileHover={{ scale: 1.05 }}>
                                     <button
                                         className="page-link bg-neutral-200 text-secondary-light fw-semibold radius-8 border-0 d-flex align-items-center justify-content-center h-32-px text-md"
                                         onClick={() => setPaginaAtual(1)}
@@ -421,8 +585,8 @@ const Audios = () => {
                                     >
                                         <Icon icon="ep:d-arrow-left" />
                                     </button>
-                                </li>
-                                <li className="page-item">
+                                </motion.li>
+                                <motion.li className="page-item" whileHover={{ scale: 1.05 }}>
                                     <button
                                         className="page-link bg-neutral-200 text-secondary-light fw-semibold radius-8 border-0 d-flex align-items-center justify-content-center h-32-px text-md"
                                         onClick={() => setPaginaAtual((prev) => Math.max(prev - 1, 1))}
@@ -430,7 +594,7 @@ const Audios = () => {
                                     >
                                         Anterior
                                     </button>
-                                </li>
+                                </motion.li>
                                 {Array.from({ length: totalPaginasAudiosCurso }, (_, idx) => idx + 1)
                                     .filter((page) => {
                                         return (
@@ -450,9 +614,11 @@ const Audios = () => {
                                             );
                                         }
                                         return (
-                                            <li
+                                            <motion.li
                                                 key={page}
                                                 className={`page-item ${paginaAtual === page ? "active" : ""}`}
+                                                whileHover={{ scale: 1.1 }}
+                                                whileTap={{ scale: 0.9 }}
                                             >
                                                 <button
                                                     className={`page-link text-md fw-semibold radius-8 border-0 d-flex align-items-center justify-content-center h-32-px w-32-px ${paginaAtual === page
@@ -463,10 +629,10 @@ const Audios = () => {
                                                 >
                                                     {page}
                                                 </button>
-                                            </li>
+                                            </motion.li>
                                         );
                                     })}
-                                <li className="page-item">
+                                <motion.li className="page-item" whileHover={{ scale: 1.05 }}>
                                     <button
                                         className="page-link bg-neutral-200 text-secondary-light fw-semibold radius-8 border-0 d-flex align-items-center justify-content-center h-32-px text-md"
                                         onClick={() => setPaginaAtual((prev) => Math.min(prev + 1, totalPaginasAudiosCurso))}
@@ -474,8 +640,8 @@ const Audios = () => {
                                     >
                                         Próximo
                                     </button>
-                                </li>
-                                <li className="page-item">
+                                </motion.li>
+                                <motion.li className="page-item" whileHover={{ scale: 1.05 }}>
                                     <button
                                         className="page-link bg-neutral-200 text-secondary-light fw-semibold radius-8 border-0 d-flex align-items-center justify-content-center h-32-px text-md"
                                         onClick={() => setPaginaAtual(totalPaginasAudiosCurso)}
@@ -483,46 +649,77 @@ const Audios = () => {
                                     >
                                         <Icon icon="ep:d-arrow-right" />
                                     </button>
-                                </li>
+                                </motion.li>
                             </ul>
-                            <select
+                            <motion.select
                                 className="form-select form-select-sm w-auto ps-12 py-6 radius-12 h-40-px"
                                 value={paginaAtual}
                                 onChange={(e) => setPaginaAtual(Number(e.target.value))}
+                                whileHover={{ scale: 1.02 }}
                             >
                                 {Array.from({ length: totalPaginasAudiosCurso }, (_, idx) => (
                                     <option key={idx + 1} value={idx + 1}>
                                         Página {idx + 1}
                                     </option>
                                 ))}
-                            </select>
-                        </div>
-
+                            </motion.select>
+                        </motion.div>
                     </div>
                 </div>
             </div>
-            {showDeleteModal && (
-                <div className="modal fade show d-block" tabIndex="-1" role="dialog">
-                    <div className="modal-dialog modal-dialog-centered" role="document">
-                        <div className="modal-content">
-                            <div className="modal-header">
-                                <h5 className="modal-title">Confirmar Exclusão</h5>
-                                <button type="button" className="btn-close" onClick={() => setShowDeleteModal(false)} />
+            
+            <AnimatePresence>
+                {showDeleteModal && (
+                    <motion.div 
+                        className="modal fade show d-block" 
+                        tabIndex="-1" 
+                        role="dialog"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+                    >
+                        <motion.div 
+                            className="modal-dialog modal-dialog-centered" 
+                            role="document"
+                            initial={{ scale: 0.8, y: -50 }}
+                            animate={{ scale: 1, y: 0 }}
+                            exit={{ scale: 0.8, y: -50 }}
+                        >
+                            <div className="modal-content">
+                                <div className="modal-header">
+                                    <h5 className="modal-title">Confirmar Exclusão</h5>
+                                    <button type="button" className="btn-close" onClick={() => setShowDeleteModal(false)} />
+                                </div>
+                                <div className="modal-body">
+                                    Tem certeza que deseja excluir este curso? Essa ação não poderá ser desfeita.
+                                </div>
+                                <div className="modal-footer">
+                                    <motion.button 
+                                        className="btn btn-secondary" 
+                                        onClick={() => setShowDeleteModal(false)}
+                                        whileHover={{ scale: 1.05 }}
+                                        whileTap={{ scale: 0.95 }}
+                                    >
+                                        Cancelar
+                                    </motion.button>
+                                    <motion.button 
+                                        className="btn btn-danger" 
+                                        onClick={deletarCurso}
+                                        whileHover={{ scale: 1.05 }}
+                                        whileTap={{ scale: 0.95 }}
+                                    >
+                                        Excluir
+                                    </motion.button>
+                                </div>
                             </div>
-                            <div className="modal-body">
-                                Tem certeza que deseja excluir este curso? Essa ação não poderá ser desfeita.
-                            </div>
-                            <div className="modal-footer">
-                                <button className="btn btn-secondary" onClick={() => setShowDeleteModal(false)}>Cancelar</button>
-                                <button className="btn btn-danger" onClick={deletarCurso}>Excluir</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             <ToastContainer />
-        </div>
+        </motion.div>
     );
 };
 
