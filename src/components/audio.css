@@ -78,6 +78,79 @@
   100% { transform: scale(1); }
 }
 
+/* Novos estilos para audio player premium */
+.modern-audio-container {
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.audio-preview-card {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.audio-preview-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  transition: left 0.6s;
+}
+
+.audio-preview-card:hover::before {
+  left: 100%;
+}
+
+.premium-audio-player {
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.premium-audio-player::-webkit-media-controls-panel {
+  background: rgba(255,255,255,0.1);
+  border-radius: 25px;
+  backdrop-filter: blur(10px);
+}
+
+.premium-audio-player::-webkit-media-controls-play-button,
+.premium-audio-player::-webkit-media-controls-pause-button {
+  background: rgba(255,255,255,0.9);
+  border-radius: 50%;
+  margin: 0 8px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+}
+
+.premium-audio-player::-webkit-media-controls-timeline {
+  background: rgba(255,255,255,0.2);
+  border-radius: 10px;
+  margin: 0 8px;
+  height: 4px;
+}
+
+.premium-audio-player::-webkit-media-controls-current-time-display,
+.premium-audio-player::-webkit-media-controls-time-remaining-display {
+  color: rgba(255,255,255,0.9);
+  font-size: 11px;
+  font-weight: 500;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.premium-audio-player::-webkit-media-controls-volume-slider {
+  background: rgba(255,255,255,0.2);
+  border-radius: 10px;
+}
+
+.audio-icon-wrapper {
+  cursor: pointer;
+}
+
 /* Responsividade */
 @media (max-width: 768px) {
   .sm-table thead {
@@ -92,27 +165,25 @@
     width: 100%;
   }
   
-  .audio-info {
+  .modern-audio-container {
+    max-width: 100%;
     margin: 0.5rem 0;
   }
   
-  .modern-audio-player {
-    height: 30px !important;
+  .audio-preview-card {
+    padding: 1rem !important;
   }
   
-  .audio-info .d-flex {
+  .premium-audio-player {
+    height: 35px !important;
+  }
+  
+  .audio-preview-card .d-flex {
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 1rem;
   }
   
-  .audio-controls {
-    order: 1;
-    margin: 0 !important;
-    width: 100%;
-  }
-  
-  .audio-icon, .audio-status {
-    order: 0;
+  .audio-icon-wrapper {
     align-self: center;
   }
 }

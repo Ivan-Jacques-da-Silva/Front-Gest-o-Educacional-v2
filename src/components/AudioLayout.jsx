@@ -297,11 +297,28 @@ const Audios = () => {
                                                 {curso.cp_nome_curso}
                                             </span>
                                             <motion.button
-                                                className="btn btn-sm btn-primary"
+                                                className="btn btn-sm"
                                                 onClick={() => fetchAudios(curso.cp_curso_id)}
-                                                whileHover={{ scale: 1.05, boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)' }}
+                                                style={{
+                                                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                                    border: 'none',
+                                                    color: 'white',
+                                                    borderRadius: '20px',
+                                                    padding: '8px 16px',
+                                                    fontSize: '12px',
+                                                    fontWeight: '500',
+                                                    backdropFilter: 'blur(10px)',
+                                                    WebkitBackdropFilter: 'blur(10px)',
+                                                    boxShadow: '0 4px 15px rgba(102, 126, 234, 0.2)'
+                                                }}
+                                                whileHover={{ 
+                                                    scale: 1.05, 
+                                                    boxShadow: '0 8px 25px rgba(102, 126, 234, 0.4)',
+                                                    y: -2
+                                                }}
                                                 whileTap={{ scale: 0.95 }}
                                             >
+                                                <Icon icon="solar:music-notes-bold" className="me-1" />
                                                 Ver Áudios
                                             </motion.button>
                                         </li>
@@ -491,68 +508,60 @@ const Audios = () => {
                                                             </td>
                                                             <td className="text-center">
                                                                 <motion.div 
-                                                                    className="audio-player-container d-flex flex-column align-items-center gap-2"
+                                                                    className="modern-audio-container"
                                                                     whileHover={{ scale: 1.02 }}
+                                                                    initial={{ opacity: 0, y: 10 }}
+                                                                    animate={{ opacity: 1, y: 0 }}
+                                                                    transition={{ delay: index * 0.1 }}
                                                                 >
                                                                     <motion.div 
-                                                                        className="audio-info p-2 rounded-3 border w-100"
+                                                                        className="audio-preview-card p-3 rounded-4 shadow-sm"
                                                                         style={{
-                                                                            background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%)',
-                                                                            border: '1px solid rgba(102, 126, 234, 0.2)'
+                                                                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                                                            border: 'none',
+                                                                            backdropFilter: 'blur(16px)',
+                                                                            WebkitBackdropFilter: 'blur(16px)'
                                                                         }}
                                                                         whileHover={{
-                                                                            boxShadow: '0 8px 25px rgba(102, 126, 234, 0.15)',
-                                                                            transform: 'translateY(-2px)'
+                                                                            boxShadow: '0 15px 35px rgba(102, 126, 234, 0.3)',
+                                                                            transform: 'translateY(-3px)'
                                                                         }}
                                                                     >
-                                                                        <div className="d-flex align-items-center justify-content-between">
+                                                                        <div className="d-flex align-items-center gap-3">
                                                                             <motion.div 
-                                                                                className="audio-icon"
-                                                                                animate={{ 
-                                                                                    scale: [1, 1.1, 1],
-                                                                                    rotate: [0, 5, -5, 0]
-                                                                                }}
-                                                                                transition={{ 
-                                                                                    duration: 3,
-                                                                                    repeat: Infinity,
-                                                                                    repeatType: "reverse"
-                                                                                }}
+                                                                                className="audio-icon-wrapper"
+                                                                                whileHover={{ rotate: 180 }}
+                                                                                transition={{ duration: 0.5 }}
                                                                             >
-                                                                                <Icon icon="solar:music-note-2-bold" className="text-primary fs-4" />
+                                                                                <div 
+                                                                                    className="d-flex align-items-center justify-content-center rounded-circle"
+                                                                                    style={{
+                                                                                        width: '45px',
+                                                                                        height: '45px',
+                                                                                        background: 'rgba(255,255,255,0.2)',
+                                                                                        border: '2px solid rgba(255,255,255,0.3)'
+                                                                                    }}
+                                                                                >
+                                                                                    <Icon icon="solar:music-note-3-bold" className="text-white fs-5" />
+                                                                                </div>
                                                                             </motion.div>
-                                                                            <div className="audio-controls flex-grow-1 mx-2">
+                                                                            <div className="flex-grow-1">
                                                                                 <audio 
                                                                                     controls 
                                                                                     preload="none" 
                                                                                     controlsList="nodownload"
-                                                                                    className="w-100 modern-audio-player"
+                                                                                    className="w-100 premium-audio-player"
                                                                                     style={{
-                                                                                        height: '35px',
-                                                                                        borderRadius: '20px'
+                                                                                        height: '40px',
+                                                                                        borderRadius: '25px',
+                                                                                        background: 'rgba(255,255,255,0.1)',
+                                                                                        border: '1px solid rgba(255,255,255,0.2)'
                                                                                     }}
                                                                                 >
                                                                                     <source src={`${API_BASE_URL}/audio/${audio.cp_nome_audio}`} type="audio/mpeg" />
                                                                                     Seu navegador não suporta o elemento <code>audio</code>.
                                                                                 </audio>
                                                                             </div>
-                                                                            <motion.div 
-                                                                                className="audio-status"
-                                                                                whileHover={{ scale: 1.05 }}
-                                                                            >
-                                                                                <span className="badge bg-success-subtle text-success-emphasis">
-                                                                                    <motion.div
-                                                                                        animate={{ scale: [1, 1.2, 1] }}
-                                                                                        transition={{ 
-                                                                                            duration: 2,
-                                                                                            repeat: Infinity
-                                                                                        }}
-                                                                                        className="d-inline-block"
-                                                                                    >
-                                                                                        <Icon icon="solar:play-circle-bold" className="me-1" />
-                                                                                    </motion.div>
-                                                                                    Ready
-                                                                                </span>
-                                                                            </motion.div>
                                                                         </div>
                                                                     </motion.div>
                                                                 </motion.div>
