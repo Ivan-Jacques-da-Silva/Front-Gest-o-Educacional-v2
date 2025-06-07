@@ -255,12 +255,28 @@ const Financeiro = () => {
             <div className="card-body p-24">
                 <div className="table-responsive scroll-sm">
                     <table className="table bordered-table sm-table mb-0">
-                        <thead>
+                        <thead className="bg-light">
                             <tr>
-                                <th>Nome</th>
-                                <th>Status</th>
-                                <th>Data de Vencimento</th>
-                                <th>Valor</th>
+                                <th className="fw-semibold text-dark py-3">
+                                    <i className="ri-user-line me-2 text-primary-600"></i>
+                                    Aluno
+                                </th>
+                                <th className="fw-semibold text-dark py-3">
+                                    <i className="ri-information-line me-2 text-warning-600"></i>
+                                    Status
+                                </th>
+                                <th className="fw-semibold text-dark py-3 text-center">
+                                    <i className="ri-calendar-line me-2 text-info-600"></i>
+                                    Vencimento
+                                </th>
+                                <th className="fw-semibold text-dark py-3 text-center">
+                                    <i className="ri-money-dollar-circle-line me-2 text-success-600"></i>
+                                    Ações
+                                </th>
+                                <th className="fw-semibold text-dark py-3 text-end">
+                                    <i className="ri-money-dollar-circle-line me-2 text-success-600"></i>
+                                    Valor
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
@@ -276,19 +292,23 @@ const Financeiro = () => {
                                         <td>
                                             <div className="d-flex align-items-center">
                                                 <div className="flex-grow-1">
-                                                    <h6 className="text-md mb-0">{item.nome}</h6>
-                                                    {item.cp_mt_tipo_pagamento && (
-                                                        <small className="text-neutral-600">
-                                                            <i className={`ri-${item.cp_mt_tipo_pagamento === 'mensalidade' ? 'calendar-line' : 'credit-card-line'} me-1`}></i>
-                                                            {item.cp_mt_tipo_pagamento === 'mensalidade' ? 'Mensalidade' : 'Parcelado'}
-                                                        </small>
-                                                    )}
-                                                    {item.cp_mt_dias_semana && (
-                                                        <small className="text-neutral-500 d-block">
-                                                            <i className="ri-calendar-2-line me-1"></i>
-                                                            {item.cp_mt_dias_semana}
-                                                        </small>
-                                                    )}
+                                                    <h6 className="text-md mb-1 fw-semibold text-dark">{item.nome}</h6>
+                                                    <div className="d-flex flex-column gap-1">
+                                                        {item.cp_mt_tipo_pagamento && (
+                                                            <span className={`badge ${item.cp_mt_tipo_pagamento === 'mensalidade' ? 'bg-info-100 text-info-600 border border-info-200' : 'bg-primary-100 text-primary-600 border border-primary-200'} px-2 py-1 rounded-pill fw-medium text-xs d-inline-flex align-items-center`} style={{width: 'fit-content'}}>
+                                                                <i className={`ri-${item.cp_mt_tipo_pagamento === 'mensalidade' ? 'calendar-line' : 'credit-card-line'} me-1`}></i>
+                                                                {item.cp_mt_tipo_pagamento === 'mensalidade' ? 'Mensalidade' : 'Parcelado'}
+                                                            </span>
+                                                        )}
+                                                        {item.cp_mt_dias_semana && (
+                                                            <span className="text-neutral-500 text-xs d-flex align-items-center">
+                                                                <i className="ri-calendar-2-line me-1"></i>
+                                                                <span className="bg-neutral-100 px-2 py-1 rounded text-neutral-700 fw-medium">
+                                                                    {item.cp_mt_dias_semana.replace(/,/g, ', ')}
+                                                                </span>
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </td>
@@ -317,28 +337,33 @@ const Financeiro = () => {
                                             </span>
                                         </td>
                                         <td>
-                                            <span className="d-flex align-items-center">
+                                            <div className="d-flex align-items-center justify-content-center">
+                                                <span className="fw-medium text-dark d-flex align-items-center bg-light px-3 py-2 rounded-3">
+                                                    <i className="ri-calendar-line me-2 text-primary-600"></i>
+                                                    {item.cp_mtPar_dataParcela}
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div className="d-flex align-items-center justify-content-center">
                                                 {(userType === 1 || userType === 2 || userType === 3) && (
                                                     <button
-                                                        className="btn btn-sm btn-outline-primary rounded-pill px-12"
+                                                        className="btn btn-sm btn-outline-primary rounded-pill px-3 py-2 d-flex align-items-center gap-1 hover-shadow"
                                                         onClick={() => handleOpenModal(item)}
+                                                        style={{transition: 'all 0.2s ease'}}
                                                     >
-                                                        <i className="ri-edit-line me-1"></i>
-                                                        Editar
+                                                        <i className="ri-edit-line"></i>
+                                                        <span className="fw-medium">Editar</span>
                                                     </button>
                                                 )}
-                                            </span>
+                                            </div>
                                         </td>
                                         <td>
-                                            <span className="fw-medium">
-                                                <i className="ri-calendar-line me-1 text-neutral-600"></i>
-                                                {item.cp_mtPar_dataParcela}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span className="fw-bold text-success-600 fs-16">
-                                                R$ {Number(item.cp_mtPar_valorParcela).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                                            </span>
+                                            <div className="d-flex align-items-center justify-content-end">
+                                                <span className="fw-bold text-success-600 fs-16 bg-success-50 px-3 py-2 rounded-3 border border-success-200">
+                                                    R$ {Number(item.cp_mtPar_valorParcela).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                                                </span>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))

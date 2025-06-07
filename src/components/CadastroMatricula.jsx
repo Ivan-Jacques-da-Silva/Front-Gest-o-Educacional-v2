@@ -906,7 +906,7 @@ const CadastroMatricula = ({
                                                     ...matriculaData,
                                                     nivelIdioma: e.target.value,
                                                 })
-                                            }```python
+                                            }
                                             className="form-control"
                                         >
                                             <option value="">Selecione o nível do idioma</option>
