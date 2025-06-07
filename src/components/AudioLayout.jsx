@@ -309,7 +309,9 @@ const Audios = () => {
                                                     fontWeight: '500',
                                                     backdropFilter: 'blur(10px)',
                                                     WebkitBackdropFilter: 'blur(10px)',
-                                                    boxShadow: '0 4px 15px rgba(102, 126, 234, 0.2)'
+                                                    boxShadow: '0 4px 15px rgba(102, 126, 234, 0.2)',
+                                                    minWidth: '100px',
+                                                    height: '36px'
                                                 }}
                                                 whileHover={{ 
                                                     scale: 1.05, 
@@ -318,7 +320,6 @@ const Audios = () => {
                                                 }}
                                                 whileTap={{ scale: 0.95 }}
                                             >
-                                                <Icon icon="solar:music-notes-bold" className="me-1" />
                                                 Ver Áudios
                                             </motion.button>
                                         </li>
@@ -508,61 +509,41 @@ const Audios = () => {
                                                             </td>
                                                             <td className="text-center">
                                                                 <motion.div 
-                                                                    className="modern-audio-container"
+                                                                    className="compact-audio-card"
                                                                     whileHover={{ scale: 1.02 }}
                                                                     initial={{ opacity: 0, y: 10 }}
                                                                     animate={{ opacity: 1, y: 0 }}
                                                                     transition={{ delay: index * 0.1 }}
                                                                 >
                                                                     <motion.div 
-                                                                        className="audio-preview-card p-3 rounded-4 shadow-sm"
+                                                                        className="audio-card-content"
                                                                         style={{
-                                                                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                                                                            border: 'none',
-                                                                            backdropFilter: 'blur(16px)',
-                                                                            WebkitBackdropFilter: 'blur(16px)'
+                                                                            background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
+                                                                            border: '1px solid rgba(102, 126, 234, 0.2)',
+                                                                            borderRadius: '12px',
+                                                                            padding: '12px',
+                                                                            maxWidth: '350px',
+                                                                            margin: '0 auto'
                                                                         }}
                                                                         whileHover={{
-                                                                            boxShadow: '0 15px 35px rgba(102, 126, 234, 0.3)',
-                                                                            transform: 'translateY(-3px)'
+                                                                            boxShadow: '0 8px 20px rgba(102, 126, 234, 0.15)',
+                                                                            transform: 'translateY(-2px)'
                                                                         }}
                                                                     >
-                                                                        <div className="d-flex align-items-center gap-3">
-                                                                            <motion.div 
-                                                                                className="audio-icon-wrapper"
-                                                                                whileHover={{ rotate: 180 }}
-                                                                                transition={{ duration: 0.5 }}
-                                                                            >
-                                                                                <div 
-                                                                                    className="d-flex align-items-center justify-content-center rounded-circle"
-                                                                                    style={{
-                                                                                        width: '45px',
-                                                                                        height: '45px',
-                                                                                        background: 'rgba(255,255,255,0.2)',
-                                                                                        border: '2px solid rgba(255,255,255,0.3)'
-                                                                                    }}
-                                                                                >
-                                                                                    <Icon icon="solar:music-note-3-bold" className="text-white fs-5" />
-                                                                                </div>
-                                                                            </motion.div>
-                                                                            <div className="flex-grow-1">
-                                                                                <audio 
-                                                                                    controls 
-                                                                                    preload="none" 
-                                                                                    controlsList="nodownload"
-                                                                                    className="w-100 premium-audio-player"
-                                                                                    style={{
-                                                                                        height: '40px',
-                                                                                        borderRadius: '25px',
-                                                                                        background: 'rgba(255,255,255,0.1)',
-                                                                                        border: '1px solid rgba(255,255,255,0.2)'
-                                                                                    }}
-                                                                                >
-                                                                                    <source src={`${API_BASE_URL}/audio/${audio.cp_nome_audio}`} type="audio/mpeg" />
-                                                                                    Seu navegador não suporta o elemento <code>audio</code>.
-                                                                                </audio>
-                                                                            </div>
-                                                                        </div>
+                                                                        <audio 
+                                                                            controls 
+                                                                            preload="none" 
+                                                                            controlsList="nodownload"
+                                                                            className="w-100 enhanced-audio-player"
+                                                                            style={{
+                                                                                height: '48px',
+                                                                                borderRadius: '8px',
+                                                                                outline: 'none'
+                                                                            }}
+                                                                        >
+                                                                            <source src={`${API_BASE_URL}/audio/${audio.cp_nome_audio}`} type="audio/mpeg" />
+                                                                            Seu navegador não suporta o elemento <code>audio</code>.
+                                                                        </audio>
                                                                     </motion.div>
                                                                 </motion.div>
                                                             </td>
