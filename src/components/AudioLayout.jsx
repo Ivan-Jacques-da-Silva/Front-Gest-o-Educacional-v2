@@ -543,31 +543,16 @@ const Audios = () => {
                                                                             transform: 'translateY(-3px)'
                                                                         }}
                                                                     >
-                                                                        <div className="d-flex align-items-center gap-3 mb-3">
-                                                                            <motion.div
-                                                                                style={{
-                                                                                    width: '12px',
-                                                                                    height: '12px',
-                                                                                    borderRadius: '50%',
-                                                                                    backgroundColor: '#4ade80'
-                                                                                }}
-                                                                                animate={{
-                                                                                    scale: [1, 1.2, 1],
-                                                                                    opacity: [1, 0.7, 1]
-                                                                                }}
-                                                                                transition={{
-                                                                                    duration: 2,
-                                                                                    repeat: Infinity,
-                                                                                    ease: "easeInOut"
-                                                                                }}
-                                                                            />
+                                                                        <div className="mb-3">
                                                                             <span style={{
-                                                                                color: 'rgba(255, 255, 255, 0.9)',
-                                                                                fontSize: '12px',
-                                                                                fontWeight: '500',
-                                                                                textShadow: '0 1px 2px rgba(0,0,0,0.2)'
+                                                                                color: 'white',
+                                                                                fontSize: '16px',
+                                                                                fontWeight: 'bold',
+                                                                                textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+                                                                                wordBreak: 'break-word',
+                                                                                lineHeight: '1.4'
                                                                             }}>
-                                                                                Player de Áudio
+                                                                                {audio.cp_nome_audio}
                                                                             </span>
                                                                         </div>
                                                                         
@@ -590,20 +575,7 @@ const Audios = () => {
                                                                             Seu navegador não suporta o elemento <code>audio</code>.
                                                                         </audio>
                                                                         
-                                                                        <div className="d-flex justify-content-center mt-3">
-                                                                            <motion.div
-                                                                                style={{
-                                                                                    color: 'rgba(255, 255, 255, 0.8)',
-                                                                                    fontSize: '11px',
-                                                                                    fontWeight: '400'
-                                                                                }}
-                                                                                initial={{ opacity: 0 }}
-                                                                                animate={{ opacity: 1 }}
-                                                                                transition={{ delay: 0.5 }}
-                                                                            >
-                                                                                Clique no botão play para reproduzir
-                                                                            </motion.div>
-                                                                        </div>
+                                                                        
                                                                     </motion.div>
                                                                 </motion.div>
                                                             </td>
