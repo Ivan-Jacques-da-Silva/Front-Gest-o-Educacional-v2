@@ -5,11 +5,11 @@
     background: transparent;
 }
 
-/* Cabeçalho da Agenda */
+/* Cabeçalho da Agenda - Compacto */
 .agenda-header {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 20px;
-    padding: 2rem;
+    border-radius: 12px;
+    padding: 1.25rem;
     color: white;
     position: relative;
     overflow: hidden;
@@ -32,16 +32,10 @@
 }
 
 .header-title {
-    font-size: 2.5rem;
-    font-weight: 700;
+    font-size: 1.75rem;
+    font-weight: 600;
     margin: 0;
     text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.header-subtitle {
-    font-size: 1.1rem;
-    opacity: 0.9;
-    font-weight: 400;
 }
 
 .header-actions {
@@ -50,16 +44,17 @@
 }
 
 .agenda-stats {
-    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
 }
 
-.stat-item {
+.stat-item-small {
     display: inline-flex;
     align-items: center;
     background: rgba(255,255,255,0.2);
-    padding: 0.5rem 1rem;
-    border-radius: 25px;
-    font-size: 0.9rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 15px;
+    font-size: 0.8rem;
     backdrop-filter: blur(10px);
 }
 
@@ -110,37 +105,81 @@
 
 .fc-toolbar {
     margin-bottom: 1.5rem !important;
+    padding: 0.75rem !important;
+    background: #f8f9fa !important;
+    border-radius: 8px !important;
+    border: 1px solid #dee2e6 !important;
 }
 
 .fc-toolbar-title {
-    font-size: 1.75rem !important;
+    font-size: 1.5rem !important;
     font-weight: 600 !important;
-    color: #2d3748 !important;
+    color: #495057 !important;
 }
 
+/* Botões usando estilo Bootstrap */
 .fc-button-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-    border: none !important;
-    border-radius: 8px !important;
-    padding: 8px 16px !important;
-    font-weight: 500 !important;
-    transition: all 0.2s ease !important;
+    background-color: #0d6efd !important;
+    border-color: #0d6efd !important;
+    border-radius: 6px !important;
+    padding: 6px 12px !important;
+    font-size: 0.875rem !important;
+    font-weight: 400 !important;
+    line-height: 1.5 !important;
+    text-align: center !important;
+    vertical-align: middle !important;
+    cursor: pointer !important;
+    user-select: none !important;
+    border: 1px solid transparent !important;
+    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out !important;
 }
 
 .fc-button-primary:hover,
 .fc-button-primary:focus {
-    background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%) !important;
-    transform: translateY(-1px) !important;
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4) !important;
+    background-color: #0b5ed7 !important;
+    border-color: #0a58ca !important;
+    box-shadow: 0 0 0 0.2rem rgba(49, 132, 253, 0.5) !important;
 }
 
 .fc-button-primary:disabled {
-    background: #e2e8f0 !important;
-    color: #a0aec0 !important;
+    background-color: #6c757d !important;
+    border-color: #6c757d !important;
+    opacity: 0.65 !important;
+    cursor: not-allowed !important;
 }
 
-.fc-button-active {
-    background: linear-gradient(135deg, #4c63d2 0%, #5a3a7e 100%) !important;
+.fc-button-active,
+.fc-button-primary:not(:disabled):not(.fc-button-primary):active {
+    background-color: #0a58ca !important;
+    border-color: #0a53be !important;
+    box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125) !important;
+}
+
+/* Grupos de botões */
+.fc-button-group {
+    position: relative !important;
+    display: inline-flex !important;
+    vertical-align: middle !important;
+}
+
+.fc-button-group .fc-button {
+    position: relative !important;
+    flex: 1 1 auto !important;
+}
+
+.fc-button-group .fc-button:not(:first-child) {
+    margin-left: -1px !important;
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+}
+
+.fc-button-group .fc-button:not(:last-child) {
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+}
+
+.fc-button-group .fc-button:focus {
+    z-index: 1 !important;
 }
 
 .fc-daygrid-day {
@@ -289,25 +328,28 @@
     }
     
     .agenda-header {
-        padding: 1.5rem;
+        padding: 1rem;
         text-align: center;
     }
     
     .header-title {
-        font-size: 2rem !important;
-    }
-    
-    .header-subtitle {
-        font-size: 1rem !important;
+        font-size: 1.5rem !important;
     }
     
     .header-actions {
-        margin-top: 1rem;
+        margin-top: 0.75rem;
+        flex-direction: column;
+        gap: 0.5rem !important;
     }
     
-    .btn-lg {
-        padding: 0.75rem 1.5rem !important;
-        font-size: 1rem !important;
+    .btn-sm {
+        padding: 0.5rem 1rem !important;
+        font-size: 0.875rem !important;
+    }
+    
+    .stat-item-small {
+        font-size: 0.75rem !important;
+        padding: 0.2rem 0.5rem !important;
     }
     
     .fc-toolbar {

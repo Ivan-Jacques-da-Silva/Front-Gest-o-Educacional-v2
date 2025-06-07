@@ -193,34 +193,31 @@ function AgendaLayout() {
 
     return (
         <div className="agenda-container">
-            {/* Cabeçalho Melhorado */}
-            <div className="agenda-header mb-4">
+            {/* Cabeçalho Compacto */}
+            <div className="agenda-header mb-3">
                 <div className="container-fluid">
                     <div className="row align-items-center">
-                        <div className="col-md-8">
+                        <div className="col-md-6">
                             <div className="header-content">
-                                <h1 className="header-title mb-2">
-                                    <Icon icon="solar:calendar-mark-bold-duotone" className="me-3" />
+                                <h3 className="header-title mb-1">
+                                    <Icon icon="solar:calendar-mark-bold-duotone" className="me-2" />
                                     Calendário Acadêmico
-                                </h1>
-                                <p className="header-subtitle mb-0">
-                                    Gerencie eventos, acompanhe aniversários e organize sua agenda escolar
-                                </p>
+                                </h3>
                             </div>
                         </div>
-                        <div className="col-md-4 text-md-end">
-                            <div className="header-actions">
+                        <div className="col-md-6 text-md-end">
+                            <div className="header-actions d-flex align-items-center justify-content-end gap-2">
                                 <button 
-                                    className="btn btn-primary btn-lg rounded-pill px-4 py-2 shadow-sm me-2"
+                                    className="btn btn-primary btn-sm rounded-3 px-3"
                                     onClick={() => setModalOpen(true)}
                                 >
-                                    <Icon icon="ic:round-add" className="me-2" />
+                                    <Icon icon="ic:round-add" className="me-1" />
                                     Novo Evento
                                 </button>
                                 <div className="agenda-stats">
-                                    <span className="stat-item">
+                                    <span className="stat-item-small">
                                         <Icon icon="solar:gift-bold" className="text-warning me-1" />
-                                        {aniversariantes.length} aniversários
+                                        {aniversariantes.length}
                                     </span>
                                 </div>
                             </div>
