@@ -168,10 +168,15 @@ const CadastroMatricula = ({
                 .then((response) => {
                     console.log("Dados dos usuários recebidos:", response.data);
                     
-                    // Como o backend já filtra por cp_tipo_user = 5 e cp_excluido = 0
-                    // vamos apenas usar os dados retornados
-                    setUsuarios(response.data);
-                    setFilteredUsuarios(response.data);
+                    const schoolId = localStorage.getItem("schoolId");
+                    
+                    // Filtrar usuários pela escola (schoolId) como era antes
+                    const usuariosFiltrados = response.data.filter(usuario =>
+                        usuario.cp_escola_id == schoolId
+                    );
+                    
+                    setUsuarios(usuariosFiltrados);
+                    setFilteredUsuarios(usuariosFiltrados);
                 })
                 .catch((error) => {
                     console.error("Erro ao buscar usuários:", error);
