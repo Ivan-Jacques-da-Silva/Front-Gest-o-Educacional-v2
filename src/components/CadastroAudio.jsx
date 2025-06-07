@@ -64,8 +64,11 @@ const CadastroAudio = ({ audioID }) => {
     { value: "MOMENTE A1", label: "[ALE] - MOMENTE A1" },
     { value: "MOMENTE A2", label: "[ALE] - MOMENTE A2" },
     { value: "MOMENTE B1", label: "[ALE] - MOMENTE B1" },
+    { value: "ASPEKTE B1", label: "[ALE] - ASPEKTE B1" },
     { value: "ASPEKTE B2", label: "[ALE] - ASPEKTE B2" },
     { value: "DAF+", label: "[ALE] - DAF+" },
+    { value: "RUSSO A1", label: "[RUS] RUSSO A1" },
+    
     // { value: "TESTE", label: "[TT] - TESTE" }
   ];
 

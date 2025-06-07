@@ -271,6 +271,10 @@ const CadastroMatricula = ({
         if (e && e.preventDefault) e.preventDefault();
 
         try {
+            const formatarData = (data) => {
+                return data ? new Date(data).toISOString().split('T')[0] : null;
+            };
+
             if (matriculaId) {
                 const editObj = {
                     cursoId: matriculaData.cursoId,
@@ -280,7 +284,7 @@ const CadastroMatricula = ({
                     cpfUsuario: matriculaData.cpfUsuario,
                     valorCurso: matriculaData.valorCurso,
                     numeroParcelas: matriculaData.numeroParcelas,
-                    primeiraDataPagamento: matriculaData.primeiraDataPagamento,
+                    primeiraDataPagamento: formatarData(matriculaData.primeiraDataPagamento),
                     status: matriculaData.status,
                     nivelIdioma: matriculaData.nivelIdioma,
                     horarioInicio: matriculaData.horarioInicio,
@@ -295,13 +299,18 @@ const CadastroMatricula = ({
                 };
 
                 const response = await axios.put(`${API_BASE_URL}/editar-matricula/${matriculaId}`, editObj);
-                if (response.data?.msg === "Matrícula editada com sucesso") {
+                if (response.data?.msg === "Matrícula e parcelas atualizadas com sucesso") {
                     toast.success("Matrícula editada com sucesso");
                 } else {
                     toast.error("Erro ao editar matrícula");
                 }
             } else {
-                const response = await axios.post(`${API_BASE_URL}/cadastrar-matricula`, matriculaData);
+                const createObj = {
+                    ...matriculaData,
+                    primeiraDataPagamento: formatarData(matriculaData.primeiraDataPagamento),
+                };
+
+                const response = await axios.post(`${API_BASE_URL}/cadastrar-matricula`, createObj);
                 if (response.data?.msg === "Matrícula cadastrada com sucesso") {
                     toast.success("Matrícula cadastrada com sucesso");
                     limparCampos();
@@ -314,6 +323,7 @@ const CadastroMatricula = ({
             toast.error("Erro ao processar matrícula");
         }
     };
+
 
 
 

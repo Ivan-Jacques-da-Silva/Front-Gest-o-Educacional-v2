@@ -86,6 +86,7 @@ const Audios = () => {
         try {
             const response = await fetch(`${API_BASE_URL}/audios-curso/${cursoId}`);
             const data = await response.json();
+            data.sort((a, b) => a.cp_nome_audio.localeCompare(b.cp_nome_audio, undefined, { numeric: true, sensitivity: 'base' }));
             setAudios(data);
             setSelectedCursoId(cursoId);
 

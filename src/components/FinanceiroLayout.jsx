@@ -98,130 +98,68 @@ const Financeiro = () => {
     const fetchFinanceiro = async () => {
         setLoading(true);
         try {
-            const response = await axios.get(`${API_BASE_URL}/financeira`);
+            const response = await axios.get(`${API_BASE_URL}/financeiroParcelas`);
             const parcelas = response.data;
-
-            const fetchNomes = async (id) => {
-                try {
-                    const response = await axios.get(`${API_BASE_URL}/financeira/${id}`);
-                    const data = response.data[0];
-
-                    const userType = parseInt(localStorage.getItem("userType"), 10);
-                    const schoolId = parseInt(localStorage.getItem("schoolId"), 10);
-                    const userName = localStorage.getItem("userName");
-
-                    // console.log("Verificando - userType:", userType, "schoolId:", schoolId, "userName:", userName, "Data recebida:", data);
-
-                    // Filtro principal e complementares
-                    if (data && data.cp_status_matricula === "ativo") { // Filtro principal
-                        if (
-                            (userType === 1) || // Nível 1: Todos os dados
-                            (userType === 5 && data.cp_mt_nome_usuario === userName && data.cp_mt_escola === schoolId) || // Nível 3
-                            (userType !== 4 && userType !== 5 && data.cp_mt_escola === schoolId) // Nível 2 (geral para escolas)
-                        ) {
-                            // console.log("Dado aceito:", data.cp_mt_nome_usuario);
-                            return data.cp_mt_nome_usuario;
-                        }
-                    }
-
-                    // console.log("Dado rejeitado:", data ? data.cp_mt_nome_usuario : null);
-                    return null; // Não atende aos critérios
-                } catch (error) {
-                    console.error("Erro ao buscar nome do usuário:", error);
-                    return null;
-                }
-            };
 
             const verificarStatus = (status, dataVencimento) => {
                 const hoje = new Date();
                 const dataVenc = new Date(dataVencimento);
-
-                // Apenas exibição; não altera o dado original
-                if (status === "à vencer" && dataVenc < hoje) {
-                    return "Vencido"; // Apenas para exibição no front-end
-                }
-                return status;
+                return status === 'à vencer' && dataVenc < hoje ? 'Vencido' : status;
             };
 
-
             const formatarData = (data) => {
-                const dataObj = new Date(data);
-                const dia = String(dataObj.getDate()).padStart(2, "0");
-                const mes = String(dataObj.getMonth() + 1).padStart(2, "0");
-                const ano = dataObj.getFullYear();
+                const d = new Date(data);
+                const dia = String(d.getDate()).padStart(2, '0');
+                const mes = String(d.getMonth() + 1).padStart(2, '0');
+                const ano = d.getFullYear();
                 return `${dia}/${mes}/${ano}`;
             };
 
-            const userType = parseInt(localStorage.getItem("userType"), 10);
-            const schoolId = parseInt(localStorage.getItem("schoolId"), 10);
-            const userName = localStorage.getItem("userName");
+            const userType = parseInt(localStorage.getItem('userType'), 10);
+            const schoolId = parseInt(localStorage.getItem('schoolId'), 10);
+            const userName = localStorage.getItem('userName');
 
-            // console.log("Informações do usuário:", { userType, schoolId, userName });
+            // filtrar matrículas ativas + permissão de visualização
+            const filtradas = parcelas
+                .filter(item => item.cp_status_matricula === 'ativo')
+                .filter(item => {
+                    if (userType === 4) return false;
+                    if (userType === 5) return item.cp_mt_nome_usuario === userName && item.cp_mt_escola === schoolId;
+                    if (![1, 5].includes(userType)) return item.cp_mt_escola === schoolId;
+                    return true;
+                });
 
-            // Caso o usuário seja do tipo 4, não deve exibir nada
-            if (userType === 4) {
-                setDados([]);
-                setTotalAtrasado(0);
-                setValorMensal(0);
-                setLoading(false);
-                return;
-            }
+            const dadosFormatados = filtradas.map(item => ({
+                ...item,
+                nome: item.cp_mt_nome_usuario,
+                cp_mtPar_status: verificarStatus(item.cp_mtPar_status, item.cp_mtPar_dataParcela),
+                cp_mtPar_dataParcela: formatarData(item.cp_mtPar_dataParcela),
+            }));
 
-            const dadosComNomes = await Promise.all(
-                parcelas.map(async (parcela) => {
-                    const nome = await fetchNomes(parcela.cp_mt_id);
+            setDados(dadosFormatados);
 
-                    if (!nome) {
-                        return null; // Ignorar parcelas sem nome válido
-                    }
-
-                    const statusAtualizado = verificarStatus(
-                        parcela.cp_mtPar_status,
-                        parcela.cp_mtPar_dataParcela
-                    );
-                    const dataFormatada = formatarData(parcela.cp_mtPar_dataParcela); // Formata a data
-
-                    return {
-                        ...parcela,
-                        nome,
-                        cp_mtPar_status: statusAtualizado,
-                        cp_mtPar_dataParcela: dataFormatada, // Usa a data formatada
-                    };
-                })
-            );
-
-            const dadosFiltrados = dadosComNomes.filter((dado) => dado !== null);
-
-            setDados(dadosFiltrados);
-
-            const totalAtrasado = dadosFiltrados
-                .filter((dado) => dado.cp_mtPar_status === "Vencido")
+            // cálculo de totalAtrasado e valorMensal permanece igual
+            const atrasado = dadosFormatados
+                .filter(d => d.cp_mtPar_status === 'Vencido')
                 .reduce((acc, curr) => acc + parseFloat(curr.cp_mtPar_valorParcela), 0);
-            setTotalAtrasado(totalAtrasado.toFixed(2));
+            setTotalAtrasado(atrasado.toFixed(2));
 
-            // Verificação de IDs únicos para o valor mensal
-            const idsJaProcessados = new Set(); // Rastreador de IDs únicos
-            let totalMensal = 0;
-
-            dadosFiltrados.forEach((parcela) => {
-                if (!idsJaProcessados.has(parcela.cp_mt_id)) {
-                    // Soma o valor da primeira parcela do ID único
-                    totalMensal += parseFloat(parcela.cp_mtPar_valorParcela);
-                    idsJaProcessados.add(parcela.cp_mt_id); // Marca o ID como processado
+            const idsUnicos = new Set();
+            const mensal = dadosFormatados.reduce((soma, p) => {
+                if (!idsUnicos.has(p.cp_mt_id)) {
+                    idsUnicos.add(p.cp_mt_id);
+                    return soma + parseFloat(p.cp_mtPar_valorParcela);
                 }
-            });
-
-            setValorMensal(totalMensal.toFixed(2));
-
+                return soma;
+            }, 0);
+            setValorMensal(mensal.toFixed(2));
 
         } catch (error) {
-            console.error("Erro ao buscar dados financeiros:", error);
+            console.error('Erro ao buscar dados financeiros:', error);
         } finally {
             setLoading(false);
         }
     };
-
-
 
     const filteredData = dados.filter((item) => {
         const matchesNome = item.nome?.toLowerCase().includes(nomeFiltro.toLowerCase()) ?? true;

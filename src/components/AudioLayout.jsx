@@ -49,21 +49,31 @@ const Audios = () => {
 
     const fetchCursos = async () => {
         const professorId = localStorage.getItem('userId');
-        const tipoUsuario = localStorage.getItem('userType'); // pega o tipo
+        const tipoUsuario = localStorage.getItem('userType');
 
-        // SE for tipo 1 (admin), busca todos os cursos direto
         if (tipoUsuario === "1") {
             try {
                 const response = await fetch(`${API_BASE_URL}/cursos`);
                 const todosCursos = await response.json();
-                setCursos(todosCursos);
+
+                const cursosComAudio = await Promise.all(
+                    todosCursos.map(async (curso) => {
+                        const response = await fetch(`${API_BASE_URL}/audios-curso/${curso.cp_curso_id}`);
+                        const audios = await response.json();
+                        return audios.length > 0 ? curso : null;
+                    })
+                );
+
+                const cursosFiltrados = cursosComAudio.filter(curso => curso !== null);
+                cursosFiltrados.sort((a, b) => a.cp_nome_curso.localeCompare(b.cp_nome_curso, undefined, { numeric: true, sensitivity: 'base' }));
+                setCursos(cursosFiltrados);
+
             } catch (error) {
                 console.error("Erro ao buscar todos os cursos:", error);
             }
             return;
         }
 
-        // caso contrário, segue lógica atual (professor)
         try {
             const responseTurmas = await fetch(`${API_BASE_URL}/cp_turmas/professor/${professorId}`);
             const turmas = await responseTurmas.json();
@@ -76,7 +86,19 @@ const Audios = () => {
                     body: JSON.stringify({ cursoIds })
                 });
                 const cursos = await responseCursos.json();
-                setCursos(cursos);
+
+                const cursosComAudio = await Promise.all(
+                    cursos.map(async (curso) => {
+                        const response = await fetch(`${API_BASE_URL}/audios-curso/${curso.cp_curso_id}`);
+                        const audios = await response.json();
+                        return audios.length > 0 ? curso : null;
+                    })
+                );
+
+                const cursosFiltrados = cursosComAudio.filter(curso => curso !== null);
+                cursosFiltrados.sort((a, b) => a.cp_nome_curso.localeCompare(b.cp_nome_curso, undefined, { numeric: true, sensitivity: 'base' }));
+                setCursos(cursosFiltrados);
+
             } else {
                 setCursos([]);
             }
@@ -87,12 +109,14 @@ const Audios = () => {
 
 
 
+
     const fetchAudios = async (cursoId) => {
         setLoading(true);
         setPaginaAtual(1); // Sempre volta para a primeira página ao trocar de curso
         try {
             const response = await fetch(`${API_BASE_URL}/audios-curso/${cursoId}`);
             const data = await response.json();
+            data.sort((a, b) => a.cp_nome_audio.localeCompare(b.cp_nome_audio, undefined, { numeric: true, sensitivity: 'base' }));
             setAudios(data);
             setSelectedCursoId(cursoId);
         } catch (error) {
@@ -233,6 +257,87 @@ const Audios = () => {
                                     </li>
                                 </div>
                             ))}
+                            <div className="d-flex flex-column align-items-center justify-content-center mt-24">
+                                <div className="d-flex align-items-center justify-content-between w-100 mb-3">
+                                    <span>
+                                        Mostrando {paginaAtualCursos} de {totalPaginasCursos} páginas
+                                    </span>
+                                    <select
+                                        className="form-select form-select-sm w-auto ps-12 py-6 radius-12 h-40-px"
+                                        value={paginaAtualCursos}
+                                        onChange={(e) => setPaginaAtualCursos(Number(e.target.value))}
+                                    >
+                                        {Array.from({ length: totalPaginasCursos }, (_, idx) => (
+                                            <option key={idx + 1} value={idx + 1}>
+                                                Página {idx + 1}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <ul className="pagination d-flex flex-wrap align-items-center gap-2 justify-content-center">
+                                    <li className="page-item">
+                                        <button
+                                            className="page-link bg-neutral-200 text-secondary-light fw-semibold radius-8 border-0 d-flex align-items-center justify-content-center h-32-px text-md"
+                                            onClick={() => setPaginaAtualCursos(1)}
+                                            disabled={paginaAtualCursos === 1}
+                                        >
+                                            <Icon icon="ep:d-arrow-left" />
+                                        </button>
+                                    </li>
+                                    <li className="page-item">
+                                        <button
+                                            className="page-link bg-neutral-200 text-secondary-light fw-semibold radius-8 border-0 d-flex align-items-center justify-content-center h-32-px text-md"
+                                            onClick={() => setPaginaAtualCursos(prev => Math.max(prev - 1, 1))}
+                                            disabled={paginaAtualCursos === 1}
+                                        >
+                                            Anterior
+                                        </button>
+                                    </li>
+                                    {Array.from({ length: totalPaginasCursos }, (_, idx) => idx + 1)
+                                        .filter(page => page === 1 || page === totalPaginasCursos || (page >= paginaAtualCursos - 2 && page <= paginaAtualCursos + 2))
+                                        .map((page, idx, pages) => {
+                                            if (idx > 0 && page > pages[idx - 1] + 1) {
+                                                return (
+                                                    <li key={`ellipsis-${idx}`} className="page-item">
+                                                        <span className="page-link bg-neutral-200 text-secondary-light fw-semibold radius-8 border-0 d-flex align-items-center justify-content-center h-32-px w-32-px">
+                                                            ...
+                                                        </span>
+                                                    </li>
+                                                );
+                                            }
+                                            return (
+                                                <li key={page} className={`page-item ${paginaAtualCursos === page ? "active" : ""}`}>
+                                                    <button
+                                                        className={`page-link text-md fw-semibold radius-8 border-0 d-flex align-items-center justify-content-center h-32-px w-32-px ${paginaAtualCursos === page ? "bg-primary-600 text-white" : "bg-neutral-200 text-secondary-light"}`}
+                                                        onClick={() => setPaginaAtualCursos(page)}
+                                                    >
+                                                        {page}
+                                                    </button>
+                                                </li>
+                                            );
+                                        })}
+                                    <li className="page-item">
+                                        <button
+                                            className="page-link bg-neutral-200 text-secondary-light fw-semibold radius-8 border-0 d-flex align-items-center justify-content-center h-32-px text-md"
+                                            onClick={() => setPaginaAtualCursos(prev => Math.min(prev + 1, totalPaginasCursos))}
+                                            disabled={paginaAtualCursos === totalPaginasCursos}
+                                        >
+                                            Próximo
+                                        </button>
+                                    </li>
+                                    <li className="page-item">
+                                        <button
+                                            className="page-link bg-neutral-200 text-secondary-light fw-semibold radius-8 border-0 d-flex align-items-center justify-content-center h-32-px text-md"
+                                            onClick={() => setPaginaAtualCursos(totalPaginasCursos)}
+                                            disabled={paginaAtualCursos === totalPaginasCursos}
+                                        >
+                                            <Icon icon="ep:d-arrow-right" />
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
+
                         </ul>
 
                     </div>
