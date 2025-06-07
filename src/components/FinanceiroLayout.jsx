@@ -273,73 +273,37 @@ const Financeiro = () => {
                             ) : (
                                 currentItems.map((item, index) => (
                                     <tr key={item.cp_mtPar_id || index}>
-                                        <td>
-                                            <div className="d-flex align-items-center">
-                                                <div className="flex-grow-1">
-                                                    <h6 className="text-md mb-0">{item.nome}</h6>
-                                                    {item.cp_mt_tipo_pagamento && (
-                                                        <small className="text-neutral-600">
-                                                            <i className={`ri-${item.cp_mt_tipo_pagamento === 'mensalidade' ? 'calendar-line' : 'credit-card-line'} me-1`}></i>
-                                                            {item.cp_mt_tipo_pagamento === 'mensalidade' ? 'Mensalidade' : 'Parcelado'}
-                                                        </small>
-                                                    )}
-                                                    {item.cp_mt_dias_semana && (
-                                                        <small className="text-neutral-500 d-block">
-                                                            <i className="ri-calendar-2-line me-1"></i>
-                                                            {item.cp_mt_dias_semana}
-                                                        </small>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </td>
+                                        <td>{item.nome || "Desconhecido"}</td>
                                         <td>
                                             <span
-                                                className={`badge ${
-                                                    item.cp_mtPar_status === "pago" || item.cp_mtPar_status === "confirmado"
-                                                        ? "bg-success-focus text-success-600 border border-success-main"
+                                                className={`badge text-sm fw-semibold rounded-pill px-20 py-9 radius-4 text-white ${item.cp_mtPar_status === "Pago"
+                                                    ? "bg-success-600"
+                                                    : item.cp_mtPar_status === "à vencer" &&
+                                                        new Date(item.cp_mtPar_dataParcela) < new Date()
+                                                        ? "bg-danger-600"
                                                         : item.cp_mtPar_status === "à vencer"
-                                                        ? "bg-warning-focus text-warning-600 border border-warning-main"
-                                                        : item.cp_mtPar_status === "Vencido"
-                                                        ? "bg-danger-focus text-danger-600 border border-danger-main"
-                                                        : "bg-neutral-200 text-neutral-600 border border-neutral-400"
-                                                } px-12 py-6 radius-6 fw-medium text-sm`}
+                                                            ? "bg-warning-600"
+                                                            : "bg-danger-600"
+                                                    } `}
                                             >
-                                                <i className={`ri-${
-                                                    item.cp_mtPar_status === "pago" || item.cp_mtPar_status === "confirmado"
-                                                        ? "check-line"
-                                                        : item.cp_mtPar_status === "à vencer"
-                                                        ? "time-line"
-                                                        : item.cp_mtPar_status === "Vencido"
-                                                        ? "error-warning-line"
-                                                        : "question-line"
-                                                } me-1`}></i>
-                                                {item.cp_mtPar_status === "Vencido" ? "Vencido" : item.cp_mtPar_status}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span className="d-flex align-items-center">
+                                                {item.cp_mtPar_status === "à vencer" &&
+                                                    new Date(item.cp_mtPar_dataParcela) < new Date()
+                                                    ? "Vencido"
+                                                    : item.cp_mtPar_status}
                                                 {(userType === 1 || userType === 2 || userType === 3) && (
-                                                    <button
-                                                        className="btn btn-sm btn-outline-primary rounded-pill px-12"
+                                                    <Icon
+                                                        style={{ marginLeft: '5px' }}
+                                                        icon="mdi:pencil-outline"
+                                                        className="cursor-pointer"
+                                                        width="16"
+                                                        height="16"
                                                         onClick={() => handleOpenModal(item)}
-                                                    >
-                                                        <i className="ri-edit-line me-1"></i>
-                                                        Editar
-                                                    </button>
+                                                    />
                                                 )}
                                             </span>
                                         </td>
-                                        <td>
-                                            <span className="fw-medium">
-                                                <i className="ri-calendar-line me-1 text-neutral-600"></i>
-                                                {item.cp_mtPar_dataParcela}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span className="fw-bold text-success-600 fs-16">
-                                                R$ {Number(item.cp_mtPar_valorParcela).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                                            </span>
-                                        </td>
+                                        <td>{item.cp_mtPar_dataParcela}</td>
+                                        <td>R$ {item.cp_mtPar_valorParcela}</td>
                                     </tr>
                                 ))
                             )}
