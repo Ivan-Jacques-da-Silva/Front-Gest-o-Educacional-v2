@@ -129,17 +129,17 @@ const CadastroMatricula = ({
 
                     setMatriculaData(prevMatriculaData => ({
                         ...prevMatriculaData,
-                        usuarioId: usuarioId, // Garante que o usuário seja identificado corretamente
-                        nomeUsuario: response.data.nomeUsuario || "",
-                        cpfUsuario: response.data.cpfUsuario || "",
-                        dataNascimento: formatarData(response.data.dataNascimento) || "",
-                        profissao: response.data.profissao || "",
-                        estadoCivil: response.data.estadoCivil || "Não informado",
-                        endereco: response.data.endereco || "",
-                        whatsapp: response.data.whatsapp || "",
-                        telefone: response.data.telefone || "",
-                        email: response.data.email || "",
-                        escolaId: response.data.escolaId || "",
+                        usuarioId: usuarioId,
+                        nomeUsuario: response.data.cp_nome || response.data.nomeUsuario || "",
+                        cpfUsuario: response.data.cp_cpf || response.data.cpfUsuario || "",
+                        dataNascimento: formatarData(response.data.cp_datanascimento || response.data.dataNascimento) || "",
+                        profissao: response.data.cp_profissao || response.data.profissao || "",
+                        estadoCivil: response.data.cp_estadocivil || response.data.estadoCivil || "Não informado",
+                        endereco: response.data.endereco || `${response.data.cp_end_cidade_estado || ''}, ${response.data.cp_end_rua || ''}, ${response.data.cp_end_num || ''}`,
+                        whatsapp: response.data.cp_whatsapp || response.data.whatsapp || "",
+                        telefone: response.data.cp_telefone || response.data.telefone || "",
+                        email: response.data.cp_email || response.data.email || "",
+                        escolaId: response.data.cp_escola_id || response.data.escolaId || "",
                     }));
 
                 } else {
@@ -347,6 +347,8 @@ const CadastroMatricula = ({
                         const usuario = response.data;
                         setDadosUsuario(usuario);
 
+                        setDadosUsuario(usuario);
+                        
                         setMatriculaData(prevMatriculaData => ({
                             ...prevMatriculaData,
                             usuarioId: usuario.cp_id,
@@ -355,11 +357,10 @@ const CadastroMatricula = ({
                             dataNascimento: usuario.cp_datanascimento,
                             profissao: usuario.cp_profissao,
                             estadoCivil: usuario.cp_estadocivil,
-                            endereco: `${usuario.cp_end_cidade_estado}, ${usuario.cp_end_rua}, ${usuario.cp_end_num}`,
+                            endereco: `${usuario.cp_end_cidade_estado || ''}, ${usuario.cp_end_rua || ''}, ${usuario.cp_end_num || ''}`,
                             whatsapp: usuario.cp_whatsapp,
                             telefone: usuario.cp_telefone,
                             email: usuario.cp_email,
-                            // escolaridade: usuario.cp_escolaridade,
                             escolaId: usuario.cp_escola_id
                         }));
                     } else {
@@ -565,7 +566,17 @@ const CadastroMatricula = ({
 
 
     const handleUsuarioSelect = (usuario) => {
-        setDadosUsuario(usuario);
+        setDadosUsuario({
+            dataNascimento: usuario.cp_datanascimento,
+            profissao: usuario.cp_profissao,
+            estadoCivil: usuario.cp_estadocivil,
+            endereco: `${usuario.cp_end_cidade_estado || ''}, ${usuario.cp_end_rua || ''}, ${usuario.cp_end_num || ''}`,
+            whatsapp: usuario.cp_whatsapp,
+            telefone: usuario.cp_telefone,
+            email: usuario.cp_email,
+            escolaId: usuario.cp_escola_id,
+        });
+        
         setMatriculaData(prevMatriculaData => ({
             ...prevMatriculaData,
             usuarioId: usuario.cp_id,
@@ -574,7 +585,7 @@ const CadastroMatricula = ({
             dataNascimento: usuario.cp_datanascimento,
             profissao: usuario.cp_profissao,
             estadoCivil: usuario.cp_estadocivil,
-            endereco: `${usuario.cp_end_cidade_estado}, ${usuario.cp_end_rua}, ${usuario.cp_end_num}`,
+            endereco: `${usuario.cp_end_cidade_estado || ''}, ${usuario.cp_end_rua || ''}, ${usuario.cp_end_num || ''}`,
             whatsapp: usuario.cp_whatsapp,
             telefone: usuario.cp_telefone,
             email: usuario.cp_email,
