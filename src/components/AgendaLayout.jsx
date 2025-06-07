@@ -71,7 +71,6 @@ const eventosManual = [
 function AgendaLayout() {
     const [events, setEvents] = useState([]);
     const [aniversariantes, setAniversariantes] = useState([]);
-    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
     const [modalOpen, setModalOpen] = useState(false);
     const [newEvent, setNewEvent] = useState({ title: '', description: '', date: '' });
     const [loading, setLoading] = useState(true);
@@ -88,15 +87,37 @@ function AgendaLayout() {
             
             // Filtrar aniversariantes pela escola
             const aniversariantesFiltrados = response.data.filter(pessoa => 
-                pessoa.cp_escola_id == schoolId
+                pessoa.cp_escola_id === parseInt(schoolId)
             );
             
             setAniversariantes(aniversariantesFiltrados);
+            adicionarAniversariosAoCalendario(aniversariantesFiltrados);
         } catch (error) {
             console.error('Erro ao buscar aniversariantes:', error);
         } finally {
             setLoading(false);
         }
+    };
+
+    const adicionarAniversariosAoCalendario = (aniversariantes) => {
+        const eventosAniversarios = aniversariantes.map(pessoa => {
+            const [mes, dia] = pessoa.aniversario.split('-');
+            const anoAtual = new Date().getFullYear();
+            
+            return {
+                title: `🎂 ${pessoa.cp_nome}`,
+                start: `${anoAtual}-${mes}-${dia}`,
+                color: '#e17055',
+                textColor: '#ffffff',
+                classNames: ['evento-aniversario'],
+                extendedProps: {
+                    tipo: 'aniversario',
+                    pessoa: pessoa
+                }
+            };
+        });
+        
+        setEvents(prevEvents => [...prevEvents, ...eventosAniversarios]);
     };
 
     const carregarEventosManuais = () => {
@@ -105,38 +126,31 @@ function AgendaLayout() {
             start: evento.date.split('T')[0],
             color: '#6c5ce7',
             textColor: '#ffffff',
-            classNames: ['evento-manual']
+            classNames: ['evento-manual'],
+            extendedProps: {
+                tipo: 'institucional'
+            }
         }));
         
         setEvents(prevEvents => [...prevEvents, ...eventosFormatados]);
     };
 
-    const getAniversariantesDoMes = () => {
-        const mesAtual = new Date().getMonth() + 1;
-        return aniversariantes.filter(pessoa => {
-            const mesAniversario = parseInt(pessoa.aniversario.split('-')[0]);
-            return mesAniversario === mesAtual;
-        });
-    };
-
-    const getAniversariantesDoDia = (data) => {
-        const [mes, dia] = data.split('-').slice(1);
-        const dataFormatada = `${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
-        
-        return aniversariantes.filter(pessoa => 
-            pessoa.aniversario === dataFormatada
-        );
-    };
-
     const handleDateClick = (info) => {
         setNewEvent({ ...newEvent, date: info.dateStr });
-        setSelectedDate(info.dateStr);
         setModalOpen(true);
     };
 
     const handleEventClick = (info) => {
-        if (info.event.classNames.includes('evento-manual')) {
-            alert('Este é um evento fixo e não pode ser removido.');
+        const tipoEvento = info.event.extendedProps.tipo;
+        
+        if (tipoEvento === 'aniversario') {
+            const pessoa = info.event.extendedProps.pessoa;
+            alert(`Aniversário de ${pessoa.cp_nome}\nData: ${pessoa.aniversario.split('-').reverse().join('/')}`);
+            return;
+        }
+        
+        if (tipoEvento === 'institucional') {
+            alert('Este é um evento institucional e não pode ser removido.');
             return;
         }
         
@@ -153,7 +167,10 @@ function AgendaLayout() {
                 start: newEvent.date,
                 description: newEvent.description,
                 color: '#00b894',
-                textColor: '#ffffff'
+                textColor: '#ffffff',
+                extendedProps: {
+                    tipo: 'personalizado'
+                }
             };
             
             setEvents([...events, novoEvento]);
@@ -163,9 +180,6 @@ function AgendaLayout() {
             alert('Por favor, preencha todos os campos obrigatórios.');
         }
     };
-
-    const aniversariantesMes = getAniversariantesDoMes();
-    const aniversariantesDia = getAniversariantesDoDia(selectedDate);
 
     if (loading) {
         return (
@@ -179,111 +193,46 @@ function AgendaLayout() {
 
     return (
         <div className="agenda-container">
-            <div className="row g-4">
-                {/* Sidebar Esquerdo */}
-                <div className="col-xl-3 col-lg-4 col-md-5">
-                    <div className="card border-0 shadow-sm h-100">
-                        <div className="card-header bg-gradient border-0 p-4">
-                            <h5 className="card-title text-white mb-0 d-flex align-items-center">
-                                <Icon icon="solar:calendar-bold" className="me-2" />
-                                Eventos & Aniversários
-                            </h5>
-                        </div>
-                        <div className="card-body p-4">
-                            {/* Botão Adicionar Evento */}
-                            <button 
-                                className="btn btn-primary w-100 mb-4 d-flex align-items-center justify-content-center gap-2 py-3 rounded-3"
-                                onClick={() => setModalOpen(true)}
-                            >
-                                <Icon icon="ic:round-add" className="fs-5" />
-                                Novo Evento
-                            </button>
-
-                            {/* Aniversariantes do Mês */}
-                            <div className="mb-4">
-                                <h6 className="text-muted mb-3 d-flex align-items-center">
-                                    <Icon icon="solar:gift-bold" className="me-2 text-warning" />
-                                    Aniversariantes do Mês ({aniversariantesMes.length})
-                                </h6>
-                                <div className="aniversariantes-list">
-                                    {aniversariantesMes.length > 0 ? (
-                                        aniversariantesMes.map((pessoa, index) => (
-                                            <div key={index} className="aniversariante-item p-3 mb-2 bg-light rounded-3">
-                                                <div className="d-flex align-items-center">
-                                                    <div className="avatar bg-warning text-white rounded-circle me-3 d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
-                                                        <Icon icon="solar:gift-bold" />
-                                                    </div>
-                                                    <div>
-                                                        <p className="mb-0 fw-semibold text-dark">{pessoa.cp_nome}</p>
-                                                        <small className="text-muted">
-                                                            {pessoa.aniversario.split('-').reverse().join('/')}
-                                                        </small>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <p className="text-muted text-center py-3">
-                                            Nenhum aniversário este mês
-                                        </p>
-                                    )}
-                                </div>
+            {/* Cabeçalho Melhorado */}
+            <div className="agenda-header mb-4">
+                <div className="container-fluid">
+                    <div className="row align-items-center">
+                        <div className="col-md-8">
+                            <div className="header-content">
+                                <h1 className="header-title mb-2">
+                                    <Icon icon="solar:calendar-mark-bold-duotone" className="me-3" />
+                                    Calendário Acadêmico
+                                </h1>
+                                <p className="header-subtitle mb-0">
+                                    Gerencie eventos, acompanhe aniversários e organize sua agenda escolar
+                                </p>
                             </div>
-
-                            {/* Aniversariantes do Dia Selecionado */}
-                            {aniversariantesDia.length > 0 && (
-                                <div className="mb-4">
-                                    <h6 className="text-success mb-3 d-flex align-items-center">
-                                        <Icon icon="solar:cake-bold" className="me-2" />
-                                        Hoje ({aniversariantesDia.length})
-                                    </h6>
-                                    <div className="aniversariantes-hoje">
-                                        {aniversariantesDia.map((pessoa, index) => (
-                                            <div key={index} className="aniversariante-item p-3 mb-2 bg-success-subtle rounded-3">
-                                                <div className="d-flex align-items-center">
-                                                    <div className="avatar bg-success text-white rounded-circle me-3 d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
-                                                        <Icon icon="solar:cake-bold" />
-                                                    </div>
-                                                    <div>
-                                                        <p className="mb-0 fw-semibold text-dark">{pessoa.cp_nome}</p>
-                                                        <small className="text-success fw-medium">
-                                                            🎉 Aniversário hoje!
-                                                        </small>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Legenda */}
-                            <div className="mt-4 pt-3 border-top">
-                                <h6 className="text-muted mb-3">Legenda</h6>
-                                <div className="d-flex flex-column gap-2">
-                                    <div className="d-flex align-items-center">
-                                        <div className="legend-color bg-success rounded me-2" style={{ width: '12px', height: '12px' }}></div>
-                                        <small className="text-muted">Eventos Personalizados</small>
-                                    </div>
-                                    <div className="d-flex align-items-center">
-                                        <div className="legend-color rounded me-2" style={{ width: '12px', height: '12px', backgroundColor: '#6c5ce7' }}></div>
-                                        <small className="text-muted">Eventos Institucionais</small>
-                                    </div>
+                        </div>
+                        <div className="col-md-4 text-md-end">
+                            <div className="header-actions">
+                                <button 
+                                    className="btn btn-primary btn-lg rounded-pill px-4 py-2 shadow-sm me-2"
+                                    onClick={() => setModalOpen(true)}
+                                >
+                                    <Icon icon="ic:round-add" className="me-2" />
+                                    Novo Evento
+                                </button>
+                                <div className="agenda-stats">
+                                    <span className="stat-item">
+                                        <Icon icon="solar:gift-bold" className="text-warning me-1" />
+                                        {aniversariantes.length} aniversários
+                                    </span>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                {/* Calendário Principal */}
-                <div className="col-xl-9 col-lg-8 col-md-7">
-                    <div className="card border-0 shadow-sm h-100">
-                        <div className="card-header bg-white border-0 p-4">
-                            <h5 className="card-title mb-0 d-flex align-items-center">
-                                <Icon icon="solar:calendar-mark-bold" className="me-2 text-primary" />
-                                Calendário Acadêmico
-                            </h5>
-                        </div>
+            {/* Calendário Principal */}
+            <div className="row">
+                <div className="col-12">
+                    <div className="card border-0 shadow-lg">
                         <div className="card-body p-4">
                             <div className="calendar-wrapper">
                                 <FullCalendar
@@ -313,6 +262,30 @@ function AgendaLayout() {
                                     eventDisplay="block"
                                     displayEventTime={false}
                                 />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Legenda */}
+            <div className="row mt-4">
+                <div className="col-12">
+                    <div className="card border-0 shadow-sm">
+                        <div className="card-body p-3">
+                            <div className="d-flex flex-wrap justify-content-center gap-4">
+                                <div className="legend-item d-flex align-items-center">
+                                    <div className="legend-color bg-success rounded me-2" style={{ width: '12px', height: '12px' }}></div>
+                                    <small className="text-muted">Eventos Personalizados</small>
+                                </div>
+                                <div className="legend-item d-flex align-items-center">
+                                    <div className="legend-color rounded me-2" style={{ width: '12px', height: '12px', backgroundColor: '#6c5ce7' }}></div>
+                                    <small className="text-muted">Eventos Institucionais</small>
+                                </div>
+                                <div className="legend-item d-flex align-items-center">
+                                    <div className="legend-color rounded me-2" style={{ width: '12px', height: '12px', backgroundColor: '#e17055' }}></div>
+                                    <small className="text-muted">Aniversários</small>
+                                </div>
                             </div>
                         </div>
                     </div>
