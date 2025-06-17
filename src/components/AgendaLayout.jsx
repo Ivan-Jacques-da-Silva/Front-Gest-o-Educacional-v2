@@ -1,5 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
+import { useRef } from 'react';
+import { Modal, Button } from 'react-bootstrap';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
@@ -74,65 +75,70 @@ function AgendaLayout() {
     const [modalOpen, setModalOpen] = useState(false);
     const [newEvent, setNewEvent] = useState({ title: '', description: '', date: '' });
     const [loading, setLoading] = useState(true);
+    const [eventoSelecionado, setEventoSelecionado] = useState(null);
+
+    const inicializado = useRef(false);
 
     useEffect(() => {
-        buscarAniversariantes();
-        carregarEventosManuais();
+        if (inicializado.current) return;
+        inicializado.current = true;
+        carregarTodosEventos();
     }, []);
 
-    const buscarAniversariantes = async () => {
+    const carregarTodosEventos = async () => {
         try {
-            const response = await axios.get(`${API_BASE_URL}/aniversarios-agenda`);
-            const schoolId = localStorage.getItem("schoolId");
-            
-            // Filtrar aniversariantes pela escola
-            const aniversariantesFiltrados = response.data.filter(pessoa => 
-                pessoa.cp_escola_id === parseInt(schoolId)
-            );
-            
-            setAniversariantes(aniversariantesFiltrados);
-            adicionarAniversariosAoCalendario(aniversariantesFiltrados);
+            // 1. Carregar eventos manuais (institucionais)
+            const anoAtual = new Date().getFullYear();
+            const institucionais = eventosManual.map(evt => {
+                const [, mes, dia] = evt.date.split('T')[0].split('-');
+                return {
+                    title: evt.name,
+                    start: `${anoAtual}-${mes}-${dia}`,
+                    allDay: true,
+                    color: '#6c5ce7',
+                    textColor: '#ffffff',
+                    classNames: ['evento-manual'],
+                    extendedProps: {
+                        tipo: 'institucional'
+                    }
+                };
+            });
+
+
+            // 2. Carregar aniversariantes
+            const resp = await axios.get(`${API_BASE_URL}/aniversarios-agenda`);
+            const schoolId = parseInt(localStorage.getItem('schoolId'));
+            const anivers = resp.data
+                .filter(p => p.cp_escola_id === schoolId)
+                .map(p => {
+                    const [mes, dia] = p.aniversario.split('-');
+                    const ano = new Date().getFullYear();
+                    const dateStr = `${ano}-${mes}-${dia}`;
+                    console.log(`Evento: Aniversário: ${p.cp_nome} | Data: ${dateStr}`);
+                    return {
+                        title: `🎂 ${p.cp_nome}`,
+                        start: dateStr,
+                        color: '#e17055',
+                        textColor: '#ffffff',
+                        classNames: ['evento-aniversario'],
+                        extendedProps: {
+                            tipo: 'aniversario',
+                            pessoa: p,
+                            debug: `Original: ${p.aniversario} | Processado: ${dateStr}`
+                        }
+                    };
+                });
+
+            // 3. Juntar todos os eventos
+            const allEvents = [...institucionais, ...anivers];
+            setEvents(allEvents);
+            console.log('Todos eventos:', allEvents);
+            setAniversariantes(anivers.filter(e => e.extendedProps.tipo === 'aniversario'));
         } catch (error) {
-            console.error('Erro ao buscar aniversariantes:', error);
+            console.error('Erro ao carregar eventos:', error);
         } finally {
             setLoading(false);
         }
-    };
-
-    const adicionarAniversariosAoCalendario = (aniversariantes) => {
-        const eventosAniversarios = aniversariantes.map(pessoa => {
-            const [mes, dia] = pessoa.aniversario.split('-');
-            const anoAtual = new Date().getFullYear();
-            
-            return {
-                title: `🎂 ${pessoa.cp_nome}`,
-                start: `${anoAtual}-${mes}-${dia}`,
-                color: '#e17055',
-                textColor: '#ffffff',
-                classNames: ['evento-aniversario'],
-                extendedProps: {
-                    tipo: 'aniversario',
-                    pessoa: pessoa
-                }
-            };
-        });
-        
-        setEvents(prevEvents => [...prevEvents, ...eventosAniversarios]);
-    };
-
-    const carregarEventosManuais = () => {
-        const eventosFormatados = eventosManual.map(evento => ({
-            title: evento.name,
-            start: evento.date.split('T')[0],
-            color: '#6c5ce7',
-            textColor: '#ffffff',
-            classNames: ['evento-manual'],
-            extendedProps: {
-                tipo: 'institucional'
-            }
-        }));
-        
-        setEvents(prevEvents => [...prevEvents, ...eventosFormatados]);
     };
 
     const handleDateClick = (info) => {
@@ -141,23 +147,12 @@ function AgendaLayout() {
     };
 
     const handleEventClick = (info) => {
-        const tipoEvento = info.event.extendedProps.tipo;
-        
-        if (tipoEvento === 'aniversario') {
-            const pessoa = info.event.extendedProps.pessoa;
-            alert(`Aniversário de ${pessoa.cp_nome}\nData: ${pessoa.aniversario.split('-').reverse().join('/')}`);
-            return;
-        }
-        
-        if (tipoEvento === 'institucional') {
-            alert('Este é um evento institucional e não pode ser removido.');
-            return;
-        }
-        
-        if (window.confirm(`Deseja excluir o evento '${info.event.title}'?`)) {
-            info.event.remove();
-            setEvents(events.filter(event => event.title !== info.event.title));
-        }
+        setEventoSelecionado({
+            title: info.event.title,
+            date: info.event.startStr,
+            description: info.event.extendedProps.description || '',
+            tipo: info.event.extendedProps.tipo
+        });
     };
 
     const handleAddEvent = () => {
@@ -172,7 +167,7 @@ function AgendaLayout() {
                     tipo: 'personalizado'
                 }
             };
-            
+
             setEvents([...events, novoEvento]);
             setNewEvent({ title: '', description: '', date: '' });
             setModalOpen(false);
@@ -207,7 +202,7 @@ function AgendaLayout() {
                         </div>
                         <div className="col-md-6 text-md-end">
                             <div className="header-actions d-flex align-items-center justify-content-end gap-2">
-                                <button 
+                                <button
                                     className="btn btn-primary btn-sm rounded-3 px-3"
                                     onClick={() => setModalOpen(true)}
                                 >
@@ -252,13 +247,52 @@ function AgendaLayout() {
                                         day: 'Dia',
                                     }}
                                     editable={true}
+                                    eventTimeFormat={{
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                        hour12: false
+                                    }}
                                     selectable={true}
                                     selectMirror={true}
                                     dayMaxEvents={3}
                                     moreLinkText="mais"
-                                    eventDisplay="block"
+                                    // eventDisplay="block"
                                     displayEventTime={false}
                                 />
+                                <Modal
+                                    show={!!eventoSelecionado}
+                                    onHide={() => setEventoSelecionado(null)}
+                                    centered
+                                    dialogClassName="modal-evento-custom"
+                                >
+                                    <Modal.Header
+                                        closeButton
+                                        className={`header-evento ${eventoSelecionado?.tipo === 'aniversario'
+                                                ? 'header-evento-aniversario'
+                                                : ''
+                                            }`}
+                                    >
+                                        <Modal.Title className="titulo-evento">
+                                            <Icon icon="solar:calendar-bold" /> {eventoSelecionado?.title}
+                                        </Modal.Title>
+                                    </Modal.Header>
+                                    <Modal.Body className="body-evento">
+                                        <p><strong>📅 Data:</strong> {eventoSelecionado?.date}</p>
+                                        {eventoSelecionado?.description && (
+                                            <p><strong>📝 Descrição:</strong> {eventoSelecionado.description}</p>
+                                        )}
+                                    </Modal.Body>
+                                    <Modal.Footer className="footer-evento">
+                                        <Button variant="outline-light" onClick={() => setEventoSelecionado(null)}>
+                                            Cancelar
+                                        </Button>
+                                        <Button variant="light" onClick={() => setEventoSelecionado(null)}>
+                                            OK
+                                        </Button>
+                                    </Modal.Footer>
+                                </Modal>
+
+
                             </div>
                         </div>
                     </div>
@@ -299,9 +333,9 @@ function AgendaLayout() {
                                     <Icon icon="solar:calendar-add-bold" className="me-2 text-primary" />
                                     Novo Evento
                                 </h5>
-                                <button 
-                                    type="button" 
-                                    className="btn-close" 
+                                <button
+                                    type="button"
+                                    className="btn-close"
                                     onClick={() => setModalOpen(false)}
                                 ></button>
                             </div>
@@ -348,16 +382,16 @@ function AgendaLayout() {
                                 </div>
                             </div>
                             <div className="modal-footer border-0 pt-0">
-                                <button 
-                                    type="button" 
-                                    className="btn btn-light rounded-3" 
+                                <button
+                                    type="button"
+                                    className="btn btn-light rounded-3"
                                     onClick={() => setModalOpen(false)}
                                 >
                                     Cancelar
                                 </button>
-                                <button 
-                                    type="button" 
-                                    className="btn btn-primary rounded-3 d-flex align-items-center gap-2" 
+                                <button
+                                    type="button"
+                                    className="btn btn-primary rounded-3 d-flex align-items-center gap-2"
                                     onClick={handleAddEvent}
                                 >
                                     <Icon icon="solar:diskette-bold" />

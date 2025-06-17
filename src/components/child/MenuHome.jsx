@@ -1,7 +1,7 @@
 import React from 'react';
 import { Icon } from '@iconify/react';
 import { useNavigate } from 'react-router-dom';
-import './childStyle.css';
+// import './childStyle.css';
 
 const menuItems = [
     { texto: "Financeiro", icone: "solar:wallet-bold", classe: "bg-success-main", to: "/financeiro", permissoes: [1, 2, 3] },
